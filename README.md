@@ -1,6 +1,6 @@
 # AnimateDiff for Stable Diffusion Webui
 
-This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) into [AUTOMATIC1111 Stable Diffusion Webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui). I have tested this extension with WebUI v1.4.1 on Ubuntu 20.04 with NVIDIA 3090.
+This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui). I have tested this extension with WebUI v1.4.1 on Ubuntu 20.04 with NVIDIA 3090.
 
 This extension implements AnimateDiff in a different way. It does not require you to clone the whole SD1.5 repository. It also applied (probably) the least modification to `ldm`, so that you do not need to reload your model weights if you don't want to.
 
