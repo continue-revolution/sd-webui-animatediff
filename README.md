@@ -24,3 +24,8 @@ You might also be interested in another extension I created: [Segment Anything f
 3.  Q: Can I generate a video instead a GIF? How much VRAM do I need?
 
     A: Currently, you can run webui with this extension via NVIDIA 3090. I cannot guarantee any other variations of GPU. You cannot generate a video. This is because a whole batch of images will pass through a transformer module, which prevents us from generating videos sequentially. We look forward to future developments of deep learning for video generation.
+
+## Sample
+![00025-860127266](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/4c716ddd-11e4-489b-a0c0-9bb6515026bc)
+
+![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/8a2d94b6-cf2f-445a-9dba-99d176b62656)
