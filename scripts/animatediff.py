@@ -64,7 +64,7 @@ class AnimateDiffScript(scripts.Script):
                         "Motion modules will be auto-downloaded from [here](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI). "
                         "If your terminal cannot access google due to whatever reason, please manually download and put to sd-webui-animatediff/model/. "
                         "DO NOT change model filename.")
-            model = gr.Dropdown(choices=["mm_sd_v15.ckpt", "mm_sd_v14.ckpt"], value="mm_sd_v15.ckpt", label="Motion module", type="value")
+            model = gr.Dropdown(choices=["mm_sd_v15.ckpt", "mm_sd_v14.ckpt"], value="mm_sd_v15.ckpt", label="Motion module (auto download from google drive)", type="value")
             with gr.Row():
                 enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
                 video_length = gr.Slider(minimum=1, maximum=24, value=16, step=1, label="Video frame number (replace batch size)", precision=0)

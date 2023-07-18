@@ -10,7 +10,7 @@ Batch size on WebUI will be replaced by GIF frame number: 1 full GIF generated i
 
 You can try txt2gif on txt2img panel, img2gif on img2img panel with any LoRA/ControlNet. Due to the 1-batch behavior of AnimateDiff, it is probably not possible to support gif2gif. However, I need to discuss this with the authors of AnimateDiff.
 
-Motion modules will be auto-downloaded from [here](https://drive.google.com/drive/folders1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI). If your terminal cannot access google due to whatever reason, please manually download andput to sd-webui-animatediff/model/. DO NOT change model filename.
+Motion modules will be **auto-downloaded** from [here](https://drive.google.com/drive/folders1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI). If your terminal cannot access google due to whatever reason, please manually download andput to sd-webui-animatediff/model/. DO NOT change model filename.
 
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything).
 
