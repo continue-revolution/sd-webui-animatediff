@@ -17,7 +17,7 @@ Motion modules will be **auto-downloaded** from [here](https://drive.google.com/
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything).
 
 ## FAQ
-1.  Q: Can I reproduce the result created by the orinal authors?
+1.  Q: Can I reproduce the result created by the original authors?
 
     A: Unfortunately, you cannot. This is because A1111 implements generation of random tensors in a completely different way. It is not possible to produce exactly the same random tensors as the original authors without an extremely large code modification.
 2.  Q: I am using a remote server which blocks Google. What should I do?
