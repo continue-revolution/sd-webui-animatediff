@@ -16,6 +16,12 @@ Motion modules will be **auto-downloaded** from [here](https://drive.google.com/
 
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything).
 
+## TODO
+- [ ] remove xformers and try other optimization of attention (e.g. sdp)
+- [ ] remove auto-download or use huggingface/civitai link
+- [ ] fix matrix incompatible issue
+- [ ] check vram usage
+
 ## FAQ
 1.  Q: Can I reproduce the result created by the original authors?
 
