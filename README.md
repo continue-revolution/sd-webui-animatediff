@@ -21,6 +21,8 @@ You might also be interested in another extension I created: [Segment Anything f
 - [ ] remove auto-download or use huggingface/civitai link
 - [ ] fix matrix incompatible issue
 - [ ] check vram usage
+- [ ] fix all problems reported at github issues and reddit.
+- [ ] refactor README as a step-by-step guidance
 
 ## FAQ
 1.  Q: Can I reproduce the result created by the original authors?
