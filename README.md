@@ -12,7 +12,7 @@ You can try txt2gif on txt2img panel, img2gif on img2img panel with any LoRA/Con
 
 You can access GIF outout via `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`.
 
-Motion modules will be **auto-downloaded** from [here](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI). If your terminal cannot access google due to whatever reason, please either configurate your proxy via `Setttings/AnimateDiff` or manually download the model weight and put to sd-webui-animatediff/model/. DO NOT change model filename.
+Motion modules will be **auto-downloaded** from [here](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI). If your terminal cannot access google due to whatever reason, please either configurate your proxy via `Settings/AnimateDiff` or manually download the model weight and put to sd-webui-animatediff/model/. DO NOT change model filename.
 
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything).
 
