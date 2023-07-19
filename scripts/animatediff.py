@@ -132,7 +132,7 @@ class AnimateDiffScript(scripts.Script):
     
     def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
-            self.logger.info(f"AnimateDiff process start with video length {video_length}, FPS {fps}, motion module {model}.")
+            self.logger.info(f"AnimateDiff process start with video Max frames {video_length}, FPS {fps}, duration {video_length/fps},  motion module {model}.")
             assert video_length > 0 and fps > 0, "Video length and FPS should be positive."
             p.batch_size = video_length
             self.inject_motion_modules(p, model)
@@ -150,7 +150,7 @@ class AnimateDiffScript(scripts.Script):
                 filename = f"{seq:05}-{res.seed}"
                 video_path = f"{p.outpath_samples}/AnimateDiff/{filename}.gif"
                 video_paths.append(video_path)
-                imageio.mimsave(video_path, video_list, duration=(1000/fps))
+                imageio.mimsave(video_path, video_list, duration=(video_length/fps))
             res.images = video_paths
             self.logger.info("AnimateDiff process end.")
 
