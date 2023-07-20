@@ -23,8 +23,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 ## TODO
 - [ ] try other attention optimization (e.g. sdp)
-- [ ] fix matrix incompatible issue
-- [ ] fix all problems reported at github issues and reddit.
+- [ ] fix [token issue](https://github.com/continue-revolution/sd-webui-animatediff/issues/4), [shape issue](https://github.com/continue-revolution/sd-webui-animatediff/issues/3) and [reddit](https://www.reddit.com/r/StableDiffusion/comments/152n2cr/a1111_extension_of_animatediff_is_available/?sort=new).
 
 ## FAQ
 1.  Q: Can I reproduce the result created by the original authors?
@@ -51,7 +50,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 7.  Q: Can I use xformers?
 
-    A: Yes, but it will not be applied to AnimateDiff due to weird bug. I will try other optimizations. You should note that xformer will change the GIF you generate.
+    A: Yes, but it will not be applied to AnimateDiff due to [a weird bug](https://github.com/continue-revolution/sd-webui-animatediff/issues/2). I will try other optimizations. Note that xformers will change the GIF you generate.
 
 ## Sample
 
