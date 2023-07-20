@@ -52,7 +52,7 @@ You might also be interested in another extension I created: [Segment Anything f
 ## Sample
 
 ### txt2img
-![00025-860127266](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/4c716ddd-11e4-489b-a0c0-9bb6515026bc)
+![00034-860127266](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/e69be73f-2e77-4e0f-a783-09e9319c82f3)
 
 ![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/8a2d94b6-cf2f-445a-9dba-99d176b62656)
 
