@@ -72,9 +72,10 @@ class AnimateDiffScript(scripts.Script):
             with gr.Row():
                 unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
                 remove = gr.Button(value="Remove motion module from any memory")
+                loopNumber = gr.Number(minimum=0, value=0, label="Loops number (0 = infinite loop)", precision=0)
                 unload.click(fn=self.unload_motion_module)
                 remove.click(fn=self.remove_motion_module)
-        return enable, video_length, fps, model
+        return enable, loopNumber, video_length, fps, model
     
     def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v15.ckpt"):
         model_path = os.path.join(script_dir, "model", model_name)
@@ -130,14 +131,14 @@ class AnimateDiffScript(scripts.Script):
         if shared.cmd_opts.lowvram:
             self.unload_motion_module()
     
-    def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
+    def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, loopNumber_animatediff=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
             self.logger.info(f"AnimateDiff process start with video Max frames {video_length}, FPS {fps}, duration {video_length/fps},  motion module {model}.")
             assert video_length > 0 and fps > 0, "Video length and FPS should be positive."
             p.batch_size = video_length
             self.inject_motion_modules(p, model)
     
-    def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
+    def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loopNumber_animatediff=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
             self.remove_motion_modules(p)
             video_paths = []
@@ -150,7 +151,7 @@ class AnimateDiffScript(scripts.Script):
                 filename = f"{seq:05}-{res.seed}"
                 video_path = f"{p.outpath_samples}/AnimateDiff/{filename}.gif"
                 video_paths.append(video_path)
-                imageio.mimsave(video_path, video_list, duration=(video_length/fps))
+                imageio.mimsave(video_path, video_list, duration=(video_length/fps), loop=loopNumber_animatediff )
             res.images = video_paths
             self.logger.info("AnimateDiff process end.")
 
