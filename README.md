@@ -49,6 +49,10 @@ You might also be interested in another extension I created: [Segment Anything f
 
     A: Due to the 1-batch behavior of AnimateDiff, it is probably not possible to support gif2gif. However, I need to discuss this with the authors of AnimateDiff.
 
+7.  Q: Can I use xformers?
+
+    A: Yes, but it will not be applied to AnimateDiff due to weird bug. I will try other optimizations. You should note that xformer will change the GIF you generate.
+
 ## Sample
 
 ### txt2img
