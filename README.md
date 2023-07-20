@@ -14,7 +14,7 @@ You might also be interested in another extension I created: [Segment Anything f
 2. Download motion modules from [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y). You only need to download one of `mm_sd_v14.ckpt` | `mm_sd_v15.ckpt`. Put the model weights under `sd-webui-animatediff/model/`. DO NOT change model filename.
 3. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
 4. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height and click `Generate`. You should see the output GIF on the output gallery. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
-5. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. The Gradio gallary might just show one frame of your GIF. You can also use download/save buttons on WebUI, just like how you save your images. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
+5. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
 
 ## Update
 

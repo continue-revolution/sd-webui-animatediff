@@ -59,7 +59,7 @@ class AnimateDiffScript(scripts.Script):
                 enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
                 video_length = gr.Slider(minimum=1, maximum=24, value=16, step=1, label="Video frame number (replace batch size)", precision=0)
                 fps = gr.Number(value=8, label="Frames per second", precision=0)
-                loop_number = gr.Number(minimum=0, value=0, label="Loops number (0 = infinite loop)", precision=0)
+                loop_number = gr.Number(minimum=0, value=0, label="Display loop number (0 = infinite loop) (not actual GIF length)", precision=0)
             with gr.Row():
                 unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
                 remove = gr.Button(value="Remove motion module from any memory")
