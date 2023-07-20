@@ -4,7 +4,7 @@ import gradio as gr
 import imageio
 import torch
 
-from modules import scripts, images, shared, script_callbacks
+from modules import scripts, images, shared
 from modules.devices import torch_gc, device, cpu
 from modules.processing import StableDiffusionProcessing, Processed
 from scripts.logging_animatediff import logger_animatediff
@@ -54,16 +54,6 @@ class AnimateDiffScript(scripts.Script):
     
     def ui(self, is_img2img):
         with gr.Accordion('AnimateDiff', open=False):
-            gr.Markdown("This extension essentially inject multiple motion modules into SD1.5 UNet. "
-                        "It does not work for other variations of SD, such as SD2.1 and SDXL. "
-                        "Batch size on WebUI will be replaced by video frame number: 1 full video generated in 1 batch. "
-                        "If you want to generate multiple videos at once, please change batch number. "
-                        "You can try txt2gif on txt2img panel, img2gif on img2img panel with any LoRA/ControlNet. "
-                        "Due to the 1-batch behavior of AnimateDiff, it is probably not possible to support gif2gif. "
-                        "However, I need to discuss this with the authors of AnimateDiff."
-                        "Motion modules will be auto-downloaded from [here](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI). "
-                        "If your terminal cannot access google due to whatever reason, please manually download and put to sd-webui-animatediff/model/. "
-                        "DO NOT change model filename.")
             model = gr.Dropdown(choices=["mm_sd_v15.ckpt", "mm_sd_v14.ckpt"], value="mm_sd_v15.ckpt", label="Motion module (auto download from google drive)", type="value")
             with gr.Row():
                 enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
@@ -80,20 +70,7 @@ class AnimateDiffScript(scripts.Script):
     def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v15.ckpt"):
         model_path = os.path.join(script_dir, "model", model_name)
         if not os.path.isfile(model_path):
-            try:
-                proxy = shared.opts.data.get("animatediff_google_proxy", None)
-                if proxy == "":
-                    proxy = None
-                self.logger.info(f"Downloading motion module {model_name} from Google drive via proxy {proxy}.")
-                import gdown
-                if model_name == "mm_sd_v14.ckpt":
-                    gdown.download(id="1RqkQuGPaCO5sGZ6V6KZ-jUWmsRu48Kdq", output=model_path, proxy=proxy)
-                else:
-                    gdown.download(id="1ql0g_Ys4UCz2RnokYlBjyOYPbttbIpbu", output=model_path, proxy=proxy)
-            except:
-                raise RuntimeError(
-                    "You either don't have gdown on your terminal or your terminal cannot access google. "
-                    "Please download model from https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI and put to sd-webui-animatediff/model/.")
+            raise RuntimeError("Please download models manually.")
         if AnimateDiffScript.motion_module is None:
             self.logger.info(f"Loading motion module {model_name} from {model_path}")
             mm_state_dict = torch.load(model_path, map_location=device)
@@ -154,10 +131,3 @@ class AnimateDiffScript(scripts.Script):
                 imageio.mimsave(video_path, video_list, duration=(video_length/fps), loop=loopNumber_animatediff )
             res.images = video_paths
             self.logger.info("AnimateDiff process end.")
-
-def on_ui_settings():
-    section = ('animatediff', "AnimateDiff")
-    shared.opts.add_option("animatediff_google_proxy", shared.OptionInfo(None, "Proxy to auto-download motion module from Google drive", gr.Textbox, {"interactive": True}, section=section))
-
-
-script_callbacks.on_ui_settings(on_ui_settings)
