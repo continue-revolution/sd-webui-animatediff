@@ -24,7 +24,6 @@ You might also be interested in another extension I created: [Segment Anything f
 - [ ] try other attention optimization (e.g. sdp)
 - [ ] fix matrix incompatible issue
 - [ ] fix all problems reported at github issues and reddit.
-- [ ] check vram usage
 
 ## FAQ
 1.  Q: Can I reproduce the result created by the original authors?
@@ -35,7 +34,7 @@ You might also be interested in another extension I created: [Segment Anything f
     A: You will have to find a way to download motion modules locally and re-upload to your server. I provide a [baidu netdisk link](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y).
 3.  Q: How much VRAM do I need?
 
-    A: Currently, you can run WebUI with this extension via NVIDIA 3090. I cannot guarantee any other variations of GPU. Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. I will add some sample VRAM requirements here later.
+    A: Currently, you can run WebUI with this extension via NVIDIA 3090. I cannot guarantee any other variations of GPU. Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. The default setting consumes 12GB VRAM. More VRAM info will be added later.
 
 4.  Q: Can I generate a video instead a GIF?
 
