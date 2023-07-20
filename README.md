@@ -50,9 +50,18 @@ You might also be interested in another extension I created: [Segment Anything f
     A: Due to the 1-batch behavior of AnimateDiff, it is probably not possible to support gif2gif. However, I need to discuss this with the authors of AnimateDiff.
 
 ## Sample
+
+### txt2img
 ![00025-860127266](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/4c716ddd-11e4-489b-a0c0-9bb6515026bc)
 
 ![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/8a2d94b6-cf2f-445a-9dba-99d176b62656)
+
+### img2img
+![00000-2096486817](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/dce2df7a-c822-433b-b2de-3c7ab755eebb)
+
+![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/f2c33e39-28a1-4473-a116-533f1d0fae4c)
+
+![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/dc17e4d3-82d3-4e56-a409-c1e86c11a21b)
 
 ## Sponsor
 You can sponsor me via WeChat or Alipay.
