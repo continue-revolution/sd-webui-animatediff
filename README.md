@@ -34,7 +34,7 @@ You might also be interested in another extension I created: [Segment Anything f
     A: You will have to find a way to download motion modules locally and re-upload to your server.
 3.  Q: How much VRAM do I need?
 
-    A: Currently, you can run WebUI with this extension via NVIDIA 3090. I cannot guarantee any other variations of GPU. Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. The default setting consumes 12GB VRAM. More VRAM info will be added later.
+    A: Currently, you can run WebUI with this extension via NVIDIA 3090. I cannot guarantee any other variations of GPU. Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. The default setting (displayed in [Samples/txt2img](#txt2img) section) consumes 12GB VRAM. More VRAM info will be added later.
 
 4.  Q: Can I generate a video instead a GIF?
 
@@ -52,7 +52,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
     A: Yes, but it will not be applied to AnimateDiff due to [a weird bug](https://github.com/continue-revolution/sd-webui-animatediff/issues/2). I will try other optimizations. Note that xformers will change the GIF you generate.
 
-## Sample
+## Samples
 
 ### txt2img
 ![00034-860127266](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/e69be73f-2e77-4e0f-a783-09e9319c82f3)
