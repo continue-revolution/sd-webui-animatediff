@@ -31,7 +31,7 @@ You might also be interested in another extension I created: [Segment Anything f
     A: Unfortunately, you cannot. This is because A1111 implements generation of random tensors in a completely different way. It is not possible to produce exactly the same random tensors as the original authors without an extremely large code modification.
 2.  Q: I am using a remote server which blocks Google. What should I do?
 
-    A: You will have to find a way to download motion modules locally and re-upload to your server. I provide a [baidu netdisk link](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y).
+    A: You will have to find a way to download motion modules locally and re-upload to your server.
 3.  Q: How much VRAM do I need?
 
     A: Currently, you can run WebUI with this extension via NVIDIA 3090. I cannot guarantee any other variations of GPU. Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. The default setting consumes 12GB VRAM. More VRAM info will be added later.
