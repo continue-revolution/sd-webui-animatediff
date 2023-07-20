@@ -18,7 +18,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 ## Update
 
-- `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-segment-anything/releases/tag/v1.1.0): remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
+- `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-segment-anything/releases/tag/v1.1.0): fix gif duration, add loop number, remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
 
 ## TODO
 - [ ] try other attention optimization (e.g. sdp)
