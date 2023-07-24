@@ -27,7 +27,6 @@ You might also be interested in another extension I created: [Segment Anything f
 - [ ] [token](https://github.com/continue-revolution/sd-webui-animatediff/issues/4)
 - [ ] [shape](https://github.com/continue-revolution/sd-webui-animatediff/issues/3)
 - [ ] [reddit](https://www.reddit.com/r/StableDiffusion/comments/152n2cr/a1111_extension_of_animatediff_is_available/?sort=new)
-- [ ] grey samples
 - [ ] img2img
 
 ## FAQ
@@ -59,11 +58,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
     A: Because I inserted motion modules to the wrong place inside UNet output blocks. It is a very idiot typo (I wrote a 2 where it was supposed to be 3) but took me days to discover.
 
-8.  Q: This extension seem to produce grey samples compared to [AnimateDiff](https://github.com/guoyww/AnimateDiff/). Why?
-
-    A: I don't know. I will try to figure out why very soon.
-
-9.  Q: How can I reproduce the result in [Samples/txt2img](#txt2img) section?
+8.  Q: How can I reproduce the result in [Samples/txt2img](#txt2img) section?
 
     A: You must replace [create_random_tensors](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/processing.py#L461-L519) with 
     ```python
@@ -73,16 +68,14 @@ You might also be interested in another extension I created: [Segment Anything f
     ```
     and retry. A1111 generate random tensors in a completely different way.
 
-10. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img. Why?
+9. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img. Why?
 
     A: I don't know. I will try to figure out why very soon.
 
 ## Samples
 
 ### txt2img
-| AnimateDiff | A1111 |
-| --- | --- |
-| ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) | ![00023-10788741199826055168](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c35a952a-a127-491b-876d-cda97771f7ee) |
+
 
 ### img2img
 [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img due to some unknown reason. Will be fixed later.
