@@ -58,7 +58,7 @@ You might also be interested in another extension I created: [Segment Anything f
 ### txt2img
 | AnimateDiff | A1111 |
 | --- | --- |
-| ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) | ![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/932a724f-85dd-4d2f-9367-de3f3abeeb08) |
+| ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) | ![00023-10788741199826055168](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c35a952a-a127-491b-876d-cda97771f7ee) |
 
 ## Sponsor
 You can sponsor me via WeChat or Alipay.
