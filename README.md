@@ -19,8 +19,8 @@ You might also be interested in another extension I created: [Segment Anything f
 
 ## Update
 
-- `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-segment-anything/releases/tag/v1.1.0): fix gif duration, add loop number, remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
-- `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-segment-anything/releases/tag/v1.2.0): fix incorrect insertion of motion modules.
+- `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.1.0): fix gif duration, add loop number, remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
+- `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0): fix incorrect insertion of motion modules.
 
 ## TODO
 - [ ] other attention optimization (e.g. sdp)
@@ -73,7 +73,7 @@ You might also be interested in another extension I created: [Segment Anything f
     ```
     and retry. A1111 generate random tensors in a completely different way.
 
-10. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-segment-anything/releases/tag/v1.2.0) does not work for img2img. Why?
+10. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img. Why?
 
     A: I don't know. I will try to figure out why very soon.
 
@@ -85,7 +85,7 @@ You might also be interested in another extension I created: [Segment Anything f
 | ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) | ![00023-10788741199826055168](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c35a952a-a127-491b-876d-cda97771f7ee) |
 
 ### img2img
-[v1.2.0](https://github.com/continue-revolution/sd-webui-segment-anything/releases/tag/v1.2.0) does not work for img2img due to some unknown reason. Will be fixed later.
+[v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img due to some unknown reason. Will be fixed later.
 
 ## Sponsor
 You can sponsor me via WeChat or Alipay.
