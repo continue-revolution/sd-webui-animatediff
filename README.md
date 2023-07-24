@@ -56,16 +56,9 @@ You might also be interested in another extension I created: [Segment Anything f
 ## Samples
 
 ### txt2img
-![00034-860127266](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/e69be73f-2e77-4e0f-a783-09e9319c82f3)
-
-![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/8a2d94b6-cf2f-445a-9dba-99d176b62656)
-
-### img2img
-![00000-2096486817](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/dce2df7a-c822-433b-b2de-3c7ab755eebb)
-
-![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/f2c33e39-28a1-4473-a116-533f1d0fae4c)
-
-![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/dc17e4d3-82d3-4e56-a409-c1e86c11a21b)
+| AnimateDiff | A1111 |
+| --- | --- |
+| ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) | ![image](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/932a724f-85dd-4d2f-9367-de3f3abeeb08) |
 
 ## Sponsor
 You can sponsor me via WeChat or Alipay.
