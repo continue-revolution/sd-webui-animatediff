@@ -5,7 +5,7 @@ import imageio
 import torch
 from einops import rearrange
 
-from modules import scripts, images, shared
+from modules import scripts, images, shared, script_callbacks
 from modules.devices import torch_gc, device, cpu
 from modules.processing import StableDiffusionProcessing, Processed
 from scripts.logging_animatediff import logger_animatediff
@@ -71,7 +71,7 @@ class AnimateDiffScript(scripts.Script):
         return enable, loop_number, video_length, fps, model
     
     def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v15.ckpt"):
-        model_path = os.path.join(script_dir, "model", model_name)
+        model_path = os.path.join(shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model")), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
         if AnimateDiffScript.motion_module is None:
@@ -143,3 +143,10 @@ class AnimateDiffScript(scripts.Script):
                 imageio.mimsave(video_path, video_list, duration=(video_length/fps), loop=loop_number)
             res.images = video_paths
             self.logger.info("AnimateDiff process end.")
+
+def on_ui_settings():
+    section = ('animatediff', "AnimateDiff")
+    shared.opts.add_option("animatediff_model_path", shared.OptionInfo(os.path.join(script_dir, "model"), "Path to save AnimateDiff motion modules", gr.Textbox, section=section))
+
+
+script_callbacks.on_ui_settings(on_ui_settings)
