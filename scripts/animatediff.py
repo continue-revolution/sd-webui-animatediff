@@ -74,10 +74,10 @@ class AnimateDiffScript(scripts.Script):
         model_path = os.path.join(shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model")), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
-        if AnimateDiffScript.motion_module is None:
+        if AnimateDiffScript.motion_module is None or AnimateDiffScript.motion_module.mm_type != model_name:
             self.logger.info(f"Loading motion module {model_name} from {model_path}")
             mm_state_dict = torch.load(model_path, map_location=device)
-            AnimateDiffScript.motion_module = MotionWrapper()
+            AnimateDiffScript.motion_module = MotionWrapper(model_name)
             missed_keys = AnimateDiffScript.motion_module.load_state_dict(mm_state_dict)
             self.logger.warn(f"Missing keys {missed_keys}")
         AnimateDiffScript.motion_module.to(device)

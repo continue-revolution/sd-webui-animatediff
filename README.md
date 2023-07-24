@@ -20,7 +20,7 @@ You might also be interested in another extension I created: [Segment Anything f
 ## Update
 
 - `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.1.0): fix gif duration, add loop number, remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
-- `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0): fix incorrect insertion of motion modules, add option to change path to save motion modules in Settings/AnimateDiff.
+- `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0): fix incorrect insertion of motion modules, add option to change path to save motion modules in Settings/AnimateDiff, fix loading different motion modules.
 
 ## TODO
 - [ ] other attention optimization (e.g. sdp)
@@ -28,6 +28,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - [ ] [shape](https://github.com/continue-revolution/sd-webui-animatediff/issues/3)
 - [ ] [reddit](https://www.reddit.com/r/StableDiffusion/comments/152n2cr/a1111_extension_of_animatediff_is_available/?sort=new)
 - [ ] img2img
+- [ ] greyer sample
 
 ## FAQ
 1.  Q: I am using a remote server which blocks Google. What should I do?
@@ -62,13 +63,17 @@ You might also be interested in another extension I created: [Segment Anything f
 
     A: You must replace [create_random_tensors](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/processing.py#L461-L519) with 
     ```python
-    torch.manual_seed(10788741199826055526)
-    from einops import rearrange
-    x = rearrange(torch.randn((4, 16, 64, 64), device=shared.device), 'c f h w -> f c h w')
+        torch.manual_seed(<seed>)
+        from einops import rearrange
+        x = rearrange(torch.randn((4, 16, 64, 64), device=shared.device), 'c f h w -> f c h w')
     ```
     and retry. A1111 generate random tensors in a completely different way.
 
 9. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img. Why?
+
+    A: I don't know. I will try to figure out why very soon.
+
+10. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) seems to give a greyer sample compared to [AnimateDiff](https://github.com/guoyww/AnimateDiff/). Why?
 
     A: I don't know. I will try to figure out why very soon.
 

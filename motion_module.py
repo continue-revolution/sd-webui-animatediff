@@ -18,7 +18,7 @@ def zero_module(module):
 
 
 class MotionWrapper(nn.Module):
-    def __init__(self):
+    def __init__(self, mm_type="mm_sd_v15.ckpt"):
         super().__init__()
         self.down_blocks = nn.ModuleList([])
         self.up_blocks = nn.ModuleList([])
@@ -26,6 +26,7 @@ class MotionWrapper(nn.Module):
             self.down_blocks.append(MotionModule(c))
         for c in (1280, 1280, 640, 320):
             self.up_blocks.append(MotionModule(c, is_up=True))
+        self.mm_type = mm_type
 
 
 class MotionModule(nn.Module):
