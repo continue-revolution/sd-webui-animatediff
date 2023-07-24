@@ -23,35 +23,59 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-segment-anything/releases/tag/v1.2.0): fix incorrect insertion of motion modules.
 
 ## TODO
-- [ ] try other attention optimization (e.g. sdp)
-- [ ] fix [token issue](https://github.com/continue-revolution/sd-webui-animatediff/issues/4), [shape issue](https://github.com/continue-revolution/sd-webui-animatediff/issues/3) and [reddit](https://www.reddit.com/r/StableDiffusion/comments/152n2cr/a1111_extension_of_animatediff_is_available/?sort=new).
+- [ ] other attention optimization (e.g. sdp)
+- [ ] [token](https://github.com/continue-revolution/sd-webui-animatediff/issues/4)
+- [ ] [shape](https://github.com/continue-revolution/sd-webui-animatediff/issues/3)
+- [ ] [reddit](https://www.reddit.com/r/StableDiffusion/comments/152n2cr/a1111_extension_of_animatediff_is_available/?sort=new)
+- [ ] grey samples
+- [ ] img2img
 
 ## FAQ
-1.  Q: Can I reproduce the result created by the original authors?
-
-    A: Unfortunately, you cannot. This is because A1111 implements generation of random tensors in a completely different way. It is not possible to produce exactly the same random tensors as the original authors without an extremely large code modification.
-2.  Q: I am using a remote server which blocks Google. What should I do?
+1.  Q: I am using a remote server which blocks Google. What should I do?
 
     A: You will have to find a way to download motion modules locally and re-upload to your server.
-3.  Q: How much VRAM do I need?
+
+2.  Q: How much VRAM do I need?
 
     A: Currently, you can run WebUI with this extension via NVIDIA 3090. I cannot guarantee any other variations of GPU. Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. The default setting (displayed in [Samples/txt2img](#txt2img) section) consumes 12GB VRAM. More VRAM info will be added later.
 
-4.  Q: Can I generate a video instead a GIF?
+3.  Q: Can I generate a video instead a GIF?
 
     A: Unfortunately, you cannot. This is because a whole batch of images will pass through a transformer module, which prevents us from generating videos sequentially. We look forward to future developments of deep learning for video generation.
 
-5.  Q: Can I use SDXL to generate GIFs?
+4.  Q: Can I use SDXL to generate GIFs?
 
     A: At least at this time, you cannot. This extension essentially inject multiple motion modules into SD1.5 UNet. It does not work for other variations of SD, such as SD2.1 and SDXL. I'm not sure what will happen if you force-add motion modules to SD2.1 or SDXL. Future experiments are needed.
 
-6.  Q: Can I use this extension to do gif2gif?
+5.  Q: Can I use this extension to do gif2gif?
 
     A: Due to the 1-batch behavior of AnimateDiff, it is probably not possible to support gif2gif. However, I need to discuss this with the authors of AnimateDiff.
 
-7.  Q: Can I use xformers?
+6.  Q: Can I use xformers?
 
     A: Yes, but it will not be applied to AnimateDiff due to [a weird bug](https://github.com/continue-revolution/sd-webui-animatediff/issues/2). I will try other optimizations. Note that xformers will change the GIF you generate.
+
+7.  Q: This extension perform worse than [AnimateDiff](https://github.com/guoyww/AnimateDiff/). There seem to be no motion but only glitches. Why?
+
+    A: Because I inserted motion modules to the wrong place inside UNet output blocks. It is a very idiot typo (I wrote a 2 where it was supposed to be 3) but took me days to discover.
+
+8.  Q: This extension seem to produce grey samples compared to [AnimateDiff](https://github.com/guoyww/AnimateDiff/). Why?
+
+    A: I don't know. I will try to figure out why very soon.
+
+9.  Q: How can I reproduce the result in [Samples/txt2img](#txt2img) section?
+
+    A: You must replace [create_random_tensors](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/processing.py#L461-L519) with 
+    ```python
+    torch.manual_seed(10788741199826055526)
+    from einops import rearrange
+    x = rearrange(torch.randn((4, 16, 64, 64), device=shared.device), 'c f h w -> f c h w')
+    ```
+    and retry. A1111 generate random tensors in a completely different way.
+
+10. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-segment-anything/releases/tag/v1.2.0) does not work for img2img. Why?
+
+    A: I don't know. I will try to figure out why very soon.
 
 ## Samples
 
@@ -59,6 +83,9 @@ You might also be interested in another extension I created: [Segment Anything f
 | AnimateDiff | A1111 |
 | --- | --- |
 | ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) | ![00023-10788741199826055168](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c35a952a-a127-491b-876d-cda97771f7ee) |
+
+### img2img
+[v1.2.0](https://github.com/continue-revolution/sd-webui-segment-anything/releases/tag/v1.2.0) does not work for img2img due to some unknown reason. Will be fixed later.
 
 ## Sponsor
 You can sponsor me via WeChat or Alipay.
