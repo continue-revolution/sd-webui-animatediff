@@ -21,6 +21,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 - `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.1.0): fix gif duration, add loop number, remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
 - `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0): fix incorrect insertion of motion modules, add option to change path to save motion modules in Settings/AnimateDiff, fix loading different motion modules.
+- `2023/07/27` [v1.2.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.1): add hash calculation of motion modules (you can disable it in `Settings/AnimateDiff`), 
 
 ## TODO
 - [ ] other attention optimization (e.g. sdp)
@@ -61,7 +62,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 8.  Q: How can I reproduce the result in [Samples/txt2img](#txt2img) section?
 
-    A: You must replace [create_random_tensors](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/processing.py#L461-L519) with 
+    A: You must replace [create_random_tensors](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/processing.py#L479-L537) with 
     ```python
         torch.manual_seed(<seed>)
         from einops import rearrange
