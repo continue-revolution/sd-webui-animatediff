@@ -21,15 +21,16 @@ You might also be interested in another extension I created: [Segment Anything f
 
 - `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.1.0): fix gif duration, add loop number, remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
 - `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0): fix incorrect insertion of motion modules, add option to change path to save motion modules in Settings/AnimateDiff, fix loading different motion modules.
-- `2023/07/27` [v1.2.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.1): add hash calculation of motion modules (you can disable it in `Settings/AnimateDiff`), 
+- `2023/07/27` [v1.2.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.1): add hash calculation of motion modules (you can disable it in `Settings/AnimateDiff`) 
 
 ## TODO
+This TODO list will most likely be resolved sequentially.
+- [ ] greyer sample
 - [ ] other attention optimization (e.g. sdp)
+- [ ] img2img
 - [ ] [token](https://github.com/continue-revolution/sd-webui-animatediff/issues/4)
 - [ ] [shape](https://github.com/continue-revolution/sd-webui-animatediff/issues/3)
 - [ ] [reddit](https://www.reddit.com/r/StableDiffusion/comments/152n2cr/a1111_extension_of_animatediff_is_available/?sort=new)
-- [ ] img2img
-- [ ] greyer sample
 
 ## FAQ
 1.  Q: I am using a remote server which blocks Google. What should I do?

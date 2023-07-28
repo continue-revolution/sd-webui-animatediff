@@ -80,7 +80,7 @@ class AnimateDiffScript(scripts.Script):
                     if model_name == "mm_sd_v14.ckpt":
                         return 'aa7fd8a200a89031edd84487e2a757c5315460eca528fa70d4b3885c399bffd5'
                     elif model_name == "mm_sd_v15.ckpt":
-                        return 'b925e6a0275bdd63e04a6f20e88f3b96aa2043958bd858bef303374f3c2ca0bc'
+                        return 'cf16ea656cb16124990c8e2c70a29c793f9841f3a2223073fac8bd89ebd9b69a'
                     else:
                         raise RuntimeError(f"Unsupported model filename {model_name}. Should be one of mm_sd_v14.ckpt or mm_sd_v15.ckpt")
                 if hashes.sha256(model_path, f"AnimateDiff/{model_name}") != get_mm_hash(model_name):
