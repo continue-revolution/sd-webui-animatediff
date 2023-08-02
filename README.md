@@ -16,7 +16,10 @@ You might also be interested in another extension I created: [Segment Anything f
 2. Download motion modules from [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y). You only need to download one of `mm_sd_v14.ckpt` | `mm_sd_v15.ckpt`. Put the model weights under `sd-webui-animatediff/model/`. DO NOT change model filename.
 3. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
 4. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
-5. Enable AnimateDiff extension, set up each parameter (loop number means how many loop the GIF will be displayed, not the actual length of the GIF) and click `Generate`. 
+5. Enable AnimateDiff extension, and set up each parameter, and click `Generate`.
+   1. **Number of frames** — The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`.
+   1. **Frames per second** — How many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds.
+   1. **Loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
 5. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
 
 ## Update
