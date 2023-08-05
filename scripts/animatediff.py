@@ -31,16 +31,16 @@ groupnorm32_original_forward = GroupNorm32.forward
 
 class AnimateDiffScript(scripts.Script):
     motion_module: MotionWrapper = None
-    
+
     def __init__(self):
         self.logger = logger_animatediff
 
     def title(self):
         return "AnimateDiff"
-    
+
     def show(self, is_img2img):
         return scripts.AlwaysVisible
-    
+
     def unload_motion_module(self):
         self.logger.info("Moving motion module to CPU")
         if AnimateDiffScript.motion_module is not None:
@@ -54,7 +54,7 @@ class AnimateDiffScript(scripts.Script):
         AnimateDiffScript.motion_module = None
         torch_gc()
         gc.collect()
-    
+
     def ui(self, is_img2img):
         with gr.Accordion('AnimateDiff', open=False):
             model = gr.Dropdown(choices=["mm_sd_v15.ckpt", "mm_sd_v14.ckpt"], value="mm_sd_v15.ckpt", label="Motion module", type="value")
@@ -69,7 +69,7 @@ class AnimateDiffScript(scripts.Script):
                 unload.click(fn=self.unload_motion_module)
                 remove.click(fn=self.remove_motion_module)
         return enable, loop_number, video_length, fps, model
-    
+
     def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v15.ckpt"):
         model_path = os.path.join(shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model")), model_name)
         if not os.path.isfile(model_path):
@@ -129,21 +129,21 @@ class AnimateDiffScript(scripts.Script):
         self.logger.info(f"Removal finished.")
         if shared.cmd_opts.lowvram:
             self.unload_motion_module()
-    
+
     def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
             self.logger.info(f"AnimateDiff process start with video Max frames {video_length}, FPS {fps}, duration {video_length/fps},  motion module {model}.")
             assert video_length > 0 and fps > 0, "Video length and FPS should be positive."
             p.batch_size = video_length
             self.inject_motion_modules(p, model)
-    
+
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
             self.remove_motion_modules(p)
             video_paths = []
             self.logger.info("Merging images into GIF.")
             from pathlib import Path
-            Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True)
+            Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
             for i in range(res.index_of_first_image, len(res.images), video_length):
                 video_list = res.images[i:i+video_length]
                 seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
