@@ -70,7 +70,7 @@ class AnimateDiffScript(scripts.Script):
                     save_png = gr.Checkbox(value=True, label='Save PNG')
                     save_gif = gr.Checkbox(value=True, label='Save GIF')
                     save_mp4 = gr.Checkbox(value=True, label='Save MP4')
-                    save_txt = gr.Checkbox(value=False, label='Save TXT')
+                    save_txt = gr.Checkbox(value=True, label='Save TXT')
             with gr.Row():
                 optimize_gif = gr.Checkbox(value=False, label='Optimize GIF (requires pygifsicle and gifsicle)')
             with gr.Row():
@@ -146,7 +146,7 @@ class AnimateDiffScript(scripts.Script):
         save_png=True,
         save_gif=True,
         save_mp4=True,
-        save_txt=False,
+        save_txt=True,
         optimize_gif=False,
         loop_number=0,
         video_length=16,
@@ -177,7 +177,7 @@ class AnimateDiffScript(scripts.Script):
         save_png=True,
         save_gif=True,
         save_mp4=True,
-        save_txt=False,
+        save_txt=True,
         optimize_gif=False,
         loop_number=0,
         video_length=16,
