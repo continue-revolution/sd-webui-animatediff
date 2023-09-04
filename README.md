@@ -13,7 +13,7 @@ You might also be interested in another extension I created: [Segment Anything f
 ## How to Use
 
 1. Install this extension via link.
-2. Download motion modules from [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y). You only need to download one of `mm_sd_v14.ckpt` | `mm_sd_v15.ckpt`. Put the model weights under `sd-webui-animatediff/model/`. DO NOT change model filename.
+2. Download motion modules and put the model weights under `sd-webui-animatediff/model/`. DO NOT change model filename. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
 3. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
 4. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
 5. Enable AnimateDiff extension, and set up each parameter, and click `Generate`.
@@ -21,6 +21,10 @@ You might also be interested in another extension I created: [Segment Anything f
    1. **Frames per second** — How many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds.
    1. **Loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
 5. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
+
+## Motion Module Model Zoo
+- `mm_sd_v14.ckpt` & `mm_sd_v15.ckpt` by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y)
+- `mm-Stabilized_high.pth` & `mm-Stabbilized_mid.pth` by [@manshoety](https://huggingface.co/manshoety): [HuggingFace](https://huggingface.co/manshoety/AD_Stabilized_Motion/tree/main)
 
 ## Update
 
@@ -31,7 +35,6 @@ You might also be interested in another extension I created: [Segment Anything f
 
 ## TODO
 This TODO list will most likely be resolved sequentially.
-- [ ] greyer sample
 - [ ] other attention optimization (e.g. sdp)
 - [ ] img2img
 - [ ] [token](https://github.com/continue-revolution/sd-webui-animatediff/issues/4)
