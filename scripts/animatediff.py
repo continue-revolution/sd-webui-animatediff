@@ -82,7 +82,7 @@ class AnimateDiffScript(scripts.Script):
                     else:
                         selected = None
                     return gr.Dropdown.update(choices=new_model_list, value=selected)
-                model = gr.Dropdown(choices=model_list, value=model_list[0], label="Motion module", type="value")
+                model = gr.Dropdown(choices=model_list, value=(model_list[0] if len(model_list) > 0 else None), label="Motion module", type="value")
                 refresh_model = ToolButton(value='\U0001f504')
                 refresh_model.click(refresh_models, model, model)
             with gr.Row():
