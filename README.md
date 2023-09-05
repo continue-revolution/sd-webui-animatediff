@@ -65,11 +65,7 @@ This TODO list will most likely be resolved sequentially.
 
     A: Yes, but it will not be applied to AnimateDiff due to [a weird bug](https://github.com/continue-revolution/sd-webui-animatediff/issues/2). I will try other optimizations. Note that xformers will change the GIF you generate.
 
-7.  Q: This extension perform worse than [AnimateDiff](https://github.com/guoyww/AnimateDiff/). There seem to be no motion but only glitches. Why?
-
-    A: Because I inserted motion modules to the wrong place inside UNet output blocks. It is a very idiot typo (I wrote a 2 where it was supposed to be 3) but took me days to discover.
-
-8.  Q: How can I reproduce the result in [Samples/txt2img](#txt2img) section?
+7.  Q: How can I reproduce the result in [Samples/txt2img](#txt2img) section?
 
     A: You must replace [create_random_tensors](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/processing.py#L479-L537) with 
     ```python
@@ -79,7 +75,7 @@ This TODO list will most likely be resolved sequentially.
     ```
     and retry. A1111 generate random tensors in a completely different way. This only works for WebUI < v1.6.0. This portion of instruction will be updated after I look into the source code of the new random tensor generation logic.
 
-9. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img. Why?
+8. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img. Why?
 
     A: I don't know. I will try to figure out why very soon.
 
