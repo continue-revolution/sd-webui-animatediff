@@ -144,7 +144,6 @@ class AnimateDiffScript(scripts.Script):
                 unet.output_blocks[unet_idx].append(AnimateDiffScript.motion_module.up_blocks[mm_idx0].motion_modules[mm_idx1])
         self.logger.info(f"Injection finished.")
 
-
     def remove_motion_modules(self, p: StableDiffusionProcessing):
         unet = p.sd_model.model.diffusion_model
         self.logger.info(f"Removing motion module from SD1.5 UNet input blocks.")
@@ -161,6 +160,19 @@ class AnimateDiffScript(scripts.Script):
         self.logger.info(f"Removal finished.")
         if shared.cmd_opts.lowvram:
             self.unload_motion_module()
+    
+    def set_ddim_alpha(self, p: StableDiffusionProcessing):
+        self.logger.info(f"Setting DDIM alpha.")
+        beta_start = 0.00085
+        beta_end = 0.012
+        betas = torch.linspace(beta_start, beta_end, p.sd_model.num_timesteps, dtype=torch.float32, device=device)
+        alphas = 1.0 - betas
+        alphas_cumprod = torch.cumprod(alphas, dim=0)
+        alphas_cumprod_prev = torch.cat(
+            (torch.tensor([1.0], dtype=torch.float32, device=device), alphas_cumprod[:-1]))
+        p.sd_model.betas = betas
+        p.sd_model.alphas_cumprod = alphas_cumprod
+        p.sd_model.alphas_cumprod_prev = alphas_cumprod_prev
 
     def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
@@ -168,6 +180,8 @@ class AnimateDiffScript(scripts.Script):
             assert video_length > 0 and fps > 0, "Video length and FPS should be positive."
             p.batch_size = video_length
             self.inject_motion_modules(p, model)
+            if p.sampler_name == "DDIM":
+                self.set_ddim_alpha(p)
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
