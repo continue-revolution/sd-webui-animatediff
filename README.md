@@ -20,7 +20,9 @@ You might also be interested in another extension I created: [Segment Anything f
    1. **Number of frames** — The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`.
    1. **Frames per second** — How many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds.
    1. **Loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
-5. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
+6. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
+
+If you want to use API, you should try [#42](https://github.com/continue-revolution/sd-webui-animatediff/issues/42) after finishing step 1-2 above.
 
 ## Motion Module Model Zoo
 - `mm_sd_v14.ckpt` & `mm_sd_v15.ckpt` by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y)
