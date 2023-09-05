@@ -13,16 +13,19 @@ You might also be interested in another extension I created: [Segment Anything f
 ## How to Use
 
 1. Install this extension via link.
-2. Download motion modules and put the model weights under `sd-webui-animatediff/model/`. If you want to use another directory to save the model weights, please go to `Settings/AnimateDiff`. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
-3. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
-4. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
-5. Enable AnimateDiff extension, and set up each parameter, and click `Generate`.
+1. Download motion modules and put the model weights under `sd-webui-animatediff/model/`. If you want to use another directory to save the model weights, please go to `Settings/AnimateDiff`. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
+
+### WebUI
+1. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
+1. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
+1. Enable AnimateDiff extension, and set up each parameter, and click `Generate`.
    1. **Number of frames** — The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`.
    1. **Frames per second** — How many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds.
    1. **Loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
-6. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
+1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
 
-If you want to use API, you should try [#42](https://github.com/continue-revolution/sd-webui-animatediff/issues/42) after finishing step 1-2 above.
+### API
+[#42](https://github.com/continue-revolution/sd-webui-animatediff/issues/42)
 
 ## Motion Module Model Zoo
 - `mm_sd_v14.ckpt` & `mm_sd_v15.ckpt` by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y)
