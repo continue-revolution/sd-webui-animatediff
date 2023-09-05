@@ -31,7 +31,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.1.0): fix gif duration, add loop number, remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
 - `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0): fix incorrect insertion of motion modules, add option to change path to save motion modules in Settings/AnimateDiff, fix loading different motion modules.
 - `2023/07/27` [v1.2.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.1): ~~add hash calculation of motion modules (you can disable it in `Settings/AnimateDiff`).~~ Starting from v1.3.0, hash will always be calculated, but nothing will prevent you from using any motion modules you want.
-- `2023/09/04` [v1.3.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.3.0): support any community models with the same architecture, improve quality via [#63](https://github.com/continue-revolution/sd-webui-animatediff/issues/63) (credit to [@TDS4874](https://github.com/TDS4874))
+- `2023/09/04` [v1.3.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.3.0): support any community models with the same architecture.
 
 ## TODO
 This TODO list will most likely be resolved sequentially.
