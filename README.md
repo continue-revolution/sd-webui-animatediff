@@ -13,7 +13,7 @@ You might also be interested in another extension I created: [Segment Anything f
 ## How to Use
 
 1. Install this extension via link.
-2. Download motion modules and put the model weights under `sd-webui-animatediff/model/`. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
+2. Download motion modules and put the model weights under `sd-webui-animatediff/model/`. If you want to use another directory to save the model weights, please go to `Settings/AnimateDiff`. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
 3. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
 4. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
 5. Enable AnimateDiff extension, and set up each parameter, and click `Generate`.
