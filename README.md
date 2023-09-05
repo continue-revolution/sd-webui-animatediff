@@ -77,7 +77,7 @@ This TODO list will most likely be resolved sequentially.
         from einops import rearrange
         x = rearrange(torch.randn((4, 16, 64, 64), device=shared.device), 'c f h w -> f c h w')
     ```
-    and retry. A1111 generate random tensors in a completely different way.
+    and retry. A1111 generate random tensors in a completely different way. This only works for WebUI < v1.6.0. This portion of instruction will be updated after I look into the source code of the new random tensor generation logic.
 
 9. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img. Why?
 
@@ -89,6 +89,8 @@ This TODO list will most likely be resolved sequentially.
 | AnimateDiff | A1111 v1.2.0 | A1111 v1.3.0 |
 | --- | --- | --- |
 | ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) | ![00023-10788741199826055168](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c35a952a-a127-491b-876d-cda97771f7ee) | ![00013-10788741199826055000](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/43b9cf34-dbd1-4120-b220-ea8cb7882272) |
+
+Note that I did not modify random tensor generation when producing v1.3.0 samples.
 
 ### img2img
 [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img due to some unknown reason. Will be fixed later.
