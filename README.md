@@ -1,4 +1,4 @@
-# AnimateDiff for Stable Diffusion Webui
+# AnimateDiff for Stable Diffusion WebUI
 
 This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui). I have tested this extension with WebUI v1.4.1 on Ubuntu 20.04 with NVIDIA 3090. You can generate GIFs in exactly the same way as generating images after enabling this extension.
 
