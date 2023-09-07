@@ -123,6 +123,8 @@ class AnimateDiffScript(scripts.Script):
             missed_keys = AnimateDiffScript.motion_module.load_state_dict(mm_state_dict)
             self.logger.warn(f"Missing keys {missed_keys}")
         AnimateDiffScript.motion_module.to(device)
+        if not shared.cmd_opts.no_half:
+            AnimateDiffScript.motion_module.half()
         unet = p.sd_model.model.diffusion_model
         self.logger.info(f"Hacking GroupNorm32 forward function.")
         def groupnorm32_mm_forward(self, x):
