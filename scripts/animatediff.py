@@ -87,7 +87,6 @@ class AnimateDiffScript(scripts.Script):
                 refresh_model.click(refresh_models, model, model)
             with gr.Row():
                 enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
-                use_f16 = gr.Checkbox(value=False, label='Use half-percision (f16)')
                 video_length = gr.Slider(minimum=1, maximum=24, value=16, step=1, label="Number of frames", precision=0)
                 fps = gr.Number(value=8, label="Frames per second (FPS)", precision=0)
                 loop_number = gr.Number(minimum=0, value=0, label="Display loop number (0 = infinite loop)", precision=0)
@@ -96,9 +95,9 @@ class AnimateDiffScript(scripts.Script):
                 remove = gr.Button(value="Remove motion module from any memory")
                 unload.click(fn=self.unload_motion_module)
                 remove.click(fn=self.remove_motion_module)
-        return enable, loop_number, video_length, fps, model, use_f16
+        return enable, loop_number, video_length, fps, model
 
-    def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v15.ckpt", use_f16=False):
+    def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v15.ckpt"):
         model_path = os.path.join(shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model")), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
@@ -124,7 +123,7 @@ class AnimateDiffScript(scripts.Script):
             missed_keys = AnimateDiffScript.motion_module.load_state_dict(mm_state_dict)
             self.logger.warn(f"Missing keys {missed_keys}")
         AnimateDiffScript.motion_module.to(device)
-        if use_f16:
+        if not shared.cmd_opts.no_half:
             AnimateDiffScript.motion_module.half()
         unet = p.sd_model.model.diffusion_model
         self.logger.info(f"Hacking GroupNorm32 forward function.")
@@ -177,16 +176,16 @@ class AnimateDiffScript(scripts.Script):
         p.sd_model.alphas_cumprod = alphas_cumprod
         p.sd_model.alphas_cumprod_prev = alphas_cumprod_prev
 
-    def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt", use_f16=False):
+    def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
             self.logger.info(f"AnimateDiff process start with video Max frames {video_length}, FPS {fps}, duration {video_length/fps},  motion module {model}.")
             assert video_length > 0 and fps > 0, "Video length and FPS should be positive."
             p.batch_size = video_length
-            self.inject_motion_modules(p, model, use_f16)
+            self.inject_motion_modules(p, model)
             if p.sampler_name == "DDIM":
                 self.set_ddim_alpha(p)
 
-    def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt", use_f16=False):
+    def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
             self.remove_motion_modules(p)
             video_paths = []
