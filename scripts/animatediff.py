@@ -126,13 +126,14 @@ class AnimateDiffScript(scripts.Script):
         if not shared.cmd_opts.no_half:
             AnimateDiffScript.motion_module.half()
         unet = p.sd_model.model.diffusion_model
-        self.logger.info(f"Hacking GroupNorm32 forward function.")
-        def groupnorm32_mm_forward(self, x):
-            x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
-            x = groupnorm32_original_forward(self, x)
-            x = rearrange(x, 'b c f h w -> (b f) c h w', b=2)
-            return x
-        GroupNorm32.forward = groupnorm32_mm_forward
+        if shared.opts.data.get("animatediff_hack_gn", False):
+            self.logger.info(f"Hacking GroupNorm32 forward function.")
+            def groupnorm32_mm_forward(self, x):
+                x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
+                x = groupnorm32_original_forward(self, x)
+                x = rearrange(x, 'b c f h w -> (b f) c h w', b=2)
+                return x
+            GroupNorm32.forward = groupnorm32_mm_forward
         self.logger.info(f"Injecting motion module {model_name} into SD1.5 UNet input blocks.")
         for mm_idx, unet_idx in enumerate([1, 2, 4, 5, 7, 8, 10, 11]):
             mm_idx0, mm_idx1 = mm_idx // 2, mm_idx % 2
@@ -157,8 +158,9 @@ class AnimateDiffScript(scripts.Script):
                 unet.output_blocks[unet_idx].pop(-2)
             else:
                 unet.output_blocks[unet_idx].pop(-1)
-        self.logger.info(f"Restoring GroupNorm32 forward function.")
-        GroupNorm32.forward = groupnorm32_original_forward
+        if shared.opts.data.get("animatediff_hack_gn", False):
+            self.logger.info(f"Restoring GroupNorm32 forward function.")
+            GroupNorm32.forward = groupnorm32_original_forward
         self.logger.info(f"Removal finished.")
         if shared.cmd_opts.lowvram:
             self.unload_motion_module()
@@ -205,6 +207,10 @@ class AnimateDiffScript(scripts.Script):
 def on_ui_settings():
     section = ('animatediff', "AnimateDiff")
     shared.opts.add_option("animatediff_model_path", shared.OptionInfo(os.path.join(script_dir, "model"), "Path to save AnimateDiff motion modules", gr.Textbox, section=section))
+    shared.opts.add_option("animatediff_hack_gn", shared.OptionInfo(
+        False, "Check if you want to hack groupnorm. By default, V1 hacks GroupNorm. "
+        "However, I do not notice a performance degradation if GroupNorm is not hacked, and you will not be able to use this extension in img2img if GroupNorm is hacked. "
+        "V2 does not hack GroupNorm, so that this option will not influence v2 inference.", gr.Checkbox, section=section))
 
 
 script_callbacks.on_ui_settings(on_ui_settings)
