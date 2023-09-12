@@ -37,12 +37,14 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.1.0): fix gif duration, add loop number, remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
 - `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0): fix incorrect insertion of motion modules, add option to change path to save motion modules in Settings/AnimateDiff, fix loading different motion modules.
 - `2023/09/04` [v1.3.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.3.0): support any community models with the same architecture; fix grey problem via [#63](https://github.com/continue-revolution/sd-webui-animatediff/issues/63) (credit to [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco))
-- `2023/09/11` [v1.4.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.0): support official v2 motion module (different architecture: GroupNorm not hacked, UNet middle layer has motion module). Starting from this version, GroupNorm is by-default not hacked (official v1 motion modules use hacked GroupNorm). If you want to use hacked GroupNorm, please enable it in `Settings/AnimateDiff`. Note that hacked GroupNorm is not compatible with img2img.
+- `2023/09/11` [v1.4.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.0): support official v2 motion module (different architecture: GroupNorm not hacked, UNet middle layer has motion module).    
+    - If you are using V1 motion modules: starting from this version, you will be able to disable hacking GroupNorm in `Settings/AnimateDiff`. If you disable hacking GruopNorm, you will be able to use this extension in `img2img`, but the generated GIFs will have flickers.
+    - If you are using V2 motion modules: you will always be able to use this extension in `img2img`, regardless of changing that setting or not.
 
 ## TODO
 This TODO list will most likely be resolved sequentially.
 - [ ] other attention optimization (e.g. sdp)
-- [ ] img2img
+- [ ] img2img with GroupNorm hacked
 - [ ] [token](https://github.com/continue-revolution/sd-webui-animatediff/issues/4)
 - [ ] [shape](https://github.com/continue-revolution/sd-webui-animatediff/issues/3)
 - [ ] [reddit](https://www.reddit.com/r/StableDiffusion/comments/152n2cr/a1111_extension_of_animatediff_is_available/?sort=new)

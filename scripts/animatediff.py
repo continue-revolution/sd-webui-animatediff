@@ -221,8 +221,8 @@ def on_ui_settings():
     section = ('animatediff', "AnimateDiff")
     shared.opts.add_option("animatediff_model_path", shared.OptionInfo(os.path.join(script_dir, "model"), "Path to save AnimateDiff motion modules", gr.Textbox, section=section))
     shared.opts.add_option("animatediff_hack_gn", shared.OptionInfo(
-        False, "Check if you want to hack GroupNorm. By default, V1 hacks GroupNorm. "
-        "However, I do not notice a performance degradation if GroupNorm is not hacked, and you will not be able to use this extension in img2img if GroupNorm is hacked. "
+        True, "Check if you want to hack GroupNorm. By default, V1 hacks GroupNorm, which avoids a performance degradation. "
+        "If you choose not to hack GroupNorm for V1, you will be able to use this extension in img2img, but the generated GIF will have flickers. "
         "V2 does not hack GroupNorm, so that this option will not influence v2 inference.", gr.Checkbox, section=section))
 
 
