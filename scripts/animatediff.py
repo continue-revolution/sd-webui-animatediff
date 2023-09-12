@@ -152,6 +152,8 @@ class AnimateDiffScript(scripts.Script):
                 unet.output_blocks[unet_idx].insert(-1, AnimateDiffScript.motion_module.up_blocks[mm_idx0].motion_modules[mm_idx1])
             else:
                 unet.output_blocks[unet_idx].append(AnimateDiffScript.motion_module.up_blocks[mm_idx0].motion_modules[mm_idx1])
+        if using_v2:
+            unet.middle_block.insert(-1, AnimateDiffScript.motion_module.mid_block.motion_modules[0])
         self.logger.info(f"Injection finished.")
 
     def remove_motion_modules(self, p: StableDiffusionProcessing):

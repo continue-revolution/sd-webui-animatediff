@@ -30,15 +30,20 @@ class MotionWrapper(nn.Module):
             self.down_blocks.append(MotionModule(c, max_len=max_len))
         for c in (1280, 1280, 640, 320):
             self.up_blocks.append(MotionModule(c, is_up=True, max_len=max_len))
+        if using_v2:
+            self.mid_block = MotionModule(1280, max_len=max_len, is_mid=using_v2)
         self.mm_hash = mm_hash
 
 
 class MotionModule(nn.Module):
-    def __init__(self, in_channels, is_up=False, max_len=24):
+    def __init__(self, in_channels, is_up=False, is_mid=False, max_len=24):
         super().__init__()
-        self.motion_modules = nn.ModuleList([get_motion_module(in_channels, max_len), get_motion_module(in_channels, max_len)])
-        if is_up:
-            self.motion_modules.append(get_motion_module(in_channels, max_len))
+        if is_mid:
+            self.motion_modules = nn.ModuleList([get_motion_module(in_channels, max_len)])
+        else:
+            self.motion_modules = nn.ModuleList([get_motion_module(in_channels, max_len), get_motion_module(in_channels, max_len)])
+            if is_up:
+                self.motion_modules.append(get_motion_module(in_channels, max_len))
 
 
 def get_motion_module(in_channels, max_len):
