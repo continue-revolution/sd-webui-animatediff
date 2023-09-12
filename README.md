@@ -1,6 +1,6 @@
 # AnimateDiff for Stable Diffusion WebUI
 
-This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui). I have tested this extension with WebUI v1.4.1 on Ubuntu 20.04 with NVIDIA 3090. You can generate GIFs in exactly the same way as generating images after enabling this extension.
+This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui). You can generate GIFs in exactly the same way as generating images after enabling this extension.
 
 This extension implements AnimateDiff in a different way. It does not require you to clone the whole SD1.5 repository. It also applied (probably) the least modification to `ldm`, so that you do not need to reload your model weights if you don't want to.
 
@@ -14,6 +14,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 1. Install this extension via link.
 1. Download motion modules and put the model weights under `sd-webui-animatediff/model/`. If you want to use another directory to save the model weights, please go to `Settings/AnimateDiff`. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
+1. Enable `Pad prompt/negative prompt to be same length` and `Batch cond/uncond` and click `Apply settings` in `Settings`. You must do this to prevent generating two separate unrelated GIFs.
 
 ### WebUI
 1. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
@@ -44,7 +45,6 @@ You might also be interested in another extension I created: [Segment Anything f
 ## TODO
 This TODO list will most likely be resolved sequentially.
 - [ ] other attention optimization (e.g. sdp)
-- [ ] [token](https://github.com/continue-revolution/sd-webui-animatediff/issues/4)
 - [ ] [shape](https://github.com/continue-revolution/sd-webui-animatediff/issues/3)
 - [ ] [reddit](https://www.reddit.com/r/StableDiffusion/comments/152n2cr/a1111_extension_of_animatediff_is_available/?sort=new)
 
