@@ -33,6 +33,7 @@ class MotionWrapper(nn.Module):
         if using_v2:
             self.mid_block = MotionModule(1280, max_len=max_len, is_mid=using_v2)
         self.mm_hash = mm_hash
+        self.using_v2 = using_v2
 
 
 class MotionModule(nn.Module):

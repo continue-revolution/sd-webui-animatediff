@@ -153,6 +153,7 @@ class AnimateDiffScript(scripts.Script):
             else:
                 unet.output_blocks[unet_idx].append(AnimateDiffScript.motion_module.up_blocks[mm_idx0].motion_modules[mm_idx1])
         if using_v2:
+            self.logger.info(f"Injecting motion module {model_name} into SD1.5 UNet middle block.")
             unet.middle_block.insert(-1, AnimateDiffScript.motion_module.mid_block.motion_modules[0])
         self.logger.info(f"Injection finished.")
 
@@ -167,6 +168,9 @@ class AnimateDiffScript(scripts.Script):
                 unet.output_blocks[unet_idx].pop(-2)
             else:
                 unet.output_blocks[unet_idx].pop(-1)
+        if AnimateDiffScript.motion_module.using_v2:
+            self.logger.info(f"Removing motion module from SD1.5 UNet middle block.")
+            unet.middle_block.pop(-2)
         if shared.opts.data.get("animatediff_hack_gn", False):
             self.logger.info(f"Restoring GroupNorm32 forward function.")
             GroupNorm32.forward = groupnorm32_original_forward
