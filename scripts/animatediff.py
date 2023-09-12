@@ -133,7 +133,7 @@ class AnimateDiffScript(scripts.Script):
         if not shared.cmd_opts.no_half:
             AnimateDiffScript.motion_module.half()
         unet = p.sd_model.model.diffusion_model
-        if shared.opts.data.get("animatediff_hack_gn", False):
+        if shared.opts.data.get("animatediff_hack_gn", False) and (not AnimateDiffScript.motion_module.using_v2):
             self.logger.info(f"Hacking GroupNorm32 forward function. Warning: this will break img2img.")
             def groupnorm32_mm_forward(self, x):
                 x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
@@ -171,7 +171,7 @@ class AnimateDiffScript(scripts.Script):
         if AnimateDiffScript.motion_module.using_v2:
             self.logger.info(f"Removing motion module from SD1.5 UNet middle block.")
             unet.middle_block.pop(-2)
-        if shared.opts.data.get("animatediff_hack_gn", False):
+        if shared.opts.data.get("animatediff_hack_gn", False) and (not AnimateDiffScript.motion_module.using_v2):
             self.logger.info(f"Restoring GroupNorm32 forward function.")
             GroupNorm32.forward = groupnorm32_original_forward
         self.logger.info(f"Removal finished.")
