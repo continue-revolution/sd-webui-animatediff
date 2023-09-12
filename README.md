@@ -28,19 +28,22 @@ You might also be interested in another extension I created: [Segment Anything f
 [#42](https://github.com/continue-revolution/sd-webui-animatediff/issues/42)
 
 ## Motion Module Model Zoo
-- `mm_sd_v14.ckpt` & `mm_sd_v15.ckpt` by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y)
+- `mm_sd_v14.ckpt` & `mm_sd_v15.ckpt` & `mm_sd_v15_v2.ckpt` by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y)
 - `mm-Stabilized_high.pth` & `mm-Stabbilized_mid.pth` by [@manshoety](https://huggingface.co/manshoety): [HuggingFace](https://huggingface.co/manshoety/AD_Stabilized_Motion/tree/main)
+- `temporaldiff-v1-animatediff.ckpt` by [@CiaraRowles](https://huggingface.co/CiaraRowles): [HuggingFace](https://huggingface.co/CiaraRowles/TemporalDiff/tree/main)
 
 ## Update
 
 - `2023/07/20` [v1.1.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.1.0): fix gif duration, add loop number, remove auto-download, remove xformers, remove instructions on gradio UI, refactor README, add [sponsor](#sponsor) QR code.
 - `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0): fix incorrect insertion of motion modules, add option to change path to save motion modules in Settings/AnimateDiff, fix loading different motion modules.
 - `2023/09/04` [v1.3.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.3.0): support any community models with the same architecture; fix grey problem via [#63](https://github.com/continue-revolution/sd-webui-animatediff/issues/63) (credit to [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco))
+- `2023/09/11` [v1.4.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.0): support official v2 motion module (different architecture: GroupNorm not hacked, UNet middle layer has motion module).    
+    - If you are using V1 motion modules: starting from this version, you will be able to disable hacking GroupNorm in `Settings/AnimateDiff`. If you disable hacking GruopNorm, you will be able to use this extension in `img2img` in all settings, but the generated GIFs will have flickers. In WebUI >=v1.6.0, even if GroupNorm is hacked, you can still use this extension in `img2img` with `--no-half-vae` enabled.
+    - If you are using V2 motion modules: you will always be able to use this extension in `img2img`, regardless of changing that setting or not.
 
 ## TODO
 This TODO list will most likely be resolved sequentially.
 - [ ] other attention optimization (e.g. sdp)
-- [ ] img2img
 - [ ] [token](https://github.com/continue-revolution/sd-webui-animatediff/issues/4)
 - [ ] [shape](https://github.com/continue-revolution/sd-webui-animatediff/issues/3)
 - [ ] [reddit](https://www.reddit.com/r/StableDiffusion/comments/152n2cr/a1111_extension_of_animatediff_is_available/?sort=new)
@@ -72,17 +75,13 @@ This TODO list will most likely be resolved sequentially.
 
 7.  Q: How can I reproduce the result in [Samples/txt2img](#txt2img) section?
 
-    A: You must replace [create_random_tensors](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/processing.py#L479-L537) with 
+    A: You must use this logic to initialize random tensors:
     ```python
         torch.manual_seed(<seed>)
         from einops import rearrange
         x = rearrange(torch.randn((4, 16, 64, 64), device=shared.device), 'c f h w -> f c h w')
     ```
-    and retry. A1111 generate random tensors in a completely different way. This only works for WebUI < v1.6.0. This portion of instruction will be updated after I look into the source code of the new random tensor generation logic.
 
-8. Q: [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img. Why?
-
-    A: I don't know. I will try to figure out why very soon.
 
 ## Samples
 
@@ -93,8 +92,6 @@ This TODO list will most likely be resolved sequentially.
 
 Note that I did not modify random tensor generation when producing v1.3.0 samples.
 
-### img2img
-[v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0) does not work for img2img due to some unknown reason. Will be fixed later.
 
 ## Sponsor
 You can sponsor me via WeChat or Alipay.

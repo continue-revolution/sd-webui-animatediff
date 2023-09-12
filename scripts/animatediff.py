@@ -87,7 +87,7 @@ class AnimateDiffScript(scripts.Script):
                 refresh_model.click(refresh_models, model, model)
             with gr.Row():
                 enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
-                video_length = gr.Slider(minimum=1, maximum=24, value=16, step=1, label="Number of frames", precision=0)
+                video_length = gr.Slider(minimum=1, maximum=32, value=16, step=1, label="Number of frames", precision=0)
                 fps = gr.Number(value=8, label="Frames per second (FPS)", precision=0)
                 loop_number = gr.Number(minimum=0, value=0, label="Display loop number (0 = infinite loop)", precision=0)
             with gr.Row():
@@ -101,38 +101,46 @@ class AnimateDiffScript(scripts.Script):
         model_path = os.path.join(shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model")), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
-        if AnimateDiffScript.motion_module is None or AnimateDiffScript.motion_module.mm_type != model_name:
-            def get_mm_hash(model_name="mm_sd_v15.ckpt"):
-                model_hash = hashes.sha256(model_path, f"AnimateDiff/{model_name}")
-                if model_hash == 'aa7fd8a200a89031edd84487e2a757c5315460eca528fa70d4b3885c399bffd5':
-                    self.logger.info('You are using mm_sd_14.ckpt, which has been tested and supported.')
-                elif model_hash == "cf16ea656cb16124990c8e2c70a29c793f9841f3a2223073fac8bd89ebd9b69a":
-                    self.logger.info('You are using mm_sd_15.ckpt, which has been tested and supported.')
-                elif model_hash == "0aaf157b9c51a0ae07cb5d9ea7c51299f07bddc6f52025e1f9bb81cd763631df":
-                    self.logger.info('You are using mm-Stabilized_high.pth, which has been tested and supported.')
-                elif model_hash == '39de8b71b1c09f10f4602f5d585d82771a60d3cf282ba90215993e06afdfe875':
-                    self.logger.info('You are using mm-Stabilized_mid.pth, which has been tested and supported.')
-                else:
-                    self.logger.warn(f"Your model {model_name} has not been tested and supported. "
-                                     "Either your download is incomplete or your model has not been tested. "
-                                     "Please use at your own risk.")
-            get_mm_hash(model_name)
+        def get_mm_hash(model_name="mm_sd_v15.ckpt"):
+            model_hash = hashes.sha256(model_path, f"AnimateDiff/{model_name}")
+            using_v2 = False
+            if model_hash == 'aa7fd8a200a89031edd84487e2a757c5315460eca528fa70d4b3885c399bffd5':
+                self.logger.info('You are using mm_sd_14.ckpt, which has been tested and supported.')
+            elif model_hash == "cf16ea656cb16124990c8e2c70a29c793f9841f3a2223073fac8bd89ebd9b69a":
+                self.logger.info('You are using mm_sd_15.ckpt, which has been tested and supported.')
+            elif model_hash == "0aaf157b9c51a0ae07cb5d9ea7c51299f07bddc6f52025e1f9bb81cd763631df":
+                self.logger.info('You are using mm-Stabilized_high.pth, which has been tested and supported.')
+            elif model_hash == '39de8b71b1c09f10f4602f5d585d82771a60d3cf282ba90215993e06afdfe875':
+                self.logger.info('You are using mm-Stabilized_mid.pth, which has been tested and supported.')
+            elif model_hash == '3cb569f7ce3dc6a10aa8438e666265cb9be3120d8f205de6a456acf46b6c99f4':
+                self.logger.info('You are using temporaldiff-v1-animatediff.ckpt, which has been tested and supported.')
+            elif model_hash == '69ed0f5fef82b110aca51bcab73b21104242bc65d6ab4b8b2a2a94d31cad1bf0':
+                self.logger.info('You are using mm_sd_v15_v2.ckpt, which has been tested and supported.')
+                using_v2 = True
+            else:
+                self.logger.warn(f"Your model {model_name} has not been tested and supported. "
+                                 "Either your download is incomplete or your model has not been tested. "
+                                 "Please use at your own risk.")
+            return model_hash, using_v2
+        model_hash, using_v2 = get_mm_hash(model_name)
+        if AnimateDiffScript.motion_module is None or AnimateDiffScript.motion_module.mm_hash != model_hash:
             self.logger.info(f"Loading motion module {model_name} from {model_path}")
             mm_state_dict = torch.load(model_path, map_location=device)
-            AnimateDiffScript.motion_module = MotionWrapper(model_name)
+            AnimateDiffScript.motion_module = MotionWrapper(model_hash, using_v2)
             missed_keys = AnimateDiffScript.motion_module.load_state_dict(mm_state_dict)
             self.logger.warn(f"Missing keys {missed_keys}")
         AnimateDiffScript.motion_module.to(device)
         if not shared.cmd_opts.no_half:
             AnimateDiffScript.motion_module.half()
         unet = p.sd_model.model.diffusion_model
-        self.logger.info(f"Hacking GroupNorm32 forward function.")
-        def groupnorm32_mm_forward(self, x):
-            x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
-            x = groupnorm32_original_forward(self, x)
-            x = rearrange(x, 'b c f h w -> (b f) c h w', b=2)
-            return x
-        GroupNorm32.forward = groupnorm32_mm_forward
+        if shared.opts.data.get("animatediff_hack_gn", False) and (not AnimateDiffScript.motion_module.using_v2):
+            self.logger.info(f"Hacking GroupNorm32 forward function. Warning: this will break img2img.")
+            def groupnorm32_mm_forward(self, x):
+                x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
+                x = groupnorm32_original_forward(self, x)
+                x = rearrange(x, 'b c f h w -> (b f) c h w', b=2)
+                return x
+            GroupNorm32.forward = groupnorm32_mm_forward
         self.logger.info(f"Injecting motion module {model_name} into SD1.5 UNet input blocks.")
         for mm_idx, unet_idx in enumerate([1, 2, 4, 5, 7, 8, 10, 11]):
             mm_idx0, mm_idx1 = mm_idx // 2, mm_idx % 2
@@ -144,6 +152,9 @@ class AnimateDiffScript(scripts.Script):
                 unet.output_blocks[unet_idx].insert(-1, AnimateDiffScript.motion_module.up_blocks[mm_idx0].motion_modules[mm_idx1])
             else:
                 unet.output_blocks[unet_idx].append(AnimateDiffScript.motion_module.up_blocks[mm_idx0].motion_modules[mm_idx1])
+        if using_v2:
+            self.logger.info(f"Injecting motion module {model_name} into SD1.5 UNet middle block.")
+            unet.middle_block.insert(-1, AnimateDiffScript.motion_module.mid_block.motion_modules[0])
         self.logger.info(f"Injection finished.")
 
     def remove_motion_modules(self, p: StableDiffusionProcessing):
@@ -157,8 +168,12 @@ class AnimateDiffScript(scripts.Script):
                 unet.output_blocks[unet_idx].pop(-2)
             else:
                 unet.output_blocks[unet_idx].pop(-1)
-        self.logger.info(f"Restoring GroupNorm32 forward function.")
-        GroupNorm32.forward = groupnorm32_original_forward
+        if AnimateDiffScript.motion_module.using_v2:
+            self.logger.info(f"Removing motion module from SD1.5 UNet middle block.")
+            unet.middle_block.pop(-2)
+        if shared.opts.data.get("animatediff_hack_gn", False) and (not AnimateDiffScript.motion_module.using_v2):
+            self.logger.info(f"Restoring GroupNorm32 forward function.")
+            GroupNorm32.forward = groupnorm32_original_forward
         self.logger.info(f"Removal finished.")
         if shared.cmd_opts.lowvram:
             self.unload_motion_module()
@@ -205,6 +220,10 @@ class AnimateDiffScript(scripts.Script):
 def on_ui_settings():
     section = ('animatediff', "AnimateDiff")
     shared.opts.add_option("animatediff_model_path", shared.OptionInfo(os.path.join(script_dir, "model"), "Path to save AnimateDiff motion modules", gr.Textbox, section=section))
+    shared.opts.add_option("animatediff_hack_gn", shared.OptionInfo(
+        True, "Check if you want to hack GroupNorm. By default, V1 hacks GroupNorm, which avoids a performance degradation. "
+        "If you choose not to hack GroupNorm for V1, you will be able to use this extension in img2img in all cases, but the generated GIF will have flickers. "
+        "V2 does not hack GroupNorm, so that this option will not influence v2 inference.", gr.Checkbox, section=section))
 
 
 script_callbacks.on_ui_settings(on_ui_settings)
