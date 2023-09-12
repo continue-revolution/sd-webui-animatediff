@@ -13,7 +13,7 @@ You might also be interested in another extension I created: [Segment Anything f
 ## How to Use
 
 1. Install this extension via link.
-1. Download motion modules and put the model weights under `sd-webui-animatediff/model/`. If you want to use another directory to save the model weights, please go to `Settings/AnimateDiff`. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
+1. Download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save the model weights, please go to `Settings/AnimateDiff`. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
 1. Enable `Pad prompt/negative prompt to be same length` and `Batch cond/uncond` and click `Apply settings` in `Settings`. You must do this to prevent generating two separate unrelated GIFs.
 
 ### WebUI
