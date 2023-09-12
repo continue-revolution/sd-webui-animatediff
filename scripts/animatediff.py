@@ -134,7 +134,7 @@ class AnimateDiffScript(scripts.Script):
             AnimateDiffScript.motion_module.half()
         unet = p.sd_model.model.diffusion_model
         if shared.opts.data.get("animatediff_hack_gn", False) and (not AnimateDiffScript.motion_module.using_v2):
-            self.logger.info(f"Hacking GroupNorm32 forward function. Warning: this will break img2img.")
+            self.logger.info(f"Hacking GroupNorm32 forward function.")
             def groupnorm32_mm_forward(self, x):
                 x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
                 x = groupnorm32_original_forward(self, x)
