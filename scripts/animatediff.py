@@ -26,19 +26,6 @@ from ldm.modules.diffusionmodules.openaimodel import TimestepBlock, TimestepEmbe
 from ldm.modules.diffusionmodules.util import GroupNorm32
 from ldm.modules.attention import SpatialTransformer
 
-def mm_tes_forward(self, x, emb, context=None):
-    for layer in self:
-        if isinstance(layer, TimestepBlock):
-            x = layer(x, emb)
-        elif isinstance(layer, (SpatialTransformer, VanillaTemporalModule)):
-            x = layer(x, context)
-        else:
-            x = layer(x)
-    return x
-
-# Constants
-TimestepEmbedSequential.forward = mm_tes_forward
-
 EXTENSION_DIRECTORY = scripts.basedir()
 MODULE_NAME = "AnimateDiff"
 
@@ -115,6 +102,7 @@ class AnimateDiffScript(scripts.Script):
         motion_module = AnimateDiffScript.motion_module
         
         unet_injection.hack_groupnorm(injection_params)
+        unet_injection.hack_timestep()
         
         unet_injection.inject_motion_module_to_unet(unet, motion_module, injection_params)
             
@@ -124,6 +112,7 @@ class AnimateDiffScript(scripts.Script):
         unet_injection.eject_motion_module_from_unet(unet)
             
         unet_injection.restore_original_groupnorm()
+        unet_injection.restore_original_timestep()
             
         if shared.cmd_opts.lowvram:
             self.move_motion_module_to_cpu()
@@ -223,31 +212,32 @@ class AnimateDiffScript(scripts.Script):
             self, p: StableDiffusionProcessing, res: Processed, 
             enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v14.ckpt"):
         
-        self.eject_motion_module_to_unet(p)
-            
-        if enable_animatediff and shared.opts.data.get("animatediff_always_save_videos", True):
-            
-            video_paths = []
-            self.logger.info("Merging images into video.")
-            
-            namegen = images.FilenameGenerator(p, res.seed, res.prompt, res.images[0])
-            
-            from pathlib import Path
-            output_directory = shared.opts.data.get("animatediff_outdir_videos", "") or f"{p.outpath_samples}/AnimateDiff"
-            if shared.opts.data.get("animatediff_save_to_subdirectory", True):
-                dirname = namegen.apply(shared.opts.data.get("animatediff_subdirectories_filename_pattern","") or 
-                                        "[date]").lstrip(' ').rstrip('\\ /')
-                output_directory = os.path.join(output_directory, dirname)
-            Path(output_directory).mkdir(exist_ok=True, parents=True)
-            
-            generated_filename = namegen.apply(shared.opts.data.get("animatediff_filename_pattern","") or 
-                                               "[seed]").lstrip(' ').rstrip('\\ /')
-            
-            for image_itr in range(res.index_of_first_image, len(res.images), video_length):
-                self.save_video(p, res, loop_number, video_length, fps, video_paths, output_directory, image_itr, generated_filename)
+        if enable_animatediff:
+            self.eject_motion_module_to_unet(p)
                 
-            res.images = video_paths
-            self.logger.info("AnimateDiff process end.")
+            if shared.opts.data.get("animatediff_always_save_videos", True):
+                
+                video_paths = []
+                self.logger.info("Merging images into video.")
+                
+                namegen = images.FilenameGenerator(p, res.seed, res.prompt, res.images[0])
+                
+                from pathlib import Path
+                output_directory = shared.opts.data.get("animatediff_outdir_videos", "") or f"{p.outpath_samples}/AnimateDiff"
+                if shared.opts.data.get("animatediff_save_to_subdirectory", True):
+                    dirname = namegen.apply(shared.opts.data.get("animatediff_subdirectories_filename_pattern","") or 
+                                            "[date]").lstrip(' ').rstrip('\\ /')
+                    output_directory = os.path.join(output_directory, dirname)
+                Path(output_directory).mkdir(exist_ok=True, parents=True)
+                
+                generated_filename = namegen.apply(shared.opts.data.get("animatediff_filename_pattern","") or 
+                                                   "[seed]").lstrip(' ').rstrip('\\ /')
+                
+                for image_itr in range(res.index_of_first_image, len(res.images), video_length):
+                    self.save_video(p, res, loop_number, video_length, fps, video_paths, output_directory, image_itr, generated_filename)
+                    
+                res.images = video_paths
+                self.logger.info("AnimateDiff process end.")
         
 def get_control_locator(control_label):
     return f"{MODULE_NAME} {control_label}"

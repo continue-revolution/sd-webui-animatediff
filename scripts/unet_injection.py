@@ -21,6 +21,8 @@ from ldm.modules.attention import SpatialTransformer
 MM_INJECTED_ATTR = "_mm_injected"
 GROUPNORM32_ORIGINAL_FORWARD = GroupNorm32.forward
 
+TIMESTEP_ORIGINAL_FORWARD = TimestepEmbedSequential.forward
+
 class InjectionParams:
     def __init__(self, video_length: int, unlimited_area_hack: bool) -> None:
         self.video_length = video_length
@@ -48,11 +50,30 @@ def groupnorm_mm_factory(params: InjectionParams):
     return groupnorm_mm_forward
 
 def hack_groupnorm(params: InjectionParams):
+    logger_animatediff.info(f"Hacking GroupNorm32 forward function.")
     GroupNorm32.forward = groupnorm_mm_factory(params)
     
 def restore_original_groupnorm():
     logger_animatediff.info(f"Restoring GroupNorm32 forward function.")
     GroupNorm32.forward = GROUPNORM32_ORIGINAL_FORWARD
+    
+def hack_timestep():
+    def mm_tes_forward(self, x, emb, context=None):
+        for layer in self:
+            if isinstance(layer, TimestepBlock):
+                x = layer(x, emb)
+            elif isinstance(layer, (SpatialTransformer, VanillaTemporalModule)):
+                x = layer(x, context)
+            else:
+                x = layer(x)
+        return x
+    
+    logger_animatediff.info(f"Hacking TimestepEmbedSequential.forward function.")
+    TimestepEmbedSequential.forward = mm_tes_forward
+    
+def restore_original_timestep():
+    logger_animatediff.info(f"Restoring TimestepEmbedSequential.forward function.")
+    TimestepEmbedSequential.forward = TIMESTEP_ORIGINAL_FORWARD
 
 def inject_motion_module_to_unet(unet, motion_module: MotionWrapper, injection_params: InjectionParams):
     logger_animatediff.info(f"Injecting motion module into UNet input blocks.")
