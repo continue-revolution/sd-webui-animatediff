@@ -41,6 +41,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/09/11` [v1.4.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.0): support official v2 motion module (different architecture: GroupNorm not hacked, UNet middle layer has motion module).    
     - If you are using V1 motion modules: starting from this version, you will be able to disable hacking GroupNorm in `Settings/AnimateDiff`. If you disable hacking GruopNorm, you will be able to use this extension in `img2img` in all settings, but the generated GIFs will have flickers. In WebUI >=v1.6.0, even if GroupNorm is hacked, you can still use this extension in `img2img` with `--no-half-vae` enabled.
     - If you are using V2 motion modules: you will always be able to use this extension in `img2img`, regardless of changing that setting or not.
+- `2023/09/14`: [v1.4.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.1): always change `beta`, `alpha_comprod` and `alpha_comprod_prev` to resolve grey problem in other samplers.
 
 ## TODO
 This TODO list will most likely be resolved sequentially.
