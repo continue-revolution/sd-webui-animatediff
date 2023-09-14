@@ -36,6 +36,11 @@ def get_video_quality_info_text():
 def get_name_pattern_wiki_link():
     return "https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Custom-Images-Filename-Name-and-Subdirectory"
 
+def get_hack_groupnorm_info_text():
+    return "Check if you want to hack GroupNorm. By default, V1 hacks GroupNorm, which avoids a performance degradation. \
+        If you choose not to hack GroupNorm for V1, you will be able to use this extension in img2img in all cases, but the generated video will flicker. \
+        V2 does not hack GroupNorm, so that this option will not influence v2 inference."
+
 def on_ui_settings():
 
     # Define options in a dictionary
@@ -112,11 +117,11 @@ def on_ui_settings():
             "info": "If True, AnimateDiff data saved to infotext and pnginfo will be applied when using buttons like 'Send to txt2img'.",
             "wiki_link": None
         },
-        "animatediff_check_hash": {
-            "default": False,
-            "title": "Check hash for motion modules.",
+        "animatediff_hack_gn": {
+            "default": True,
+            "title": "Hack GroupNorm",
             "component_type": gr.Checkbox,
-            "info": "Disable checking if you want to use your own.",
+            "info": get_hack_groupnorm_info_text(),
             "wiki_link": None
         }
     }
