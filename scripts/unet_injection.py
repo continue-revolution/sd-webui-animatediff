@@ -23,6 +23,7 @@ from ldm.modules.attention import SpatialTransformer
 #############################################
 #### Code Injection #########################
 MM_INJECTED_ATTR = "_mm_injected"
+
 GROUPNORM32_ORIGINAL_FORWARD = GroupNorm32.forward
 
 TIMESTEP_ORIGINAL_FORWARD = TimestepEmbedSequential.forward

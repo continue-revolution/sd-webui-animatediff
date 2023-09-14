@@ -122,7 +122,7 @@ class AnimateDiffScript(scripts.Script):
         return p.sd_model.model.diffusion_model
     
     def hack_groupnorm_enabled(self):
-        return shared.opts.data.get("animatediff_hack_gn", True)
+        return shared.opts.data.get("animatediff_hack_gn", True) and AnimateDiffScript.motion_module.version == "v1"
     
     def inject_motion_module_to_unet(self, p: StableDiffusionProcessing, injection_params: InjectionParams):               
         unet = self.get_unet(p)
@@ -136,6 +136,8 @@ class AnimateDiffScript(scripts.Script):
         
         if self.hack_groupnorm_enabled():
             unet_injection.hack_groupnorm(injection_params)
+        else: # Enforce original groupnorm to avoid bad state from switching hack on and off
+            unet_injection.restore_original_groupnorm() 
             
         unet_injection.hack_timestep()
         
@@ -234,7 +236,7 @@ class AnimateDiffScript(scripts.Script):
         video_extension = shared.opts.data.get("animatediff_file_format", "") or "gif"
         video_path = f"{video_path_before_extension}.{video_extension}"
         video_paths.append(video_path)
-        video_duration = 1 / fps
+        video_duration = 1 / fps * 1000 # duration is defined in whole ms, not a fraction of a second
         video_use_lossless_quality = shared.opts.data.get("animatediff_use_lossless_quality", False)
         video_quality = shared.opts.data.get("animatediff_video_quality", 95)
         
