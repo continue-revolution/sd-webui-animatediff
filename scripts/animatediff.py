@@ -44,6 +44,9 @@ class AnimateDiffScript(scripts.Script):
 
     def __init__(self):
         self.logger = logger_animatediff
+        self.prev_beta = None
+        self.prev_alpha_cumprod = None
+        self.prev_alpha_cumprod_prev = None
 
     def title(self):
         return "AnimateDiff"
@@ -187,9 +190,21 @@ class AnimateDiffScript(scripts.Script):
         alphas_cumprod = torch.cumprod(alphas, dim=0)
         alphas_cumprod_prev = torch.cat(
             (torch.tensor([1.0], dtype=torch.float32, device=device), alphas_cumprod[:-1]))
+        self.prev_beta = p.sd_model.betas
         p.sd_model.betas = betas
+        self.prev_alpha_cumprod = p.sd_model.alphas_cumprod
         p.sd_model.alphas_cumprod = alphas_cumprod
+        self.prev_alpha_cumprod_prev = p.sd_model.alphas_cumprod_prev
         p.sd_model.alphas_cumprod_prev = alphas_cumprod_prev
+    
+    def restore_ddim_alpha(self, p: StableDiffusionProcessing):
+        self.logger.info(f"Restoring DDIM alpha.")
+        p.sd_model.betas = self.prev_beta
+        p.sd_model.alphas_cumprod = self.prev_alpha_cumprod
+        p.sd_model.alphas_cumprod_prev = self.prev_alpha_cumprod_prev
+        self.prev_beta = None
+        self.prev_alpha_cumprod = None
+        self.prev_alpha_cumprod_prev = None
 
     def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
@@ -197,11 +212,11 @@ class AnimateDiffScript(scripts.Script):
             assert video_length > 0 and fps > 0, "Video length and FPS should be positive."
             p.batch_size = video_length
             self.inject_motion_modules(p, model)
-            if p.sampler_name == "DDIM":
-                self.set_ddim_alpha(p)
+            self.set_ddim_alpha(p)
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
+            self.restore_ddim_alpha(p)
             self.remove_motion_modules(p)
             video_paths = []
             self.logger.info("Merging images into GIF.")
