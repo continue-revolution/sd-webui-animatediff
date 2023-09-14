@@ -28,6 +28,17 @@ from ldm.modules.attention import SpatialTransformer
 
 EXTENSION_DIRECTORY = scripts.basedir()
 MODULE_NAME = "AnimateDiff"
+DDIM_SAMPLER_NAME = "DDIM"
+
+class ToolButton(gr.Button, gr.components.FormComponent):
+    """Small button with single emoji as text, fits inside gradio forms"""
+
+    def __init__(self, **kwargs):
+        super().__init__(variant="tool", **kwargs)
+
+    def get_block_name(self):
+        return "button"
+
 
 class AnimateDiffScript(scripts.Script):
     motion_module: MotionWrapper = None
@@ -63,18 +74,31 @@ class AnimateDiffScript(scripts.Script):
     def setup_ui_controls(self):
         # Setup UI controls
         with gr.Accordion('AnimateDiff', open=False):
-            choices = self.get_motion_modules_from_folder()
-            model = gr.Dropdown(choices=choices, label="Motion module", type="value")
+            model_list = self.get_motion_modules_from_folder()
+            with gr.Row():
+                def refresh_models(*inputs):
+                    new_model_list = self.get_motion_modules_from_folder()
+                    model_dropdown = inputs[0]
+                    if model_dropdown in new_model_list:
+                        selected = model_dropdown
+                    elif len(new_model_list) > 0:
+                        selected = new_model_list[0]
+                    else:
+                        selected = None
+                    return gr.Dropdown.update(choices=new_model_list, value=selected)
+                model = gr.Dropdown(choices=model_list, value=(model_list[0] if len(model_list) > 0 else None), label="Motion module", type="value")
+                refresh_model = ToolButton(value='\U0001f504')
+                refresh_model.click(refresh_models, model, model)
             with gr.Row():
                 enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
-                video_length = gr.Slider(minimum=1, maximum=24, value=16, step=1, label="Number of frames", precision=0)
+                video_length = gr.Slider(minimum=1, maximum=32, value=16, step=1, label="Number of frames", precision=0)
                 fps = gr.Number(minimum=1, value=8, label="FPS", info= "(Frames per second)", precision=0)
                 loop_number = gr.Number(minimum=0, value=0, label="Display loop number", info="(0 = infinite loop)", precision=0)
             with gr.Row():
-                unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
-                remove = gr.Button(value="Remove motion module from any memory")
-                unload.click(fn=self.move_motion_module_to_cpu)
-                remove.click(fn=self.remove_motion_module)
+                move_mm = gr.Button(value="Move motion module to CPU (default if lowvram)")
+                remove_mm = gr.Button(value="Remove motion module from any memory")
+                move_mm.click(fn=self.move_motion_module_to_cpu)
+                remove_mm.click(fn=self.remove_motion_module)
         self.ui_controls = enable, loop_number, video_length, fps, model
         return self.ui_controls
         
@@ -97,55 +121,78 @@ class AnimateDiffScript(scripts.Script):
     def get_unet(self, p):
         return p.sd_model.model.diffusion_model
     
+    def hack_groupnorm_enabled(self):
+        return shared.opts.data.get("animatediff_hack_gn", True)
+    
     def inject_motion_module_to_unet(self, p: StableDiffusionProcessing, injection_params: InjectionParams):               
         unet = self.get_unet(p)
         motion_module = AnimateDiffScript.motion_module
         
-        unet_injection.hack_groupnorm(injection_params)
+        if p.sampler_name == DDIM_SAMPLER_NAME:
+            unet_injection.set_ddim_alpha_for_animatediff(p)
+        
+        if not shared.cmd_opts.no_half:
+            AnimateDiffScript.motion_module.half()
+        
+        if self.hack_groupnorm_enabled():
+            unet_injection.hack_groupnorm(injection_params)
+            
         unet_injection.hack_timestep()
         
         unet_injection.inject_motion_module_to_unet(unet, motion_module, injection_params)
             
-    def eject_motion_module_to_unet(self, p: StableDiffusionProcessing):
+    def eject_motion_module_from_unet(self, p: StableDiffusionProcessing):
         unet = self.get_unet(p)
         
         unet_injection.eject_motion_module_from_unet(unet)
             
-        unet_injection.restore_original_groupnorm()
+        if self.hack_groupnorm_enabled():
+            unet_injection.restore_original_groupnorm()
+            
         unet_injection.restore_original_timestep()
+        
+        if p.sampler_name == DDIM_SAMPLER_NAME:
+            unet_injection.restore_original_ddim_alpha(p)
             
         if shared.cmd_opts.lowvram:
             self.move_motion_module_to_cpu()
 
     def load_motion_module_and_inject_motion_module_to_unet(
             self, p: StableDiffusionProcessing, injection_params: InjectionParams, model_name="mm_sd_v15.ckpt"):
-        model_path = os.path.join(shared.opts.data.get("animatediff_model_path","") or os.path.join(script_dir, "model"), model_name)
+        model_path = os.path.join(shared.opts.data.get("animatediff_model_path","") or os.path.join(EXTENSION_DIRECTORY, "model"), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
         
-        if AnimateDiffScript.motion_module is None or AnimateDiffScript.motion_module.mm_type != model_name:
-            if shared.opts.data.get("animatediff_check_hash", True):
-                if get_model_hash(model_path, model_name) != get_expected_hash(model_name):
-                    raise RuntimeError(f"{model_name} hash mismatch. You probably need to re-download the motion module.")
+        model_hash = self.get_and_compare_model_hash(model_path, model_name)
+        if AnimateDiffScript.motion_module is None or AnimateDiffScript.motion_module.mm_hash != model_hash:
                 
             self.logger.info(f"Loading motion module {model_name} from {model_path}")
             mm_state_dict = torch.load(model_path, map_location=device)
-            AnimateDiffScript.motion_module = MotionWrapper(mm_state_dict, model_name)
+            AnimateDiffScript.motion_module = MotionWrapper(mm_state_dict, model_hash)
             missed_keys = AnimateDiffScript.motion_module.load_state_dict(mm_state_dict)
             self.logger.warn(f"Missing keys {missed_keys}")
             AnimateDiffScript.motion_module.to(device)
         self.inject_motion_module_to_unet(p, injection_params)
-            
-    def get_model_hash(self, model_path, model_name):
-        return hashes.sha256(model_path, f"AnimateDiff/{model_name}")
 
-    def get_expected_hash(self, model_name):
-        if model_name == "mm_sd_v14.ckpt":
-            return 'aa7fd8a200a89031edd84487e2a757c5315460eca528fa70d4b3885c399bffd5'
-        elif model_name == "mm_sd_v15.ckpt":
-            return 'cf16ea656cb16124990c8e2c70a29c793f9841f3a2223073fac8bd89ebd9b69a'
+    def get_and_compare_model_hash(self, model_path, model_name):
+        model_hash = hashes.sha256(model_path, f"AnimateDiff/{model_name}")
+        if model_hash == 'aa7fd8a200a89031edd84487e2a757c5315460eca528fa70d4b3885c399bffd5':
+            self.logger.info('You are using mm_sd_14.ckpt, which has been tested and supported.')
+        elif model_hash == "cf16ea656cb16124990c8e2c70a29c793f9841f3a2223073fac8bd89ebd9b69a":
+            self.logger.info('You are using mm_sd_15.ckpt, which has been tested and supported.')
+        elif model_hash == "0aaf157b9c51a0ae07cb5d9ea7c51299f07bddc6f52025e1f9bb81cd763631df":
+            self.logger.info('You are using mm-Stabilized_high.pth, which has been tested and supported.')
+        elif model_hash == '39de8b71b1c09f10f4602f5d585d82771a60d3cf282ba90215993e06afdfe875':
+            self.logger.info('You are using mm-Stabilized_mid.pth, which has been tested and supported.')
+        elif model_hash == '3cb569f7ce3dc6a10aa8438e666265cb9be3120d8f205de6a456acf46b6c99f4':
+            self.logger.info('You are using temporaldiff-v1-animatediff.ckpt, which has been tested and supported.')
+        elif model_hash == '69ed0f5fef82b110aca51bcab73b21104242bc65d6ab4b8b2a2a94d31cad1bf0':
+            self.logger.info('You are using mm_sd_v15_v2.ckpt, which has been tested and supported.')
         else:
-            raise RuntimeError(f"Unsupported model filename {model_name}. Should be one of mm_sd_v14 or mm_sd_v15")
+            self.logger.warn(f"Your model {model_name} has not been tested and supported. "
+                             "Either your download is incomplete or your model has not been tested. "
+                             "Please use at your own risk.")
+        return model_hash
         
     def serialize_args_to_infotext(self, p: StableDiffusionProcessing):
         # Serialize Animatediff UI controls for infotext and add them to p.extra_generation_params
@@ -213,7 +260,7 @@ class AnimateDiffScript(scripts.Script):
             enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v14.ckpt"):
         
         if enable_animatediff:
-            self.eject_motion_module_to_unet(p)
+            self.eject_motion_module_from_unet(p)
                 
             if shared.opts.data.get("animatediff_always_save_videos", True):
                 

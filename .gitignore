@@ -1,2 +1,3 @@
 __pycache__
 model/*.ckpt
+model/*.pth
