@@ -24,9 +24,9 @@ def mm_tes_forward(self, x, emb, context=None):
         else:
             x = layer(x)
     return x
-TimestepEmbedSequential.forward = mm_tes_forward
 script_dir = scripts.basedir()
-groupnorm32_original_forward = GroupNorm32.forward
+gn32_original_forward = GroupNorm32.forward
+tes_original_forward = TimestepEmbedSequential.forward
 
 
 class ToolButton(gr.Button, gr.components.FormComponent):
@@ -136,11 +136,12 @@ class AnimateDiffScript(scripts.Script):
         if not shared.cmd_opts.no_half:
             AnimateDiffScript.motion_module.half()
         unet = p.sd_model.model.diffusion_model
+        TimestepEmbedSequential.forward = mm_tes_forward
         if shared.opts.data.get("animatediff_hack_gn", False) and (not AnimateDiffScript.motion_module.using_v2):
             self.logger.info(f"Hacking GroupNorm32 forward function.")
             def groupnorm32_mm_forward(self, x):
                 x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
-                x = groupnorm32_original_forward(self, x)
+                x = gn32_original_forward(self, x)
                 x = rearrange(x, 'b c f h w -> (b f) c h w', b=2)
                 return x
             GroupNorm32.forward = groupnorm32_mm_forward
@@ -176,7 +177,8 @@ class AnimateDiffScript(scripts.Script):
             unet.middle_block.pop(-2)
         if shared.opts.data.get("animatediff_hack_gn", False) and (not AnimateDiffScript.motion_module.using_v2):
             self.logger.info(f"Restoring GroupNorm32 forward function.")
-            GroupNorm32.forward = groupnorm32_original_forward
+            GroupNorm32.forward = gn32_original_forward
+        TimestepEmbedSequential.forward = tes_original_forward 
         self.logger.info(f"Removal finished.")
         if shared.cmd_opts.lowvram:
             self.unload_motion_module()
