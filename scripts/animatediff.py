@@ -47,6 +47,7 @@ class AnimateDiffScript(scripts.Script):
         self.prev_beta = None
         self.prev_alpha_cumprod = None
         self.prev_alpha_cumprod_prev = None
+        self.motion_loaded = False # SBM vlad alt.
 
     def title(self):
         return "AnimateDiff"
@@ -208,18 +209,45 @@ class AnimateDiffScript(scripts.Script):
         self.prev_alpha_cumprod = None
         self.prev_alpha_cumprod_prev = None
 
-    def process(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt", **kwargs):
-        if enable_animatediff:
+    # SBM Vlad fix.
+    def expand_process(self, p, batch_size, inddupe):
+        """Creates duplicate frames with a +1 seed and sets batch size.
+        
+        The better option would be to dupe the prompts ahead but vlad's fork doesn't have before process,
+        so it's rendered optional through inddupe.
+        """
+        if inddupe:
+            p.all_prompts = p.all_prompts * batch_size
+            p.all_negative_prompts = p.all_negative_prompts * batch_size 
+            p.all_seeds = fseries(p.all_seeds[0], batch_size)
+            p.all_subseeds = fseries(p.all_subseeds[0], batch_size)
+        p.batch_size = batch_size
+
+    def load_motion_module(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8,
+                           model="mm_sd_v15.ckpt", inddupe = False):
+        if enable_animatediff and not self.motion_loaded:
             self.logger.info(f"AnimateDiff process start with video Max frames {video_length}, FPS {fps}, duration {video_length/fps},  motion module {model}.")
             assert video_length > 0 and fps > 0, "Video length and FPS should be positive."
+            if p.batch_size == 1: # SBM Extend prompts to receive the frames.
+                self.expand_process(p, video_length, inddupe)
+            elif p.batch_size != video_length:
+                print("Warning: number of frames differs from batchsize.")
             p.batch_size = video_length
             self.inject_motion_modules(p, model)
             self.set_ddim_alpha(p)
+            self.motion_loaded = True
+
+    def before_process(self, *args, **kwargs):
+        self.load_motion_module(*args, inddupe = False)
+    
+    def process(self, *args, **kwargs):
+        self.load_motion_module(*args, inddupe = True)
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
             self.restore_ddim_alpha(p)
             self.remove_motion_modules(p)
+            self.motion_loaded = False # SBM Reload module.
             video_paths = []
             self.logger.info("Merging images into GIF.")
             from pathlib import Path
