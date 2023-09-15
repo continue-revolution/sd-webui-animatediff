@@ -7,7 +7,7 @@ from einops import rearrange
 
 from modules import scripts, images, shared, script_callbacks, hashes
 from modules.devices import torch_gc, device, cpu
-from modules.processing import StableDiffusionProcessing, Processed
+from modules.processing import StableDiffusionProcessing, Processed, StableDiffusionProcessingImg2Img
 from scripts.logging_animatediff import logger_animatediff
 from motion_module import MotionWrapper, VanillaTemporalModule
 
@@ -215,6 +215,15 @@ class AnimateDiffScript(scripts.Script):
             p.batch_size = video_length
             self.inject_motion_modules(p, model)
             self.set_ddim_alpha(p)
+    
+    def before_process_batch(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt", **kwargs):
+        if enable_animatediff and isinstance(p, StableDiffusionProcessingImg2Img):
+            init_alpha = []
+            for i in range(video_length):
+                init_alpha.append((video_length - i) / video_length)
+            self.logger.info(f'Randomizing init_latent according to {init_alpha}.')
+            init_alpha = torch.tensor(init_alpha, dtype=torch.float32, device=device)[:, None, None, None]
+            p.init_latent = p.init_latent * init_alpha + p.rng.next() * (1 - init_alpha)
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
         if enable_animatediff:
