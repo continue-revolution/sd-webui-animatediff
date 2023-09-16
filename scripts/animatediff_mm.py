@@ -72,7 +72,10 @@ class AnimateDiffMM:
         unet = sd_model.model.diffusion_model
         self._load(model_name)
         TimestepEmbedSequential.forward = mm_tes_forward
-        if not self.mm.using_v2:
+        if self.mm.using_v2:
+            logger.info(f"Injecting motion module {model_name} into SD1.5 UNet middle block.")
+            unet.middle_block.insert(-1, self.mm.mid_block.motion_modules[0])
+        else:
             logger.info(f"Hacking GroupNorm32 forward function.")
             def groupnorm32_mm_forward(self, x):
                 x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
@@ -91,9 +94,6 @@ class AnimateDiffMM:
                 unet.output_blocks[unet_idx].insert(-1, self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1])
             else:
                 unet.output_blocks[unet_idx].append(self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1])
-        if self.mm.using_v2:
-            logger.info(f"Injecting motion module {model_name} into SD1.5 UNet middle block.")
-            unet.middle_block.insert(-1, self.mm.mid_block.motion_modules[0])
         self._set_ddim_alpha(sd_model)
         logger.info(f"Injection finished.")
     
@@ -112,7 +112,7 @@ class AnimateDiffMM:
         if self.mm.using_v2:
             logger.info(f"Removing motion module from SD1.5 UNet middle block.")
             unet.middle_block.pop(-2)
-        if not self.mm.using_v2:
+        else:
             logger.info(f"Restoring GroupNorm32 forward function.")
             GroupNorm32.forward = gn32_original_forward
         TimestepEmbedSequential.forward = tes_original_forward 
