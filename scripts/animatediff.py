@@ -94,11 +94,13 @@ class AnimateDiffScript(scripts.Script):
                 fps = gr.Number(value=8, label="Frames per second (FPS)", precision=0)
                 loop_number = gr.Number(minimum=0, value=0, label="Display loop number (0 = infinite loop)", precision=0)
             with gr.Row():
+                reverse_frames = gr.CheckboxGroup(["Add Reverse Frame", "Remove head", "Remove tail"], label="Reverse Frame")
+            with gr.Row():
                 unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
                 remove = gr.Button(value="Remove motion module from any memory")
                 unload.click(fn=self.unload_motion_module)
                 remove.click(fn=self.remove_motion_module)
-        return enable, loop_number, video_length, fps, model
+        return enable, loop_number, video_length, fps, model, reverse_frames
 
     def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v15.ckpt"):
         model_path = os.path.join(shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model")), model_name)
@@ -208,7 +210,7 @@ class AnimateDiffScript(scripts.Script):
         self.prev_alpha_cumprod = None
         self.prev_alpha_cumprod_prev = None
 
-    def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
+    def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt", reverse_frames=[]):
         if enable_animatediff:
             self.logger.info(f"AnimateDiff process start with video Max frames {video_length}, FPS {fps}, duration {video_length/fps},  motion module {model}.")
             assert video_length > 0 and fps > 0, "Video length and FPS should be positive."
@@ -216,7 +218,7 @@ class AnimateDiffScript(scripts.Script):
             self.inject_motion_modules(p, model)
             self.set_ddim_alpha(p)
 
-    def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
+    def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt", reverse_frames=[]):
         if enable_animatediff:
             self.restore_ddim_alpha(p)
             self.remove_motion_modules(p)
@@ -226,6 +228,17 @@ class AnimateDiffScript(scripts.Script):
             Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
             for i in range(res.index_of_first_image, len(res.images), video_length):
                 video_list = res.images[i:i+video_length]
+
+                # Add Reverse Frames
+                print( reverse_frames )
+                if "Add Reverse Frame" in reverse_frames:
+                    video_list_reverse = video_list[::-1]
+                    if "Remove head" in reverse_frames:
+                        video_list_reverse.pop(0)
+                    if "Remove tail" in reverse_frames:
+                        video_list_reverse.pop(-1)
+                    video_list = video_list + video_list_reverse
+
                 seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
                 filename = f"{seq:05}-{res.seed}"
                 video_path = f"{p.outpath_samples}/AnimateDiff/{filename}.gif"
