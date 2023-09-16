@@ -38,6 +38,7 @@ class ToolButton(gr.Button, gr.components.FormComponent):
     def get_block_name(self):
         return "button"
 
+fseries = lambda vfrom, vcnt: list(range(vfrom, vfrom + vcnt))
 
 class AnimateDiffScript(scripts.Script):
     motion_module: MotionWrapper = None
