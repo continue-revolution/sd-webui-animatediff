@@ -30,7 +30,7 @@ class AnimateDiffScript(scripts.Script):
 
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
         if params.enable:
-            logger.info(f"AnimateDiff process start with video Max frames {params.video_length}, FPS {params.fps}, duration {params.video_length/params.fps},  motion module {params.model}.")
+            logger.info(f"AnimateDiff process start with video Max frames {params.video_length}, FPS {params.fps}, duration {params.video_length/params.fps}, motion module {params.model}.")
             assert params.video_length > 0 and params.fps > 0, "Video length and FPS should be positive."
             p.batch_size = params.video_length
             motion_module.inject(p.sd_model, params.model)

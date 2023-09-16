@@ -27,6 +27,15 @@ class AnimateDiffProcess:
         self.video_length = video_length
         self.fps = fps
         self.model = model
+    
+    def get_list(self):
+        return [
+            self.enable,
+            self.loop_number,
+            self.video_length,
+            self.fps,
+            self.model,
+        ]
 
 
 class AnimateDiffUiGroup:
@@ -34,11 +43,7 @@ class AnimateDiffUiGroup:
     img2img_submit_button = None
 
     def __init__(self):
-        self.model = None
-        self.enable = None
-        self.video_length = None
-        self.fps = None
-        self.loop_number = None
+        self.params = AnimateDiffProcess()
 
     def render(self, is_img2img: bool, model_dir: str):
         if not os.path.isdir(model_dir):
@@ -56,14 +61,14 @@ class AnimateDiffUiGroup:
                     else:
                         selected = None
                     return gr.Dropdown.update(choices=new_model_list, value=selected)
-                self.model = gr.Dropdown(choices=model_list, value=(model_list[0] if len(model_list) > 0 else None), label="Motion module", type="value")
+                self.params.model = gr.Dropdown(choices=model_list, value=(model_list[0] if len(model_list) > 0 else None), label="Motion module", type="value")
                 refresh_model = ToolButton(value='\U0001f504')
-                refresh_model.click(refresh_models, self.model, self.model)
+                refresh_model.click(refresh_models, self.params.model, self.params.model)
             with gr.Row():
-                self.enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
-                self.video_length = gr.Slider(minimum=1, maximum=32, value=16, step=1, label="Number of frames", precision=0)
-                self.fps = gr.Number(value=8, label="Frames per second (FPS)", precision=0)
-                self.loop_number = gr.Number(minimum=0, value=0, label="Display loop number (0 = infinite loop)", precision=0)
+                self.params.enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
+                self.params.video_length = gr.Slider(minimum=1, maximum=32, value=16, step=1, label="Number of frames", precision=0)
+                self.params.fps = gr.Number(value=8, label="Frames per second (FPS)", precision=0)
+                self.params.loop_number = gr.Number(minimum=0, value=0, label="Display loop number (0 = infinite loop)", precision=0)
             with gr.Row():
                 unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
                 remove = gr.Button(value="Remove motion module from any memory")
@@ -73,13 +78,7 @@ class AnimateDiffUiGroup:
     
     def register_unit(self, is_img2img: bool):
         unit = gr.State()
-        unit_args = [
-            self.enable,
-            self.loop_number,
-            self.video_length,
-            self.fps,
-            self.model,
-        ]
+        unit_args = self.params.get_list()
         (
             AnimateDiffUiGroup.img2img_submit_button
             if is_img2img
