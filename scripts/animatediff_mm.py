@@ -72,7 +72,7 @@ class AnimateDiffMM:
         unet = sd_model.model.diffusion_model
         self._load(model_name)
         TimestepEmbedSequential.forward = mm_tes_forward
-        if shared.opts.data.get("animatediff_hack_gn", False) and (not self.mm.using_v2):
+        if not self.mm.using_v2:
             logger.info(f"Hacking GroupNorm32 forward function.")
             def groupnorm32_mm_forward(self, x):
                 x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
@@ -112,7 +112,7 @@ class AnimateDiffMM:
         if self.mm.using_v2:
             logger.info(f"Removing motion module from SD1.5 UNet middle block.")
             unet.middle_block.pop(-2)
-        if shared.opts.data.get("animatediff_hack_gn", False) and (not self.mm.using_v2):
+        if not self.mm.using_v2:
             logger.info(f"Restoring GroupNorm32 forward function.")
             GroupNorm32.forward = gn32_original_forward
         TimestepEmbedSequential.forward = tes_original_forward 
@@ -130,10 +130,10 @@ class AnimateDiffMM:
         alphas_cumprod_prev = torch.cat(
             (torch.tensor([1.0], dtype=torch.float32, device=device), alphas_cumprod[:-1]))
         self.prev_beta = sd_model.betas
-        sd_model.betas = betas
         self.prev_alpha_cumprod = sd_model.alphas_cumprod
-        sd_model.alphas_cumprod = alphas_cumprod
         self.prev_alpha_cumprod_prev = sd_model.alphas_cumprod_prev
+        sd_model.betas = betas
+        sd_model.alphas_cumprod = alphas_cumprod
         sd_model.alphas_cumprod_prev = alphas_cumprod_prev
     
     def _restore_ddim_alpha(self, sd_model):

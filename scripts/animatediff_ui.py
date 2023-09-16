@@ -15,19 +15,22 @@ class ToolButton(gr.Button, gr.components.FormComponent):
 
 
 class AnimateDiffProcess:
+
     def __init__(
             self, 
             enable=False, 
             loop_number=0, 
             video_length=16, 
             fps=8, 
-            model="mm_sd_v15.ckpt",
+            model="mm_sd_v15_v2.ckpt",
+            format=["GIF", "PNG"],
             reverse=[]):
         self.enable = enable
         self.loop_number = loop_number
         self.video_length = video_length
         self.fps = fps
         self.model = model
+        self.format = format
         self.reverse = reverse
     
     def get_list(self):
@@ -37,8 +40,19 @@ class AnimateDiffProcess:
             self.video_length,
             self.fps,
             self.model,
+            self.format,
             self.reverse
         ]
+
+    def _check(self):
+        assert self.video_length > 0 and self.fps > 0, "Video length and FPS should be positive."
+        assert not set(["GIF", "MP4", "PNG"]).isdisjoint(self.format), "At least one saving format should be selected."
+    
+    def set_p(self, p):
+        self._check()
+        p.batch_size = self.video_length
+        if "PNG" not in self.format:
+            p.do_not_save_samples = True
 
 
 class AnimateDiffUiGroup:
@@ -73,15 +87,12 @@ class AnimateDiffUiGroup:
                 self.params.fps = gr.Number(value=8, label="Frames per second (FPS)", precision=0)
                 self.params.loop_number = gr.Number(minimum=0, value=0, label="Display loop number (0 = infinite loop)", precision=0)
             with gr.Row():
+                self.params.format = gr.CheckboxGroup(
+                    choices=["GIF", "MP4", "PNG", "TXT", "Optimize GIF"],
+                    label="Save", type="value", value=["GIF", "PNG"])
                 self.params.reverse = gr.CheckboxGroup(
-                    choices=[
-                        "Add Reverse Frame",
-                        "Remove head",
-                        "Remove tail"
-                    ],
-                    label="Reverse",
-                    type="index"
-                )
+                    choices=["Add Reverse Frame", "Remove head", "Remove tail"],
+                    label="Reverse",type="index")
             with gr.Row():
                 unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
                 remove = gr.Button(value="Remove motion module from any memory")
