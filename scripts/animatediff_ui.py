@@ -15,16 +15,16 @@ class ToolButton(gr.Button, gr.components.FormComponent):
 
 
 class AnimateDiffProcess:
-
     def __init__(
-            self, 
-            enable=False, 
-            loop_number=0, 
-            video_length=16, 
-            fps=8, 
-            model="mm_sd_v15_v2.ckpt",
-            format=["GIF", "PNG"],
-            reverse=[]):
+        self,
+        enable=False,
+        loop_number=0,
+        video_length=16,
+        fps=8,
+        model="mm_sd_v15_v2.ckpt",
+        format=["GIF", "PNG"],
+        reverse=[],
+    ):
         self.enable = enable
         self.loop_number = loop_number
         self.video_length = video_length
@@ -32,7 +32,7 @@ class AnimateDiffProcess:
         self.model = model
         self.format = format
         self.reverse = reverse
-    
+
     def get_list(self):
         return [
             self.enable,
@@ -41,13 +41,17 @@ class AnimateDiffProcess:
             self.fps,
             self.model,
             self.format,
-            self.reverse
+            self.reverse,
         ]
 
     def _check(self):
-        assert self.video_length > 0 and self.fps > 0, "Video length and FPS should be positive."
-        assert not set(["GIF", "MP4", "PNG"]).isdisjoint(self.format), "At least one saving format should be selected."
-    
+        assert (
+            self.video_length > 0 and self.fps > 0
+        ), "Video length and FPS should be positive."
+        assert not set(["GIF", "MP4", "PNG"]).isdisjoint(
+            self.format
+        ), "At least one saving format should be selected."
+
     def set_p(self, p):
         self._check()
         p.batch_size = self.video_length
@@ -66,10 +70,13 @@ class AnimateDiffUiGroup:
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
         model_list = [f for f in os.listdir(model_dir) if f != ".gitkeep"]
-        with gr.Accordion('AnimateDiff', open=False):
+        with gr.Accordion("AnimateDiff", open=False):
             with gr.Row():
+
                 def refresh_models(*inputs):
-                    new_model_list = [f for f in os.listdir(model_dir) if f != ".gitkeep"]
+                    new_model_list = [
+                        f for f in os.listdir(model_dir) if f != ".gitkeep"
+                    ]
                     dd = inputs[0]
                     if dd in new_model_list:
                         selected = dd
@@ -78,28 +85,59 @@ class AnimateDiffUiGroup:
                     else:
                         selected = None
                     return gr.Dropdown.update(choices=new_model_list, value=selected)
-                self.params.model = gr.Dropdown(choices=model_list, value=(model_list[0] if len(model_list) > 0 else None), label="Motion module", type="value")
-                refresh_model = ToolButton(value='\U0001f504')
-                refresh_model.click(refresh_models, self.params.model, self.params.model)
+
+                self.params.model = gr.Dropdown(
+                    choices=model_list,
+                    value=(model_list[0] if len(model_list) > 0 else None),
+                    label="Motion module",
+                    type="value",
+                )
+                refresh_model = ToolButton(value="\U0001f504")
+                refresh_model.click(
+                    refresh_models, self.params.model, self.params.model
+                )
             with gr.Row():
-                self.params.enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
-                self.params.video_length = gr.Slider(minimum=1, maximum=32, value=16, step=1, label="Number of frames", precision=0)
-                self.params.fps = gr.Number(value=8, label="Frames per second (FPS)", precision=0)
-                self.params.loop_number = gr.Number(minimum=0, value=0, label="Display loop number (0 = infinite loop)", precision=0)
+                self.params.enable = gr.Checkbox(
+                    value=False, label="Enable AnimateDiff"
+                )
+                self.params.video_length = gr.Slider(
+                    minimum=1,
+                    maximum=32,
+                    value=16,
+                    step=1,
+                    label="Number of frames",
+                    precision=0,
+                )
+                self.params.fps = gr.Number(
+                    value=8, label="Frames per second (FPS)", precision=0
+                )
+                self.params.loop_number = gr.Number(
+                    minimum=0,
+                    value=0,
+                    label="Display loop number (0 = infinite loop)",
+                    precision=0,
+                )
             with gr.Row():
                 self.params.format = gr.CheckboxGroup(
                     choices=["GIF", "MP4", "PNG", "TXT", "Optimize GIF"],
-                    label="Save", type="value", value=["GIF", "PNG"])
+                    label="Save",
+                    type="value",
+                    value=["GIF", "PNG"],
+                )
                 self.params.reverse = gr.CheckboxGroup(
                     choices=["Add Reverse Frame", "Remove head", "Remove tail"],
-                    label="Reverse",type="index")
+                    label="Reverse",
+                    type="index",
+                )
             with gr.Row():
-                unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
+                unload = gr.Button(
+                    value="Move motion module to CPU (default if lowvram)"
+                )
                 remove = gr.Button(value="Remove motion module from any memory")
                 unload.click(fn=motion_module.unload)
                 remove.click(fn=motion_module.remove)
         return self.register_unit(is_img2img)
-    
+
     def register_unit(self, is_img2img: bool):
         unit = gr.State()
         unit_args = self.params.get_list()
@@ -114,7 +152,7 @@ class AnimateDiffUiGroup:
             queue=False,
         )
         return unit
-    
+
     @staticmethod
     def on_after_component(component, **_kwargs):
         elem_id = getattr(component, "elem_id", None)
