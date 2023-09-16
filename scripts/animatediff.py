@@ -69,7 +69,7 @@ class AnimateDiffScript(scripts.Script):
         gc.collect()
 
     def ui(self, is_img2img):
-        model_dir = shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model"))
+        model_dir = fseti("model_path")
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
         model_list = [f for f in os.listdir(model_dir) if f != ".gitkeep"]
@@ -101,7 +101,7 @@ class AnimateDiffScript(scripts.Script):
         return enable, loop_number, video_length, fps, model
 
     def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v15.ckpt"):
-        model_path = os.path.join(shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model")), model_name)
+        model_path = os.path.join(fseti("model_path"), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
         def get_mm_hash(model_name="mm_sd_v15.ckpt"):
@@ -137,7 +137,7 @@ class AnimateDiffScript(scripts.Script):
             AnimateDiffScript.motion_module.half()
         unet = p.sd_model.model.diffusion_model
         TimestepEmbedSequential.forward = mm_tes_forward
-        if shared.opts.data.get("animatediff_hack_gn", False) and (not AnimateDiffScript.motion_module.using_v2):
+        if fseti("hack_gn") and (not AnimateDiffScript.motion_module.using_v2):
             self.logger.info(f"Hacking GroupNorm32 forward function.")
             def groupnorm32_mm_forward(self, x):
                 x = rearrange(x, '(b f) c h w -> b c f h w', b=2)
@@ -175,7 +175,7 @@ class AnimateDiffScript(scripts.Script):
         if AnimateDiffScript.motion_module.using_v2:
             self.logger.info(f"Removing motion module from SD1.5 UNet middle block.")
             unet.middle_block.pop(-2)
-        if shared.opts.data.get("animatediff_hack_gn", False) and (not AnimateDiffScript.motion_module.using_v2):
+        if fseti("hack_gn") and (not AnimateDiffScript.motion_module.using_v2):
             self.logger.info(f"Restoring GroupNorm32 forward function.")
             GroupNorm32.forward = gn32_original_forward
         TimestepEmbedSequential.forward = tes_original_forward 
@@ -234,8 +234,19 @@ class AnimateDiffScript(scripts.Script):
             res.images = video_paths
             self.logger.info("AnimateDiff process end.")
 
+# SBM Setting defaultisation.
+EXTKEY = "animatediff"
+EXTNAME = "AnimateDiff"
+# List of default values, because shared doesn't allocate a value automatically.
+# (id: def)
+DEXTSETV = {
+"model_path": os.path.join(script_dir, "model"),
+"hack_gn": True,
+}
+fseti = lambda x: shared.opts.data.get(EXTKEY + "_" + x, DEXTSETV[x])
+
 def on_ui_settings():
-    section = ('animatediff', "AnimateDiff")
+    section = (EXTKEY, EXTNAME)
     shared.opts.add_option("animatediff_model_path", shared.OptionInfo(os.path.join(script_dir, "model"), "Path to save AnimateDiff motion modules", gr.Textbox, section=section))
     shared.opts.add_option("animatediff_hack_gn", shared.OptionInfo(
         True, "Check if you want to hack GroupNorm. By default, V1 hacks GroupNorm, which avoids a performance degradation. "
