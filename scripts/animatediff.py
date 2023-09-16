@@ -53,6 +53,15 @@ class AnimateDiffScript(scripts.Script):
             Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
             for i in range(res.index_of_first_image, len(res.images), params.video_length):
                 video_list = res.images[i:i+params.video_length]
+
+                if 0 in params.reverse:
+                    video_list_reverse = video_list[::-1]
+                    if 1 in params.reverse:
+                        video_list_reverse.pop(0)
+                    if 2 in params.reverse:
+                        video_list_reverse.pop(-1)
+                    video_list = video_list + video_list_reverse
+
                 seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
                 filename = f"{seq:05}-{res.seed}"
                 video_path = f"{p.outpath_samples}/AnimateDiff/{filename}.gif"
