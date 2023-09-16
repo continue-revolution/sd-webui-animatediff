@@ -30,6 +30,7 @@ class AnimateDiffScript(scripts.Script):
 
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
         if params.enable:
+            logger.info("AnimateDiff process start.")
             params.set_p(p)
             motion_module.inject(p.sd_model, params.model)
     
@@ -37,7 +38,7 @@ class AnimateDiffScript(scripts.Script):
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img):
             init_alpha = []
             for i in range(params.video_length):
-                init_alpha.append(params.video_length - i / params.video_length)
+                init_alpha.append(1 - i / params.video_length)
             logger.info(f'Randomizing init_latent according to {init_alpha}.')
             init_alpha = torch.tensor(init_alpha, dtype=torch.float32, device=device)[:, None, None, None]
             p.init_latent = p.init_latent * init_alpha + p.rng.next() * (1 - init_alpha)
@@ -47,6 +48,7 @@ class AnimateDiffScript(scripts.Script):
             motion_module.restore(p.sd_model)
             AnimateDiffOutput().output(p, res, params)
             logger.info("AnimateDiff process end.")
+
 
 def on_ui_settings():
     section = ('animatediff', "AnimateDiff")
