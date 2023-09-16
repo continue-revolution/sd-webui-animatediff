@@ -8,6 +8,7 @@ from einops import rearrange
 from modules import scripts, images, shared, script_callbacks, hashes
 from modules.devices import torch_gc, device, cpu
 from modules.processing import StableDiffusionProcessing, Processed
+from modules.images import FilenameGenerator
 from scripts.logging_animatediff import logger_animatediff
 from motion_module import MotionWrapper, VanillaTemporalModule
 
@@ -75,32 +76,28 @@ class AnimateDiffScript(scripts.Script):
         model_list = [f for f in os.listdir(model_dir) if f != ".gitkeep"]
         with gr.Accordion('AnimateDiff', open=False):
             with gr.Row():
-                def refresh_models(*inputs):
-                    new_model_list = [f for f in os.listdir(model_dir) if f != ".gitkeep"]
-                    dd = inputs[0]
-                    if dd in new_model_list:
-                        selected = dd
-                    elif len(new_model_list) > 0:
-                        selected = new_model_list[0]
-                    else:
-                        selected = None
-                    return gr.Dropdown.update(choices=new_model_list, value=selected)
-                model = gr.Dropdown(choices=model_list, value=(model_list[0] if len(model_list) > 0 else None), label="Motion module", type="value")
-                refresh_model = ToolButton(value='\U0001f504')
-                refresh_model.click(refresh_models, model, model)
-            with gr.Row():
                 enable = gr.Checkbox(value=False, label='Enable AnimateDiff')
-                video_length = gr.Slider(minimum=1, maximum=32, value=16, step=1, label="Number of frames", precision=0)
-                fps = gr.Number(value=8, label="Frames per second (FPS)", precision=0)
-                loop_number = gr.Number(minimum=0, value=0, label="Display loop number (0 = infinite loop)", precision=0)
+                model = gr.Dropdown(choices=["mm_sd_v15.ckpt", "mm_sd_v14.ckpt"], value="mm_sd_v14.ckpt", label="Motion module", type="value")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    video_length = gr.Slider(minimum=1, maximum=24, value=16, step=1, label="Number of frames", precision=0)
+                    fps = gr.Slider(minimum=1, maximum=30, value=8, step=1, label="Frames per second (FPS)", precision=0)
+                    loop_number = gr.Slider(minimum=0, maximum=64, value=0, step=1, label="Display loop number (0 = infinite loop)", precision=0)
+                with gr.Column(scale=1):
+                    save_png = gr.Checkbox(value=True, label='Save PNG')
+                    save_gif = gr.Checkbox(value=True, label='Save GIF')
+                    save_mp4 = gr.Checkbox(value=True, label='Save MP4')
+                    save_txt = gr.Checkbox(value=True, label='Save TXT')
+            with gr.Row():
+                optimize_gif = gr.Checkbox(value=False, label='Optimize GIF (requires pygifsicle and gifsicle)')
             with gr.Row():
                 unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
                 remove = gr.Button(value="Remove motion module from any memory")
                 unload.click(fn=self.unload_motion_module)
                 remove.click(fn=self.remove_motion_module)
-        return enable, loop_number, video_length, fps, model
+        return enable, save_png, save_gif, save_mp4, save_txt, optimize_gif, loop_number, video_length, fps, model
 
-    def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v15.ckpt"):
+    def inject_motion_modules(self, p: StableDiffusionProcessing, model_name="mm_sd_v14.ckpt"):
         model_path = os.path.join(shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model")), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
@@ -208,29 +205,97 @@ class AnimateDiffScript(scripts.Script):
         self.prev_alpha_cumprod = None
         self.prev_alpha_cumprod_prev = None
 
-    def before_process(self, p: StableDiffusionProcessing, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
+    def before_process(self,
+        p: StableDiffusionProcessing,
+        enable_animatediff=False,
+        save_png=True,
+        save_gif=True,
+        save_mp4=True,
+        save_txt=True,
+        optimize_gif=False,
+        loop_number=0,
+        video_length=16,
+        fps=8,
+        model="mm_sd_v14.ckpt"):
         if enable_animatediff:
-            self.logger.info(f"AnimateDiff process start with video Max frames {video_length}, FPS {fps}, duration {video_length/fps},  motion module {model}.")
+            # create output directory for PNG, the others will be created as needed
+            png_path = os.path.join(p.outpath_samples, "animatediff", "png")
+            os.makedirs(png_path, exist_ok=True)
+
+            # override save location for PNG frames
+            p.outpath_samples = png_path
+            
+            if not save_png:
+                p.do_not_save_samples = True
+
+            assert save_png or save_gif or save_mp4, "No save option selected!"
             assert video_length > 0 and fps > 0, "Video length and FPS should be positive."
+
+            self.logger.info(f"AnimateDiff process start with video Max frames {video_length}, FPS {fps}, duration {video_length/fps}, motion module {model}.")
             p.batch_size = video_length
             self.inject_motion_modules(p, model)
             self.set_ddim_alpha(p)
 
-    def postprocess(self, p: StableDiffusionProcessing, res: Processed, enable_animatediff=False, loop_number=0, video_length=16, fps=8, model="mm_sd_v15.ckpt"):
+    def postprocess(self,
+        p: StableDiffusionProcessing,
+        res: Processed,
+        enable_animatediff=False,
+        save_png=True,
+        save_gif=True,
+        save_mp4=True,
+        save_txt=True,
+        optimize_gif=False,
+        loop_number=0,
+        video_length=16,
+        fps=8,
+        model="mm_sd_v14.ckpt"):
         if enable_animatediff:
             self.restore_ddim_alpha(p)
             self.remove_motion_modules(p)
             video_paths = []
-            self.logger.info("Merging images into GIF.")
-            from pathlib import Path
-            Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
             for i in range(res.index_of_first_image, len(res.images), video_length):
                 video_list = res.images[i:i+video_length]
-                seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
+
+                seq = images.get_next_sequence_number(f"{p.outpath_samples}", "")
                 filename = f"{seq:05}-{res.seed}"
-                video_path = f"{p.outpath_samples}/AnimateDiff/{filename}.gif"
-                video_paths.append(video_path)
-                imageio.mimsave(video_path, video_list, duration=(1/fps), loop=loop_number)
+
+                namegen = FilenameGenerator(p, res.seed, res.prompt, res.images[i])
+                dirname = namegen.apply(shared.opts.directories_filename_pattern or "[prompt_words]").lstrip(' ').rstrip('\\ /')
+                path = os.path.join(f"{p.outpath_samples}", dirname)
+                os.makedirs(path, exist_ok=True)
+
+                if save_gif:
+                    gif_path = os.path.join(p.outpath_samples, "..", "gif", dirname)
+                    os.makedirs(gif_path, exist_ok=True)
+                    video_path = os.path.join(gif_path, f"{filename}.gif")
+                    video_paths.append(video_path)
+                    imageio.mimsave(video_path, video_list, duration=(1/fps), loop=loop_number)
+                    if optimize_gif:
+                        try:
+                            import pygifsicle
+                        except ImportError:
+                            self.logger.warn("pygifsicle failed to import, required for optimized GIFs, try: pip install pygifsicle")
+                        else:
+                            try:
+                                pygifsicle.optimize(video_path)
+                            except FileNotFoundError:
+                                self.logger.warn("gifsicle not found, required for optimized GIFs, try: apt install gifsicle")
+                if save_mp4:
+                    mp4_path = os.path.join(p.outpath_samples, "..", "mp4", dirname)
+                    os.makedirs(mp4_path, exist_ok=True)
+                    video_path = os.path.join(mp4_path, f"{filename}.mp4")
+                    imageio.mimsave(video_path, video_list, fps=fps)
+                if save_txt and res.images[i].info is not None:
+                    res.images[i].info['motion_module'] = model
+                    res.images[i].info['video_length'] = video_length
+                    res.images[i].info['fps'] = fps
+                    res.images[i].info['loop_number'] = 0
+                    txt_path = os.path.join(p.outpath_samples, "..", "txt", dirname)
+                    os.makedirs(txt_path, exist_ok=True)
+                    file_path = os.path.join(txt_path, f"{filename}.txt")
+                    with open(file_path, "w", encoding="utf8") as file:
+                        file.write(f"{res.images[i].info}\n")
+
             res.images = video_paths
             self.logger.info("AnimateDiff process end.")
 
