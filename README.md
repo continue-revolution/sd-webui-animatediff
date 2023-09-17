@@ -20,10 +20,24 @@ You might also be interested in another extension I created: [Segment Anything f
 1. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
 1. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
 1. Enable AnimateDiff extension, and set up each parameter, and click `Generate`.
-   1. **Number of frames** — The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`.
+   1. **Number of frames** — The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`. Choose [1, 24] for V1 motion modules and [1, 32] for V2 motion modules. 
    1. **Frames per second** — How many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds.
-   1. **Loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
+   1. **Display loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
+   1. **Save** — Format of the output. Choose at least one of "GIF"|"MP4"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF. Check "Optimize GIF" if you want to optimize the output GIF (`apt install gifsicle` required).
+   1. **Reverse** — Append reversed frames to your output.
 1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
+
+#### img2GIF
+
+You need to go to img2img and submit an init frame via A1111 panel. You can optionally submit a last frame via extension panel (experiment feature, not tested, not sure if it will work).
+
+By default: your `init_latent` will be changed to 
+```
+init_alpha = (1 - frame_number ^ latent_power / latent_scale)
+init_latent = init_latent * init_alpha + random_tensor * (1 - init_alpha)
+```
+
+If you upload a last frame: your `init_latent` will be changed in a similar way. Read [this code](https://github.com/continue-revolution/sd-webui-animatediff/blob/i2v/scripts/animatediff_latent.py#L28-L65) to understand how it works.
 
 ### API
 [#42](https://github.com/continue-revolution/sd-webui-animatediff/issues/42)
@@ -39,9 +53,8 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/07/24` [v1.2.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.2.0): fix incorrect insertion of motion modules, add option to change path to save motion modules in Settings/AnimateDiff, fix loading different motion modules.
 - `2023/09/04` [v1.3.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.3.0): support any community models with the same architecture; fix grey problem via [#63](https://github.com/continue-revolution/sd-webui-animatediff/issues/63) (credit to [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco))
 - `2023/09/11` [v1.4.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.0): support official v2 motion module (different architecture: GroupNorm not hacked, UNet middle layer has motion module).    
-    - If you are using V1 motion modules: starting from this version, you will be able to disable hacking GroupNorm in `Settings/AnimateDiff`. If you disable hacking GruopNorm, you will be able to use this extension in `img2img` in all settings, but the generated GIFs will have flickers. In WebUI >=v1.6.0, even if GroupNorm is hacked, you can still use this extension in `img2img` with `--no-half-vae` enabled.
-    - If you are using V2 motion modules: you will always be able to use this extension in `img2img`, regardless of changing that setting or not.
 - `2023/09/14`: [v1.4.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.1): always change `beta`, `alpha_comprod` and `alpha_comprod_prev` to resolve grey problem in other samplers.
+- `2023/09/16`: [v1.5.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.0): randomize init latent to support better img2gif, credit to [this forked repo](https://github.com/talesofai/AnimateDiff); add other output formats and infotext output, credit to [@zappityzap](https://github.com/zappityzap); refactor code to ease maintaining.
 
 ## FAQ
 1.  Q: How much VRAM do I need?
@@ -52,10 +65,6 @@ You might also be interested in another extension I created: [Segment Anything f
 
     A: You will have to wait for someone to train SDXL-specific motion modules which will have a different model architecture. This extension essentially inject multiple motion modules into SD1.5 UNet. It does not work for other variations of SD, such as SD2.1 and SDXL.
 
-1.  Q: Can I generate a video instead a GIF?
-
-    A: Not at this time, but will be supported via a very huge [output format pull request](https://github.com/continue-revolution/sd-webui-animatediff/pull/54) in the near future. I will merge with some other huge updates.
-
 1.  Q: Can I use this extension to do GIF2GIF? Can I apply ControlNet to this extension? Can I override the limitation of 24/32 frames per generation?
 
     A: Not at this time, but will be supported via supporting [AnimateDIFF CLI Prompt Travel](https://github.com/s9roll7/animatediff-cli-prompt-travel) in the near future. This is a huge amount of work and life is busy, so expect to wait for a long time before updating.
@@ -63,10 +72,6 @@ You might also be interested in another extension I created: [Segment Anything f
 1.  Q: Can I use xformers, sdp or some other attention optimizations?
 
     A: Attention optimizations are currently not applied to motion modules, but will applied after a pull request in the near future.
-
-1.  Q: Can I use this extension to do img2GIF? The current generation result seems pretty static.
-
-    A: The current performance for img2GIF is indeed static. I will look into a [forked](https://github.com/talesofai/AnimateDiff) AnimateDiff repository and see how I can resolve this problem in the near future.
 
 1.  Q: How can I reproduce the result in [Samples/txt2img](#txt2img) section?
 
