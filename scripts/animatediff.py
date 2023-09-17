@@ -10,8 +10,9 @@ from modules.processing import (
     StableDiffusionProcessingImg2Img,
 )
 from scripts.animatediff_logger import logger_animatediff as logger
-from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_mm import mm_animatediff as motion_module
+from scripts.animatediff_latent import AnimateDiffI2VLatent
+from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_output import AnimateDiffOutput
 
 
@@ -42,14 +43,7 @@ class AnimateDiffScript(scripts.Script):
         self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs
     ):
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img):
-            init_alpha = []
-            for i in range(params.video_length):
-                init_alpha.append(1 - i / params.video_length)
-            logger.info(f"Randomizing init_latent according to {init_alpha}.")
-            init_alpha = torch.tensor(init_alpha, dtype=torch.float32, device=device)[
-                :, None, None, None
-            ]
-            p.init_latent = p.init_latent * init_alpha + p.rng.next() * (1 - init_alpha)
+            AnimateDiffI2VLatent().randomize(p, params)
 
     def postprocess(
         self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess

@@ -24,6 +24,11 @@ class AnimateDiffProcess:
         model="mm_sd_v15_v2.ckpt",
         format=["GIF", "PNG"],
         reverse=[],
+        latent_power=1,
+        latent_scale=32,
+        last_frame=None,
+        latent_power_last=1,
+        latent_scale_last=32,
     ):
         self.enable = enable
         self.loop_number = loop_number
@@ -32,17 +37,17 @@ class AnimateDiffProcess:
         self.model = model
         self.format = format
         self.reverse = reverse
+        self.latent_power = latent_power
+        self.latent_scale = latent_scale
+        self.last_frame = last_frame
+        self.latent_power_last = latent_power_last
+        self.latent_scale_last = latent_scale_last
 
-    def get_list(self):
-        return [
-            self.enable,
-            self.loop_number,
-            self.video_length,
-            self.fps,
-            self.model,
-            self.format,
-            self.reverse,
-        ]
+    def get_list(self, is_img2img: bool):
+        list_var = list(vars(self).values())
+        if not is_img2img:
+            list_var = list_var[:-5]
+        return list_var
 
     def _check(self):
         assert (
@@ -129,6 +134,37 @@ class AnimateDiffUiGroup:
                     label="Reverse",
                     type="index",
                 )
+            if is_img2img:
+                with gr.Row():
+                    self.params.latent_power = gr.Slider(
+                        minimum=0.1,
+                        maximum=10,
+                        value=1,
+                        step=0.1,
+                        label="Latent power",
+                    )
+                    self.params.latent_scale = gr.Slider(
+                        minimum=1,
+                        maximum=128,
+                        value=32,
+                        label="Latent scale",
+                    )
+                    self.params.latent_power_last = gr.Slider(
+                        minimum=0.1,
+                        maximum=10,
+                        value=1,
+                        step=0.1,
+                        label="Optional latent power for last frame",
+                    )
+                    self.params.latent_scale_last = gr.Slider(
+                        minimum=1,
+                        maximum=128,
+                        value=32,
+                        label="Optional latent scale for last frame",
+                    )
+                self.params.last_frame = gr.Image(
+                    label="[Experiment] Optional last frame. Leave it blank if you do not need one."
+                )
             with gr.Row():
                 unload = gr.Button(
                     value="Move motion module to CPU (default if lowvram)"
@@ -140,14 +176,13 @@ class AnimateDiffUiGroup:
 
     def register_unit(self, is_img2img: bool):
         unit = gr.State()
-        unit_args = self.params.get_list()
         (
             AnimateDiffUiGroup.img2img_submit_button
             if is_img2img
             else AnimateDiffUiGroup.txt2img_submit_button
         ).click(
             fn=AnimateDiffProcess,
-            inputs=unit_args,
+            inputs=self.params.get_list(is_img2img),
             outputs=unit,
             queue=False,
         )
