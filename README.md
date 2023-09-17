@@ -37,7 +37,7 @@ init_alpha = (1 - frame_number ^ latent_power / latent_scale)
 init_latent = init_latent * init_alpha + random_tensor * (1 - init_alpha)
 ```
 
-If you upload a last frame: your `init_latent` will be changed in a similar way. Read [this code](https://github.com/continue-revolution/sd-webui-animatediff/blob/i2v/scripts/animatediff_latent.py#L28-L65) to understand how it works.
+If you upload a last frame: your `init_latent` will be changed in a similar way. Read [this code](https://github.com/continue-revolution/sd-webui-animatediff/tree/v1.5.0/scripts/animatediff_latent.py#L28-L65) to understand how it works.
 
 ### API
 [#42](https://github.com/continue-revolution/sd-webui-animatediff/issues/42)

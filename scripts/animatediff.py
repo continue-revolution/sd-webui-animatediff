@@ -1,9 +1,7 @@
 import os
 import gradio as gr
-import torch
 
 from modules import scripts, shared, script_callbacks
-from modules.devices import device
 from modules.processing import (
     StableDiffusionProcessing,
     Processed,
