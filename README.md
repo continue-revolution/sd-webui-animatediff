@@ -73,15 +73,6 @@ If you upload a last frame: your `init_latent` will be changed in a similar way.
 
     A: Attention optimizations are currently not applied to motion modules, but will applied after a pull request in the near future.
 
-1.  Q: How can I reproduce the result in [Samples/txt2img](#txt2img) section?
-
-    A: You must use this logic to initialize random tensors:
-    ```python
-        torch.manual_seed(<seed>)
-        from einops import rearrange
-        x = rearrange(torch.randn((4, 16, 64, 64), device=shared.device), 'c f h w -> f c h w')
-    ```
-
 
 ## Samples
 
