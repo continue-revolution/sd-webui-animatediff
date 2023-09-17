@@ -93,7 +93,8 @@ If you upload a last frame: your `init_latent` will be changed in a similar way.
 Note that I did not modify random tensor generation when producing v1.3.0 samples.
 
 ### img2img
-![00013-1618522211](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/cf9766b7-298f-43a1-92ab-a9a877636910)
+
+![00018-727621716](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/d04bb573-c8ca-4ae6-a2d9-81f8012bec3a)
 
 ## Sponsor
 You can sponsor me via WeChat, AliPay or Paypal.
