@@ -54,7 +54,7 @@ If you upload a last frame: your `init_latent` will be changed in a similar way.
 - `2023/09/04` [v1.3.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.3.0): support any community models with the same architecture; fix grey problem via [#63](https://github.com/continue-revolution/sd-webui-animatediff/issues/63) (credit to [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco))
 - `2023/09/11` [v1.4.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.0): support official v2 motion module (different architecture: GroupNorm not hacked, UNet middle layer has motion module).    
 - `2023/09/14`: [v1.4.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.1): always change `beta`, `alpha_comprod` and `alpha_comprod_prev` to resolve grey problem in other samplers.
-- `2023/09/16`: [v1.5.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.0): randomize init latent to support better img2gif, credit to [this forked repo](https://github.com/talesofai/AnimateDiff); add other output formats and infotext output, credit to [@zappityzap](https://github.com/zappityzap); refactor code to ease maintaining.
+- `2023/09/16`: [v1.5.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.0): randomize init latent to support better img2gif, credit to [this forked repo](https://github.com/talesofai/AnimateDiff); add other output formats and infotext output, credit to [@zappityzap](https://github.com/zappityzap); add appending reversed frames; refactor code to ease maintaining.
 
 ## FAQ
 1.  Q: How much VRAM do I need?
