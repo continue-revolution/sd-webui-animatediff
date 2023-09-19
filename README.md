@@ -55,11 +55,12 @@ If you upload a last frame: your `init_latent` will be changed in a similar way.
 - `2023/09/11` [v1.4.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.0): support official v2 motion module (different architecture: GroupNorm not hacked, UNet middle layer has motion module).    
 - `2023/09/14`: [v1.4.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.1): always change `beta`, `alpha_comprod` and `alpha_comprod_prev` to resolve grey problem in other samplers.
 - `2023/09/16`: [v1.5.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.0): randomize init latent to support better img2gif, credit to [this forked repo](https://github.com/talesofai/AnimateDiff); add other output formats and infotext output, credit to [@zappityzap](https://github.com/zappityzap); add appending reversed frames; refactor code to ease maintaining.
+- `2023/09/19`: [v1.5.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.1): support xformers, sdp, sub-quadratic attention optimization, vram usage decrease to 5.60GB with default setting.
 
 ## FAQ
 1.  Q: How much VRAM do I need?
 
-    A: Currently, you can run WebUI with this extension via NVIDIA 3090/4090. I cannot guarantee any other variations of GPU. Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. The default setting (displayed in [Samples/txt2img](#txt2img) section) consumes 12GB VRAM. More VRAM info will be added later.
+    A: Tested on Ubuntu 22.04, NVIDIA 4090, torch 2.0.1, H=W=512, frame=16 (default setting): 12.13GB with no optimization, 5.60GB with xformers/sdp optimization, 10.39 GB with sub-quadratic optimization. Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage.
 
 1.  Q: Can I use SDXL to generate GIFs?
 
@@ -68,10 +69,6 @@ If you upload a last frame: your `init_latent` will be changed in a similar way.
 1.  Q: Can I use this extension to do GIF2GIF? Can I apply ControlNet to this extension? Can I override the limitation of 24/32 frames per generation?
 
     A: Not at this time, but will be supported via supporting [AnimateDIFF CLI Prompt Travel](https://github.com/s9roll7/animatediff-cli-prompt-travel) in the near future. This is a huge amount of work and life is busy, so expect to wait for a long time before updating.
-
-1.  Q: Can I use xformers, sdp or some other attention optimizations?
-
-    A: Attention optimizations are currently not applied to motion modules, but will applied after a pull request in the near future.
 
 
 ## Samples

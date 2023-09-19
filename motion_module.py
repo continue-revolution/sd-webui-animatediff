@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from modules import sd_hijack
 from ldm.modules.attention import FeedForward
 
 from einops import rearrange, repeat
@@ -283,8 +284,7 @@ class CrossAttention(nn.Module):
         # You can set slice_size with `set_attention_slice`
         self.sliceable_head_dim = heads
         self._slice_size = None
-        # self._use_memory_efficient_attention_xformers = shared.xformers_available
-        self._use_memory_efficient_attention_xformers = False
+
         self.added_kv_proj_dim = added_kv_proj_dim
 
         if norm_num_groups is not None:
@@ -364,8 +364,8 @@ class CrossAttention(nn.Module):
                 attention_mask = attention_mask.repeat_interleave(self.heads, dim=0)
 
         # attention, what we cannot get enough of
-        if self._use_memory_efficient_attention_xformers:
-            hidden_states = self._memory_efficient_attention_xformers(query, key, value, attention_mask)
+        if sd_hijack.current_optimizer is not None and sd_hijack.current_optimizer.name in ["xformers", "sdp", "sdp-no-mem", "sub-quadratic"]:
+            hidden_states = self._memory_efficient_attention(query, key, value, attention_mask, sd_hijack.current_optimizer.name)
             # Some versions of xformers return output in fp32, cast it back to the dtype of the input
             hidden_states = hidden_states.to(query.dtype)
         else:
@@ -455,16 +455,39 @@ class CrossAttention(nn.Module):
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
         return hidden_states
 
-    def _memory_efficient_attention_xformers(self, query, key, value, attention_mask):
+    def _memory_efficient_attention(self, q, k, v, mask, current_optimizer_name):
         # TODO attention_mask
-        query = query.contiguous()
-        key = key.contiguous()
-        value = value.contiguous()
-        import xformers.ops
-        from modules.sd_hijack_optimizations import get_xformers_flash_attention_op
-        hidden_states = xformers.ops.memory_efficient_attention(query, key, value, attn_bias=attention_mask, 
-                                                                op=get_xformers_flash_attention_op(query, key, value))
-        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
+        q = q.contiguous()
+        k = k.contiguous()
+        v = v.contiguous()
+
+        if current_optimizer_name == "xformers":
+            import xformers.ops
+            from modules.sd_hijack_optimizations import get_xformers_flash_attention_op
+            hidden_states = xformers.ops.memory_efficient_attention(
+                q, k, v, attn_bias=mask,
+                op=get_xformers_flash_attention_op(q, k, v))
+        elif current_optimizer_name == "sdp":
+            hidden_states = torch.nn.functional.scaled_dot_product_attention(
+                q, k, v, attn_mask=mask, dropout_p=0.0, is_causal=False
+            )
+        elif current_optimizer_name == "sdp-no-mem":
+            with torch.backends.cuda.sdp_kernel(enable_flash=True, enable_math=True, enable_mem_efficient=False):
+                hidden_states = torch.nn.functional.scaled_dot_product_attention(
+                    q, k, v, attn_mask=mask, dropout_p=0.0, is_causal=False
+                )
+        elif current_optimizer_name == "sub-quadratic":
+            from modules.sd_hijack_optimizations import sub_quad_attention
+            from modules import shared
+            hidden_states = sub_quad_attention(
+                q, k, v, 
+                q_chunk_size=shared.cmd_opts.sub_quad_q_chunk_size, 
+                kv_chunk_size=shared.cmd_opts.sub_quad_kv_chunk_size, 
+                chunk_threshold=shared.cmd_opts.sub_quad_chunk_threshold, 
+                use_checkpoint=self.training
+            )
+
+        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)        
         return hidden_states
 
 
@@ -532,8 +555,8 @@ class VersatileAttention(CrossAttention):
                 attention_mask = attention_mask.repeat_interleave(self.heads, dim=0)
 
         # attention, what we cannot get enough of
-        if self._use_memory_efficient_attention_xformers:
-            hidden_states = self._memory_efficient_attention_xformers(query, key, value, attention_mask)
+        if sd_hijack.current_optimizer is not None and sd_hijack.current_optimizer.name in ["xformers", "sdp", "sdp-no-mem", "sub-quadratic"]:
+            hidden_states = self._memory_efficient_attention(query, key, value, attention_mask, sd_hijack.current_optimizer.name)
             # Some versions of xformers return output in fp32, cast it back to the dtype of the input
             hidden_states = hidden_states.to(query.dtype)
         else:
