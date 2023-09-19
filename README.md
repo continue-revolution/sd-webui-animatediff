@@ -55,12 +55,17 @@ If you upload a last frame: your `init_latent` will be changed in a similar way.
 - `2023/09/11` [v1.4.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.0): support official v2 motion module (different architecture: GroupNorm not hacked, UNet middle layer has motion module).    
 - `2023/09/14`: [v1.4.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.1): always change `beta`, `alpha_comprod` and `alpha_comprod_prev` to resolve grey problem in other samplers.
 - `2023/09/16`: [v1.5.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.0): randomize init latent to support better img2gif, credit to [this forked repo](https://github.com/talesofai/AnimateDiff); add other output formats and infotext output, credit to [@zappityzap](https://github.com/zappityzap); add appending reversed frames; refactor code to ease maintaining.
-- `2023/09/19`: [v1.5.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.1): support xformers, sdp, sub-quadratic attention optimization, vram usage decrease to 5.60GB with default setting.
+- `2023/09/19`: [v1.5.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.1): support xformers, sdp, sub-quadratic attention optimization - VRAM usage decrease to 5.60GB with default setting. See [FAQ](#faq) 1st item for more information.
 
 ## FAQ
 1.  Q: How much VRAM do I need?
 
-    A: Tested on Ubuntu 22.04, NVIDIA 4090, torch 2.0.1, H=W=512, frame=16 (default setting): 12.13GB with no optimization, 5.60GB with xformers/sdp optimization, 10.39 GB with sub-quadratic optimization. Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage.
+    A: Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. I list some data tested on Ubuntu 22.04, NVIDIA 4090, torch 2.0.1+cu117, H=W=512, frame=16 (default setting):
+    | Optimization | VRAM usage |
+    | --- | --- |
+    | No optimization | 12.13GB |
+    | xformers/sdp | 5.60GB |
+    | sub-quadratic | 10.39GB |
 
 1.  Q: Can I use SDXL to generate GIFs?
 
