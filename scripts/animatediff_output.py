@@ -53,7 +53,7 @@ class AnimateDiffOutput:
         if "GIF" in params.format:
             video_path_gif = video_path_prefix + "gif"
             video_paths.append(video_path_gif)
-            if shared.opts.data.get("animatediff_optimize_gif_palette", True):
+            if shared.opts.data.get("animatediff_optimize_gif_palette", False):
                 try:
                     import av
                 except ImportError:
@@ -89,7 +89,7 @@ class AnimateDiffOutput:
                     duration=(1000 / params.fps),
                     loop=params.loop_number,
                 )
-            if "Optimize GIF" in params.format:
+            if shared.opts.data.get("animatediff_optimize_gif_gifsicle", False):
                 self._optimize_gif(video_path_gif)
         if "MP4" in params.format:
             video_path_mp4 = video_path_prefix + "mp4"

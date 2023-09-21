@@ -75,6 +75,15 @@ def on_ui_settings():
             section=section
         )
     )
+    shared.opts.add_option(
+        "animatediff_optimize_gif_gifsicle",
+        shared.OptionInfo(
+            False,
+            "Optimize GIFs with gifsicle, reduces file size",
+            gr.Checkbox,
+            section=section
+        )
+    )
 
 
 script_callbacks.on_ui_settings(on_ui_settings)
