@@ -66,6 +66,15 @@ def on_ui_settings():
             section=section,
         ),
     )
+    shared.opts.add_option(
+        "animatediff_optimize_gif_palette",
+        shared.OptionInfo(
+            False,
+            "Calculate the optimal GIF palette, improves quality significantly, removes banding",
+            gr.Checkbox,
+            section=section
+        )
+    )
 
 
 script_callbacks.on_ui_settings(on_ui_settings)
