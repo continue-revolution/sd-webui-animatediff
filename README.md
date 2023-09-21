@@ -23,7 +23,8 @@ You might also be interested in another extension I created: [Segment Anything f
    1. **Number of frames** — The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`. Choose [1, 24] for V1 motion modules and [1, 32] for V2 motion modules. 
    1. **Frames per second** — How many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds.
    1. **Display loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
-   1. **Save** — Format of the output. Choose at least one of "GIF"|"MP4"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF. Check "Optimize GIF" if you want to optimize the output GIF (`apt install gifsicle` required).
+   1. **Save** — Format of the output. Choose at least one of "GIF"|"MP4"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF.
+        1. You can optimize GIF with `gifsicle` (`apt install gifsicle` required, read [#91](https://github.com/continue-revolution/sd-webui-animatediff/pull/91) for more information) and/or `palette` (read [#104](https://github.com/continue-revolution/sd-webui-animatediff/pull/104) for more information). Go to `Settings/AnimateDiff` to enable them.
    1. **Reverse** — Append reversed frames to your output.
 1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
 
@@ -40,7 +41,30 @@ init_latent = init_latent * init_alpha + random_tensor * (1 - init_alpha)
 If you upload a last frame: your `init_latent` will be changed in a similar way. Read [this code](https://github.com/continue-revolution/sd-webui-animatediff/tree/v1.5.0/scripts/animatediff_latent.py#L28-L65) to understand how it works.
 
 ### API
-[#42](https://github.com/continue-revolution/sd-webui-animatediff/issues/42)
+Just like how you use ControlNet. Here is a sample. You will have to do a [patch](https://github.com/continue-revolution/sd-webui-animatediff/pull/110#issue-1907664100) and view GIF in your file system, as mentioned at [#WebUI](#webui) item 4.
+```
+'alwayson_scripts': {
+	'AnimateDiff': {
+		'args': [{
+				'enable': True,         # enable AnimateDiff
+				'video_length': 16,     # video frame number, 0-24 for v1 and 0-32 for v2
+				'format': 'MP4',        # 'GIF' | 'MP4' | 'PNG' | 'TXT'
+				'loop_number': 0,       # 0 = infinite loop
+				'fps': 8,               # frames per second
+				'model': 'mm_sd_v15_v2.ckpt',   # motion module name
+				'reverse': [],          # 0 | 1 | 2 - 0: Add Reverse Frame, 1: Remove head, 2: Remove tail
+
+                # parameters below are for img2gif only.
+				'latent_power': 1,
+				'latent_scale': 32,
+				'last_frame': None,
+				'latent_power_last': 1,
+				'latent_scale_last': 32
+			}
+		]
+	}
+},
+```
 
 ## Motion Module Model Zoo
 - `mm_sd_v14.ckpt` & `mm_sd_v15.ckpt` & `mm_sd_v15_v2.ckpt` by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y)
@@ -56,6 +80,7 @@ If you upload a last frame: your `init_latent` will be changed in a similar way.
 - `2023/09/14`: [v1.4.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.1): always change `beta`, `alpha_comprod` and `alpha_comprod_prev` to resolve grey problem in other samplers.
 - `2023/09/16`: [v1.5.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.0): randomize init latent to support better img2gif, credit to [this forked repo](https://github.com/talesofai/AnimateDiff); add other output formats and infotext output, credit to [@zappityzap](https://github.com/zappityzap); add appending reversed frames; refactor code to ease maintaining.
 - `2023/09/19`: [v1.5.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.1): support xformers, sdp, sub-quadratic attention optimization - VRAM usage decrease to 5.60GB with default setting. See [FAQ](#faq) 1st item for more information.
+- `2023/09/19`: [v1.5.2](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.2): option to disable xformers at `Settings/AnimateDiff` [due to a bug in xformers](https://github.com/facebookresearch/xformers/issues/845), API support, option to enable GIF paletter optimization at `Settings/AnimateDiff` (credit to [@rkfg](https://github.com/rkfg)), gifsicle optimization move to `Settings/AnimateDiff`.
 
 ## FAQ
 1.  Q: How much VRAM do I need?
