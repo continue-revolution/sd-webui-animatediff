@@ -1,18 +1,15 @@
 import os
-import gradio as gr
 
-from modules import scripts, shared, script_callbacks
-from modules.processing import (
-    StableDiffusionProcessing,
-    Processed,
-    StableDiffusionProcessingImg2Img,
-)
+import gradio as gr
+from modules import script_callbacks, scripts, shared
+from modules.processing import (Processed, StableDiffusionProcessing,
+                                StableDiffusionProcessingImg2Img)
+
+from scripts.animatediff_latent import AnimateDiffI2VLatent
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_mm import mm_animatediff as motion_module
-from scripts.animatediff_latent import AnimateDiffI2VLatent
-from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_output import AnimateDiffOutput
-
+from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
@@ -32,6 +29,7 @@ class AnimateDiffScript(scripts.Script):
         return (AnimateDiffUiGroup().render(is_img2img, model_dir),)
 
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
+        if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
             logger.info("AnimateDiff process start.")
             params.set_p(p)
@@ -40,12 +38,14 @@ class AnimateDiffScript(scripts.Script):
     def before_process_batch(
         self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs
     ):
+        if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img):
             AnimateDiffI2VLatent().randomize(p, params)
 
     def postprocess(
         self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess
     ):
+        if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
             motion_module.restore(p.sd_model)
             AnimateDiffOutput().output(p, res, params)
@@ -62,6 +62,36 @@ def on_ui_settings():
             gr.Textbox,
             section=section,
         ),
+    )
+    shared.opts.add_option(
+        "animatediff_optimize_gif_palette",
+        shared.OptionInfo(
+            False,
+            "Calculate the optimal GIF palette, improves quality significantly, removes banding",
+            gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
+        "animatediff_optimize_gif_gifsicle",
+        shared.OptionInfo(
+            False,
+            "Optimize GIFs with gifsicle, reduces file size",
+            gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
+        "animatediff_xformers",
+        shared.OptionInfo(
+            "Optimize attention layers with xformers",
+            "When you have --xformers in your command line args, you want AnimateDiff to ",
+            gr.Radio,
+            {"choices": ["Optimize attention layers with xformers",
+                         "Optimize attention layers with sdp (torch >= 2.0.0 required)",
+                         "Do not optimize attention layers"]},
+            section=section
+        )
     )
 
 

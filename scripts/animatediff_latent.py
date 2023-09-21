@@ -1,11 +1,12 @@
 import torch
-
 from modules import images, shared
 from modules.devices import device, dtype_vae, torch_gc
-from modules.sd_samplers_common import images_tensor_to_samples, approximation_indexes
 from modules.processing import StableDiffusionProcessingImg2Img
-from scripts.animatediff_ui import AnimateDiffProcess
+from modules.sd_samplers_common import (approximation_indexes,
+                                        images_tensor_to_samples)
+
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_ui import AnimateDiffProcess
 
 
 class AnimateDiffI2VLatent:

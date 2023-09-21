@@ -1,4 +1,5 @@
 import os
+
 import gradio as gr
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
@@ -124,7 +125,7 @@ class AnimateDiffUiGroup:
                 )
             with gr.Row():
                 self.params.format = gr.CheckboxGroup(
-                    choices=["GIF", "MP4", "PNG", "TXT", "Optimize GIF"],
+                    choices=["GIF", "MP4", "PNG", "TXT"],
                     label="Save",
                     type="value",
                     value=["GIF", "PNG"],

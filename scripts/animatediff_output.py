@@ -1,8 +1,9 @@
-import imageio
 from pathlib import Path
 
-from modules import images
-from modules.processing import StableDiffusionProcessing, Processed
+import imageio.v3 as imageio
+import numpy as np
+from modules import images, shared
+from modules.processing import Processed, StableDiffusionProcessing
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
@@ -48,21 +49,52 @@ class AnimateDiffOutput:
         index: int,
     ):
         video_paths = []
+        video_array = [np.array(v) for v in video_list]
         if "GIF" in params.format:
             video_path_gif = video_path_prefix + "gif"
             video_paths.append(video_path_gif)
-            imageio.mimsave(
-                video_path_gif,
-                video_list,
-                duration=(1 / params.fps),
-                loop=params.loop_number,
-            )
-            if "Optimize GIF" in params.format:
+            if shared.opts.data.get("animatediff_optimize_gif_palette", False):
+                try:
+                    import av
+                except ImportError:
+                    from launch import run_pip
+                    run_pip(
+                        "install imageio[pyav]",
+                        "sd-webui-animatediff GIF palette optimization requirement: imageio[pyav]",
+                    )
+                imageio.imwrite(
+                    video_path_gif, video_array, plugin='pyav', fps=params.fps, 
+                    codec='gif', out_pixel_format='pal8',
+                    filter_graph=(
+                        {
+                            "split": ("split", ""),
+                            "palgen": ("palettegen", ""),
+                            "paluse": ("paletteuse", ""),
+                            "scale": ("scale", f"{video_list[0].width}:{video_list[0].height}")
+                        },
+                        [
+                            ("video_in", "scale", 0, 0),
+                            ("scale", "split", 0, 0),
+                            ("split", "palgen", 1, 0),
+                            ("split", "paluse", 0, 0),
+                            ("palgen", "paluse", 0, 1),
+                            ("paluse", "video_out", 0, 0),
+                        ]
+                    )
+                )
+            else:
+                imageio.imwrite(
+                    video_path_gif,
+                    video_array,
+                    duration=(1000 / params.fps),
+                    loop=params.loop_number,
+                )
+            if shared.opts.data.get("animatediff_optimize_gif_gifsicle", False):
                 self._optimize_gif(video_path_gif)
         if "MP4" in params.format:
             video_path_mp4 = video_path_prefix + "mp4"
             video_paths.append(video_path_mp4)
-            imageio.mimsave(video_path_mp4, video_list, fps=params.fps)
+            imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
         if "TXT" in params.format and res.images[index].info is not None:
             video_path_txt = video_path_prefix + "txt"
             self._save_txt(params, video_path_txt, res, index)
