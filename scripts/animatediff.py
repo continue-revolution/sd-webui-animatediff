@@ -32,6 +32,7 @@ class AnimateDiffScript(scripts.Script):
         return (AnimateDiffUiGroup().render(is_img2img, model_dir),)
 
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
+        if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
             logger.info("AnimateDiff process start.")
             params.set_p(p)
@@ -40,12 +41,14 @@ class AnimateDiffScript(scripts.Script):
     def before_process_batch(
         self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs
     ):
+        if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img):
             AnimateDiffI2VLatent().randomize(p, params)
 
     def postprocess(
         self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess
     ):
+        if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
             motion_module.restore(p.sd_model)
             AnimateDiffOutput().output(p, res, params)
