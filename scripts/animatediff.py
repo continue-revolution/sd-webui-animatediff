@@ -81,6 +81,19 @@ def on_ui_settings():
             section=section
         )
     )
+    shared.opts.add_option(
+        "animatediff_xformers",
+        shared.OptionInfo(
+            0,
+            "When you have --xformers in your command line args, you want AnimateDiff to ",
+            gr.Radio,
+            {"choices": ["Optimize attention layers with xformers",
+                         "Optimize attention layers with sdp (torch >= 2.0.0 required)",
+                         "Do not optimize attention layers"],
+             "type": "index"},
+            section=section
+        )
+    )
 
 
 script_callbacks.on_ui_settings(on_ui_settings)

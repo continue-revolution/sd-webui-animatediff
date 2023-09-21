@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from modules import sd_hijack
+from modules import sd_hijack, shared
 from ldm.modules.attention import FeedForward
 
 from einops import rearrange, repeat
@@ -554,9 +554,17 @@ class VersatileAttention(CrossAttention):
                 attention_mask = F.pad(attention_mask, (0, target_length), value=0.0)
                 attention_mask = attention_mask.repeat_interleave(self.heads, dim=0)
 
+        xformers_option = shared.opts.data.get("animatediff_xformers", 0)
+        optimizer_collections = ["xformers", "sdp", "sdp-no-mem", "sub-quadratic"]
+        if xformers_option == 2: # "Do not optimize attention layers"
+            optimizer_collections = optimizer_collections[1:]
+
         # attention, what we cannot get enough of
-        if sd_hijack.current_optimizer is not None and sd_hijack.current_optimizer.name in ["xformers", "sdp", "sdp-no-mem", "sub-quadratic"]:
-            hidden_states = self._memory_efficient_attention(query, key, value, attention_mask, sd_hijack.current_optimizer.name)
+        if sd_hijack.current_optimizer is not None and sd_hijack.current_optimizer.name in optimizer_collections:
+            optimizer_name = sd_hijack.current_optimizer.name
+            if xformers_option == 1 and optimizer_name == "xformers":
+                optimizer_name = "sdp" # "Optimize attention layers with sdp (torch >= 2.0.0 required)"
+            hidden_states = self._memory_efficient_attention(query, key, value, attention_mask, optimizer_name)
             # Some versions of xformers return output in fp32, cast it back to the dtype of the input
             hidden_states = hidden_states.to(query.dtype)
         else:
