@@ -1,21 +1,18 @@
-import os
 import gc
 import json
+import os
+
 import torch
 from einops import rearrange
-
-from modules.devices import device, cpu, torch_gc
-from modules import shared, hashes
-
-from scripts.animatediff_logger import logger_animatediff as logger
-from motion_module import MotionWrapper, VanillaTemporalModule
-
-from ldm.modules.diffusionmodules.openaimodel import (
-    TimestepBlock,
-    TimestepEmbedSequential,
-)
-from ldm.modules.diffusionmodules.util import GroupNorm32
 from ldm.modules.attention import SpatialTransformer
+from ldm.modules.diffusionmodules.openaimodel import (TimestepBlock,
+                                                      TimestepEmbedSequential)
+from ldm.modules.diffusionmodules.util import GroupNorm32
+from modules import hashes, shared
+from modules.devices import cpu, device, torch_gc
+
+from motion_module import MotionWrapper, VanillaTemporalModule
+from scripts.animatediff_logger import logger_animatediff as logger
 
 
 def mm_tes_forward(self, x, emb, context=None):

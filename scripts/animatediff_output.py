@@ -1,9 +1,9 @@
-import imageio.v3 as imageio
 from pathlib import Path
-import numpy as np
 
+import imageio.v3 as imageio
+import numpy as np
 from modules import images, shared
-from modules.processing import StableDiffusionProcessing, Processed
+from modules.processing import Processed, StableDiffusionProcessing
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess

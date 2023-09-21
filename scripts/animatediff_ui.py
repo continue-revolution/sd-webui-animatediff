@@ -1,4 +1,5 @@
 import os
+
 import gradio as gr
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
