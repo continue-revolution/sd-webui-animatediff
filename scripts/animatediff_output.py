@@ -27,7 +27,7 @@ class AnimateDiffOutput:
 
             video_list = self._add_reverse(params, video_list)
             video_paths += self._save(params, video_list, video_path_prefix, res, i)
-        if len(video_paths) > 0:
+        if len(video_paths) > 0 and not p.is_api:
             res.images = video_paths
 
     def _add_reverse(self, params: AnimateDiffProcess, video_list: list):
