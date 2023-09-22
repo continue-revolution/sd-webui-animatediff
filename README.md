@@ -53,7 +53,7 @@ Just like how you use ControlNet. Here is a sample. You will get a list of gener
   		  'fps': 8,               # frames per second
   		  'model': 'mm_sd_v15_v2.ckpt',   # motion module name
   		  'reverse': [],          # 0 | 1 | 2 - 0: Add Reverse Frame, 1: Remove head, 2: Remove tail
-          # parameters below are for img2gif only.
+        # parameters below are for img2gif only.
   		  'latent_power': 1,
   		  'latent_scale': 32,
   		  'last_frame': None,
@@ -79,7 +79,7 @@ Just like how you use ControlNet. Here is a sample. You will get a list of gener
 - `2023/09/14`: [v1.4.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.4.1): always change `beta`, `alpha_comprod` and `alpha_comprod_prev` to resolve grey problem in other samplers.
 - `2023/09/16`: [v1.5.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.0): randomize init latent to support better img2gif, credit to [this forked repo](https://github.com/talesofai/AnimateDiff); add other output formats and infotext output, credit to [@zappityzap](https://github.com/zappityzap); add appending reversed frames; refactor code to ease maintaining.
 - `2023/09/19`: [v1.5.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.1): support xformers, sdp, sub-quadratic attention optimization - VRAM usage decrease to 5.60GB with default setting. See [FAQ](#faq) 1st item for more information.
-- `2023/09/19`: [v1.5.2](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.2): option to disable xformers at `Settings/AnimateDiff` [due to a bug in xformers](https://github.com/facebookresearch/xformers/issues/845), API support, option to enable GIF paletter optimization at `Settings/AnimateDiff` (credit to [@rkfg](https://github.com/rkfg)), gifsicle optimization move to `Settings/AnimateDiff`.
+- `2023/09/22`: [v1.5.2](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.2): option to disable xformers at `Settings/AnimateDiff` [due to a bug in xformers](https://github.com/facebookresearch/xformers/issues/845), API support, option to enable GIF paletter optimization at `Settings/AnimateDiff` (credit to [@rkfg](https://github.com/rkfg)), gifsicle optimization move to `Settings/AnimateDiff`.
 
 ## FAQ
 1.  Q: How much VRAM do I need?
