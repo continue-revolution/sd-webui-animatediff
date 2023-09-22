@@ -44,25 +44,24 @@ If you upload a last frame: your `init_latent` will be changed in a similar way.
 Just like how you use ControlNet. Here is a sample. You will have to do a [patch](https://github.com/continue-revolution/sd-webui-animatediff/pull/110#issue-1907664100) and view GIF in your file system, as mentioned at [#WebUI](#webui) item 4.
 ```
 'alwayson_scripts': {
-	'AnimateDiff': {
-		'args': [{
-				'enable': True,         # enable AnimateDiff
-				'video_length': 16,     # video frame number, 0-24 for v1 and 0-32 for v2
-				'format': 'MP4',        # 'GIF' | 'MP4' | 'PNG' | 'TXT'
-				'loop_number': 0,       # 0 = infinite loop
-				'fps': 8,               # frames per second
-				'model': 'mm_sd_v15_v2.ckpt',   # motion module name
-				'reverse': [],          # 0 | 1 | 2 - 0: Add Reverse Frame, 1: Remove head, 2: Remove tail
-
-                # parameters below are for img2gif only.
-				'latent_power': 1,
-				'latent_scale': 32,
-				'last_frame': None,
-				'latent_power_last': 1,
-				'latent_scale_last': 32
-			}
-		]
-	}
+  'AnimateDiff': {
+  	'args': [{
+  		  'enable': True,         # enable AnimateDiff
+  		  'video_length': 16,     # video frame number, 0-24 for v1 and 0-32 for v2
+  		  'format': 'MP4',        # 'GIF' | 'MP4' | 'PNG' | 'TXT'
+  		  'loop_number': 0,       # 0 = infinite loop
+  		  'fps': 8,               # frames per second
+  		  'model': 'mm_sd_v15_v2.ckpt',   # motion module name
+  		  'reverse': [],          # 0 | 1 | 2 - 0: Add Reverse Frame, 1: Remove head, 2: Remove tail
+          # parameters below are for img2gif only.
+  		  'latent_power': 1,
+  		  'latent_scale': 32,
+  		  'last_frame': None,
+  		  'latent_power_last': 1,
+  		  'latent_scale_last': 32
+  	  }
+  	]
+  }
 },
 ```
 
