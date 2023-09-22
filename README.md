@@ -41,7 +41,7 @@ init_latent = init_latent * init_alpha + random_tensor * (1 - init_alpha)
 If you upload a last frame: your `init_latent` will be changed in a similar way. Read [this code](https://github.com/continue-revolution/sd-webui-animatediff/tree/v1.5.0/scripts/animatediff_latent.py#L28-L65) to understand how it works.
 
 ### API
-Just like how you use ControlNet. Here is a sample. You will have to do a [patch](https://github.com/continue-revolution/sd-webui-animatediff/pull/110#issue-1907664100) and view GIF in your file system, as mentioned at [#WebUI](#webui) item 4.
+Just like how you use ControlNet. Here is a sample. You will get a list of generated frames. You will have to view GIF in your file system, as mentioned at [#WebUI](#webui) item 4.
 ```
 'alwayson_scripts': {
   'AnimateDiff': {
