@@ -164,7 +164,8 @@ class AnimateDiffUiGroup:
                         label="Optional latent scale for last frame",
                     )
                 self.params.last_frame = gr.Image(
-                    label="[Experiment] Optional last frame. Leave it blank if you do not need one."
+                    label="[Experiment] Optional last frame. Leave it blank if you do not need one.",
+                    type="pil",
                 )
             with gr.Row():
                 unload = gr.Button(
