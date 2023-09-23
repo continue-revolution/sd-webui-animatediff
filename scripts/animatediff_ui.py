@@ -94,7 +94,7 @@ class AnimateDiffUiGroup:
 
                 self.params.model = gr.Dropdown(
                     choices=model_list,
-                    value=(model_list[0] if len(model_list) > 0 else None),
+                    value=(self.params.model if self.params.model in model_list else None),
                     label="Motion module",
                     type="value",
                 )
@@ -104,22 +104,22 @@ class AnimateDiffUiGroup:
                 )
             with gr.Row():
                 self.params.enable = gr.Checkbox(
-                    value=False, label="Enable AnimateDiff"
+                    value=self.params.enable, label="Enable AnimateDiff"
                 )
                 self.params.video_length = gr.Slider(
                     minimum=1,
                     maximum=32,
-                    value=16,
+                    value=self.params.video_length,
                     step=1,
                     label="Number of frames",
                     precision=0,
                 )
                 self.params.fps = gr.Number(
-                    value=8, label="Frames per second (FPS)", precision=0
+                    value=self.params.fps, label="Frames per second (FPS)", precision=0
                 )
                 self.params.loop_number = gr.Number(
                     minimum=0,
-                    value=0,
+                    value=self.params.loop_number,
                     label="Display loop number (0 = infinite loop)",
                     precision=0,
                 )
@@ -128,39 +128,40 @@ class AnimateDiffUiGroup:
                     choices=["GIF", "MP4", "PNG", "TXT"],
                     label="Save",
                     type="value",
-                    value=["GIF", "PNG"],
+                    value=self.params.format,
                 )
                 self.params.reverse = gr.CheckboxGroup(
                     choices=["Add Reverse Frame", "Remove head", "Remove tail"],
                     label="Reverse",
                     type="index",
+                    value=self.params.reverse
                 )
             if is_img2img:
                 with gr.Row():
                     self.params.latent_power = gr.Slider(
                         minimum=0.1,
                         maximum=10,
-                        value=1,
+                        value=self.params.latent_power,
                         step=0.1,
                         label="Latent power",
                     )
                     self.params.latent_scale = gr.Slider(
                         minimum=1,
                         maximum=128,
-                        value=32,
+                        value=self.params.latent_scale,
                         label="Latent scale",
                     )
                     self.params.latent_power_last = gr.Slider(
                         minimum=0.1,
                         maximum=10,
-                        value=1,
+                        value=self.params.latent_power_last,
                         step=0.1,
                         label="Optional latent power for last frame",
                     )
                     self.params.latent_scale_last = gr.Slider(
                         minimum=1,
                         maximum=128,
-                        value=32,
+                        value=self.params.latent_scale_last,
                         label="Optional latent scale for last frame",
                     )
                 self.params.last_frame = gr.Image(
