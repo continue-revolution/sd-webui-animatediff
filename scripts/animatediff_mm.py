@@ -15,21 +15,6 @@ from motion_module import MotionWrapper, VanillaTemporalModule
 from scripts.animatediff_logger import logger_animatediff as logger
 
 
-def mm_tes_forward(self, x, emb, context=None):
-    for layer in self:
-        if isinstance(layer, TimestepBlock):
-            x = layer(x, emb)
-        elif isinstance(layer, (SpatialTransformer, VanillaTemporalModule)):
-            x = layer(x, context)
-        else:
-            x = layer(x)
-    return x
-
-
-gn32_original_forward = GroupNorm32.forward
-tes_original_forward = TimestepEmbedSequential.forward
-
-
 class AnimateDiffMM:
     def __init__(self):
         self.mm: MotionWrapper = None
@@ -37,6 +22,8 @@ class AnimateDiffMM:
         self.prev_beta = None
         self.prev_alpha_cumprod = None
         self.prev_alpha_cumprod_prev = None
+        self.gn32_original_forward = None
+        self.tes_original_forward = None
 
     def set_script_dir(self, script_dir):
         self.script_dir = script_dir
@@ -82,6 +69,20 @@ class AnimateDiffMM:
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
         unet = sd_model.model.diffusion_model
         self._load(model_name)
+        self.gn32_original_forward = GroupNorm32.forward
+        self.tes_original_forward = TimestepEmbedSequential.forward
+        gn32_original_forward = self.gn32_original_forward
+
+        def mm_tes_forward(self, x, emb, context=None):
+            for layer in self:
+                if isinstance(layer, TimestepBlock):
+                    x = layer(x, emb)
+                elif isinstance(layer, (SpatialTransformer, VanillaTemporalModule)):
+                    x = layer(x, context)
+                else:
+                    x = layer(x)
+            return x
+
         TimestepEmbedSequential.forward = mm_tes_forward
         if self.mm.using_v2:
             logger.info(
@@ -139,8 +140,8 @@ class AnimateDiffMM:
             unet.middle_block.pop(-2)
         else:
             logger.info(f"Restoring GroupNorm32 forward function.")
-            GroupNorm32.forward = gn32_original_forward
-        TimestepEmbedSequential.forward = tes_original_forward
+            GroupNorm32.forward = self.gn32_original_forward
+        TimestepEmbedSequential.forward = self.tes_original_forward
         logger.info(f"Removal finished.")
         if shared.cmd_opts.lowvram:
             self.unload()

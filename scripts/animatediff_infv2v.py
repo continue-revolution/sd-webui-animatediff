@@ -1,11 +1,15 @@
 import numpy as np
-from typing import Optional
+from scripts.animatediff_ui import AnimateDiffProcess
+from scripts.animatediff_logger import logger_animatediff as logger
+from modules.sd_samplers_cfg_denoiser import CFGDenoiser
 
 
 class AnimateDiffInfV2V:
 
-    def __init__(self):
-        pass
+    def __init__(self, params: AnimateDiffProcess):
+        self.params = params
+        self.cfg_original_forward = None
+
 
     @staticmethod
     # Returns fraction that has denominator that is a power of 2
@@ -22,68 +26,61 @@ class AnimateDiffInfV2V:
         return final
 
 
+    @staticmethod
     # Generator that returns lists of latent indeces to diffuse on
     def uniform(
         step: int = ...,
-        video_length: int = ...,
-        batch_size: Optional[int] = None,
-        context_stride: int = 3,
-        context_overlap: int = 4,
+        video_length: int = 0,
+        batch_size: int = 16,
+        stride: int = 1,
+        overlap: int = 4,
         closed_loop: bool = True,
     ):
         if video_length <= batch_size:
-            yield list(range(video_length))
+            yield list(range(batch_size))
             return
 
-        context_stride = min(context_stride, int(np.ceil(np.log2(video_length / batch_size))) + 1)
+        stride = min(stride, int(np.ceil(np.log2(video_length / batch_size))) + 1)
 
-        for context_step in 1 << np.arange(context_stride):
+        for context_step in 1 << np.arange(stride):
             pad = int(round(video_length * AnimateDiffInfV2V.ordered_halving(step)))
             for j in range(
                 int(AnimateDiffInfV2V.ordered_halving(step) * context_step) + pad,
-                video_length + pad + (0 if closed_loop else -context_overlap),
-                (batch_size * context_step - context_overlap),
+                video_length + pad + (0 if closed_loop else -overlap),
+                (batch_size * context_step - overlap),
             ):
-                yield [e % video_length for e in range(j, j + batch_size * context_step, context_step)]
+                batch_list = [e % video_length for e in range(j, j + batch_size * context_step, context_step)]
+                if not closed_loop and batch_list[-1] < batch_list[0]:
+                    batch_list_end = batch_list[: video_length - batch_list[0]]
+                    batch_list_front = batch_list[video_length - batch_list[0] :]
+                    if len(batch_list_end) < len(batch_list_front):
+                        batch_list_front_end = batch_list_front[-1]
+                        for i in range(len(batch_list_end)):
+                            batch_list_front.append(batch_list_front_end + i + 1)
+                        yield batch_list_front
+                    else:
+                        batch_list_end_front = batch_list_end[0]
+                        for i in range(len(batch_list_front)):
+                            batch_list_end.insert(0, batch_list_end_front - i - 1)
+                        yield batch_list_end
+                else:
+                    yield batch_list
 
 
-    def uniform_constant(
-        step: int = ...,
-        num_steps: Optional[int] = None,
-        num_frames: int = ...,
-        context_size: Optional[int] = None,
-        context_stride: int = 3,
-        context_overlap: int = 4,
-        closed_loop: bool = True,
-        print_final: bool = False,
-    ):
-        if num_frames <= context_size:
-            yield list(range(num_frames))
-            return
+    def hack_cfg_forward(self):
+        logger.info(f"Hacking CFGDenoiser forward function.")
+        self.cfg_original_forward = CFGDenoiser.forward
+        params = self.params
+        cfg_original_forward = self.cfg_original_forward
+        def mm_cfg_forward(self, x, sigma, uncond, cond, cond_scale, s_min_uncond, image_cond):
+            for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
+                x[context] = cfg_original_forward(self, x[context], sigma, uncond[context], cond[context], cond_scale, s_min_uncond, image_cond)
+                self.step -= 1
+            self.step += 1
+            return x
+        CFGDenoiser.forward = mm_cfg_forward
 
-        context_stride = min(context_stride, int(np.ceil(np.log2(num_frames / context_size))) + 1)
 
-        # want to avoid loops that connect end to beginning
-
-        for context_step in 1 << np.arange(context_stride):
-            pad = int(round(num_frames * AnimateDiffInfV2V.ordered_halving(step, print_final)))
-            for j in range(
-                int(AnimateDiffInfV2V.ordered_halving(step) * context_step) + pad,
-                num_frames + pad + (0 if closed_loop else -context_overlap),
-                (context_size * context_step - context_overlap),
-            ):
-                skip_this_window = False
-                prev_val = -1
-                to_yield = []
-                for e in range(j, j + context_size * context_step, context_step):
-                    e = e % num_frames
-                    # if not a closed loop and loops back on itself, should be skipped
-                    if not closed_loop and e < prev_val:
-                        skip_this_window = True
-                        break
-                    to_yield.append(e)
-                    prev_val = e
-                if skip_this_window:
-                    continue
-                # yield if not skipped
-                yield to_yield
+    def restore_cfg_forward(self):
+        logger.info(f"Restoring CFGDenoiser forward function.")
+        CFGDenoiser.forward = self.cfg_original_forward
