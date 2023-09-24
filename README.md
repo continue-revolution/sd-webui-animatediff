@@ -20,12 +20,24 @@ You might also be interested in another extension I created: [Segment Anything f
 1. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
 1. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
 1. Enable AnimateDiff extension, and set up each parameter, and click `Generate`.
-   1. **Number of frames** — The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`. Choose [1, 24] for V1 motion modules and [1, 32] for V2 motion modules. 
+   1. **Number of frames** — Choose whatever number you like. 
+      
+      If you enter 0 (default):
+      - If you submit a video via `Video source` / enter a video path via `Video path` / enable ANY batch ControlNet, the number of frames will be the number of frames in the video (use shortest if many videos are submitted).
+      - Otherwise, the number of frames will be your `Batch size` described below.
+
+      If you enter something smaller than your `Batch size` other than 0: you will get the first `Number of frames` frames as your output GIF from your whole generation. All following frames will not appear in your generated GIF, but will be saved as PNGs as usual.
    1. **Frames per second** — How many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds.
    1. **Display loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
+   1. **Batch size** — How many frames will be passed into the motion module at once. The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`. Choose [1, 24] for V1 motion modules and [1, 32] for V2 motion modules.
+   1. **Stride** — 
+   1. **Overlap** —
+   1. **Closed loop** —
    1. **Save** — Format of the output. Choose at least one of "GIF"|"MP4"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF.
         1. You can optimize GIF with `gifsicle` (`apt install gifsicle` required, read [#91](https://github.com/continue-revolution/sd-webui-animatediff/pull/91) for more information) and/or `palette` (read [#104](https://github.com/continue-revolution/sd-webui-animatediff/pull/104) for more information). Go to `Settings/AnimateDiff` to enable them.
-   1. **Reverse** — Append reversed frames to your output.
+   1. **Reverse** — Append reversed frames to your output. See [#112](https://github.com/continue-revolution/sd-webui-animatediff/issues/112) for instruction.
+   1. **Video source** — [Optional] Video source file for video to video generation. You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a control image or a path.
+   1. **Video path** — [Optional] Folder for source frames for video to video generation, but lower priority than `Video source`. You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a control image or a path.
 1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
 
 #### img2GIF
