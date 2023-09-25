@@ -23,15 +23,15 @@ You might also be interested in another extension I created: [Segment Anything f
    1. **Number of frames** — Choose whatever number you like. 
       
       If you enter 0 (default):
-      - If you submit a video via `Video source` / enter a video path via `Video path` / enable ANY batch ControlNet, the number of frames will be the number of frames in the video (use shortest if many videos are submitted).
+      - If you submit a video via `Video source` / enter a video path via `Video path` / enable ANY batch ControlNet, the number of frames will be the number of frames in the video (use shortest if more than one videos are submitted).
       - Otherwise, the number of frames will be your `Batch size` described below.
 
       If you enter something smaller than your `Batch size` other than 0: you will get the first `Number of frames` frames as your output GIF from your whole generation. All following frames will not appear in your generated GIF, but will be saved as PNGs as usual.
-   1. **Frames per second** — How many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds.
+   1. **FPS** — Frames per second, which is how many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds. If you submit a source video, your FPS will be the same as the source video.
    1. **Display loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
    1. **Batch size** — How many frames will be passed into the motion module at once. The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`. Choose [1, 24] for V1 motion modules and [1, 32] for V2 motion modules.
    1. **Stride** — TODO
-   1. **Overlap** — TODO
+   1. **Overlap** — TODO If overlap is -1 (default): your overlap will be `Batch size` // 4.
    1. **Closed loop** — TODO
    1. **Save** — Format of the output. Choose at least one of "GIF"|"MP4"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF.
         1. You can optimize GIF with `gifsicle` (`apt install gifsicle` required, read [#91](https://github.com/continue-revolution/sd-webui-animatediff/pull/91) for more information) and/or `palette` (read [#104](https://github.com/continue-revolution/sd-webui-animatediff/pull/104) for more information). Go to `Settings/AnimateDiff` to enable them.

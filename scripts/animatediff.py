@@ -44,7 +44,7 @@ class AnimateDiffScript(scripts.Script):
             params.set_p(p)
             motion_module.inject(p.sd_model, params.model)
             self.cfg_hacker = AnimateDiffInfV2V(p, params)
-            self.cfg_hacker.hack_cfg_forward()
+            self.cfg_hacker.hack_cfg_forward(params)
 
 
     def before_process_batch(

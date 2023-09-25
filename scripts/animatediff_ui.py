@@ -72,7 +72,10 @@ class AnimateDiffProcess:
 
     def set_p(self, p):
         self._check()
-        p.batch_size = self.video_length
+        if self.video_length < self.batch_size:
+            p.batch_size = self.batch_size
+        else:
+            p.batch_size = self.video_length
         if "PNG" not in self.format:
             p.do_not_save_samples = True
 

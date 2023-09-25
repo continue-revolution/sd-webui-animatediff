@@ -7,8 +7,7 @@ from scripts.animatediff_ui import AnimateDiffProcess
 
 class AnimateDiffInfV2V:
 
-    def __init__(self, params: AnimateDiffProcess):
-        self.params = params
+    def __init__(self):
         self.cfg_original_forward = None
 
 
@@ -68,10 +67,9 @@ class AnimateDiffInfV2V:
                     yield batch_list
 
 
-    def hack_cfg_forward(self):
+    def hack_cfg_forward(self, params: AnimateDiffProcess):
         logger.info(f"Hacking CFGDenoiser forward function.")
         self.cfg_original_forward = CFGDenoiser.forward
-        params = self.params
         cfg_original_forward = self.cfg_original_forward
         def mm_cfg_forward(self, x, sigma, uncond, cond, cond_scale, s_min_uncond, image_cond):
             for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
