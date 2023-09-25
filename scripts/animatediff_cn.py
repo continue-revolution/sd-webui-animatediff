@@ -1,9 +1,12 @@
 from typing import Optional
-from PIL import Image
-import numpy as np
 
+import numpy as np
 from modules import images, masking
-from modules.processing import StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img, StableDiffusionProcessing
+from modules.processing import (StableDiffusionProcessing,
+                                StableDiffusionProcessingImg2Img,
+                                StableDiffusionProcessingTxt2Img)
+from PIL import Image
+
 
 class AnimateDiffControl:
     """
@@ -25,9 +28,10 @@ class AnimateDiffControl:
         # 4. do not support img2img batch mode
 
         # import ControlNet packages
-        from scripts.logging import logger
-        from scripts.controlnet import Script, image_has_mask, prepare_mask, set_numpy_seed
         from scripts import external_code
+        from scripts.controlnet import (Script, image_has_mask, prepare_mask,
+                                        set_numpy_seed)
+        from scripts.logging import logger
 
         for idx, unit in enumerate(self.enabled_units):
 

@@ -1,7 +1,8 @@
 import numpy as np
-from scripts.animatediff_ui import AnimateDiffProcess
-from scripts.animatediff_logger import logger_animatediff as logger
 from modules.sd_samplers_cfg_denoiser import CFGDenoiser
+
+from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_ui import AnimateDiffProcess
 
 
 class AnimateDiffInfV2V:
@@ -11,8 +12,8 @@ class AnimateDiffInfV2V:
         self.cfg_original_forward = None
 
 
-    @staticmethod
     # Returns fraction that has denominator that is a power of 2
+    @staticmethod
     def ordered_halving(val):
         # get binary value, padded with 0s for 64 bits
         bin_str = f"{val:064b}"
@@ -26,8 +27,8 @@ class AnimateDiffInfV2V:
         return final
 
 
-    @staticmethod
     # Generator that returns lists of latent indeces to diffuse on
+    @staticmethod
     def uniform(
         step: int = ...,
         video_length: int = 0,
