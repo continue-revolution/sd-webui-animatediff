@@ -113,7 +113,9 @@ Note that I did not modify random tensor generation when producing v1.3.0 sample
 
 ### Motion LoRA
 
-
+| No LoRA | PanDown | PanLeft |
+| --- | --- | --- |
+| ![00094-1401397431](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/d8d2b860-c781-4dd0-8c0a-0eb26970130b) | ![00095-3197605735](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/aed2243f-5494-4fe3-a10a-96c57f6f2906) | ![00093-2722547708](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c32e9aaf-54f2-4f40-879b-e800c7c7848c) |
 
 ## Sponsor
 You can sponsor me via WeChat, AliPay or Paypal.
