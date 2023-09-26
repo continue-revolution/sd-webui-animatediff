@@ -82,7 +82,7 @@ Just like how you use ControlNet. Here is a sample. You will get a list of gener
 - `2023/09/22`: [v1.5.2](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.2): option to disable xformers at `Settings/AnimateDiff` [due to a bug in xformers](https://github.com/facebookresearch/xformers/issues/845), API support, option to enable GIF paletter optimization at `Settings/AnimateDiff` (credit to [@rkfg](https://github.com/rkfg)), gifsicle optimization move to `Settings/AnimateDiff`.
 - `2023/09/25`: [v1.6.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.6.0): [motion lora](https://github.com/guoyww/AnimateDiff#features) supported. Download and use them like any other LoRA you use (example: download motion lora to `stable-diffusion-webui/models/Lora` and add `<lora:v2_lora_PanDown:0.8>` to your positive prompt).
 
-Infinite V2V, ControlNet and Prompt Travel are currently work in progress inside [#121]. Stay tuned and they should be released within a week.
+Infinite V2V, ControlNet and Prompt Travel are currently work in progress inside [#121](https://github.com/continue-revolution/sd-webui-animatediff/pull/121). Stay tuned and they should be released within a week.
 
 ## FAQ
 1.  Q: How much VRAM do I need?
