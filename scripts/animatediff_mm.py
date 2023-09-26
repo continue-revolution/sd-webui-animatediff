@@ -16,6 +16,7 @@ from scripts.animatediff_logger import logger_animatediff as logger
 
 
 class AnimateDiffMM:
+
     def __init__(self):
         self.mm: MotionWrapper = None
         self.script_dir = None
@@ -25,8 +26,10 @@ class AnimateDiffMM:
         self.gn32_original_forward = None
         self.tes_original_forward = None
 
+
     def set_script_dir(self, script_dir):
         self.script_dir = script_dir
+
 
     def _load(self, model_name):
         model_path = os.path.join(
@@ -48,6 +51,7 @@ class AnimateDiffMM:
         if not shared.cmd_opts.no_half:
             self.mm.half()
 
+
     def _hash(self, model_path: str, model_name="mm_sd_v15.ckpt"):
         model_hash = hashes.sha256(model_path, f"AnimateDiff/{model_name}")
         with open(os.path.join(self.script_dir, "mm_zoo.json"), "r") as f:
@@ -65,6 +69,7 @@ class AnimateDiffMM:
                 "Please use at your own risk."
             )
             return model_hash, False
+
 
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
         unet = sd_model.model.diffusion_model
@@ -85,9 +90,7 @@ class AnimateDiffMM:
 
         TimestepEmbedSequential.forward = mm_tes_forward
         if self.mm.using_v2:
-            logger.info(
-                f"Injecting motion module {model_name} into SD1.5 UNet middle block."
-            )
+            logger.info(f"Injecting motion module {model_name} into SD1.5 UNet middle block.")
             unet.middle_block.insert(-1, self.mm.mid_block.motion_modules[0])
         else:
             logger.info(f"Hacking GroupNorm32 forward function.")
@@ -99,17 +102,15 @@ class AnimateDiffMM:
                 return x
 
             GroupNorm32.forward = groupnorm32_mm_forward
-        logger.info(
-            f"Injecting motion module {model_name} into SD1.5 UNet input blocks."
-        )
+
+        logger.info(f"Injecting motion module {model_name} into SD1.5 UNet input blocks.")
         for mm_idx, unet_idx in enumerate([1, 2, 4, 5, 7, 8, 10, 11]):
             mm_idx0, mm_idx1 = mm_idx // 2, mm_idx % 2
             unet.input_blocks[unet_idx].append(
                 self.mm.down_blocks[mm_idx0].motion_modules[mm_idx1]
             )
-        logger.info(
-            f"Injecting motion module {model_name} into SD1.5 UNet output blocks."
-        )
+
+        logger.info(f"Injecting motion module {model_name} into SD1.5 UNet output blocks.")
         for unet_idx in range(12):
             mm_idx0, mm_idx1 = unet_idx // 3, unet_idx % 3
             if unet_idx % 3 == 2 and unet_idx != 11:
@@ -120,8 +121,11 @@ class AnimateDiffMM:
                 unet.output_blocks[unet_idx].append(
                     self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1]
                 )
+
         self._set_ddim_alpha(sd_model)
+        self._set_layer_mapping(sd_model)
         logger.info(f"Injection finished.")
+
 
     def restore(self, sd_model):
         self._restore_ddim_alpha(sd_model)
@@ -145,6 +149,7 @@ class AnimateDiffMM:
         logger.info(f"Removal finished.")
         if shared.cmd_opts.lowvram:
             self.unload()
+
 
     def _set_ddim_alpha(self, sd_model):
         logger.info(f"Setting DDIM alpha.")
@@ -171,6 +176,13 @@ class AnimateDiffMM:
         sd_model.betas = betas
         sd_model.alphas_cumprod = alphas_cumprod
         sd_model.alphas_cumprod_prev = alphas_cumprod_prev
+    
+
+    def _set_layer_mapping(self, sd_model):
+        if hasattr(sd_model, 'network_layer_mapping'):
+            for name, module in self.mm.named_modules():
+                sd_model.network_layer_mapping[name] = module
+                module.network_layer_name = name
 
     def _restore_ddim_alpha(self, sd_model):
         logger.info(f"Restoring DDIM alpha.")
@@ -181,12 +193,14 @@ class AnimateDiffMM:
         self.prev_alpha_cumprod = None
         self.prev_alpha_cumprod_prev = None
 
+
     def unload(self):
         logger.info("Moving motion module to CPU")
         if self.mm is not None:
             self.mm.to(cpu)
         torch_gc()
         gc.collect()
+
 
     def remove(self):
         logger.info("Removing motion module from any memory")
