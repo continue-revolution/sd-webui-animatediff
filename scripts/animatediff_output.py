@@ -34,7 +34,7 @@ class AnimateDiffOutput:
                 from deforum_helpers.frame_interpolation import calculate_frames_to_add, check_and_download_film_model
                 from film_interpolation.film_inference import run_film_interp_infer
             except ImportError:
-                self.logger("Deforum not found. Please install: https://github.com/deforum-art/deforum-for-automatic1111-webui.git")
+                logger.error("Deforum not found. Please install: https://github.com/deforum-art/deforum-for-automatic1111-webui.git")
             else:
                 import os
                 import glob
