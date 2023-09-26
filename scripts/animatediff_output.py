@@ -74,7 +74,6 @@ class AnimateDiffOutput:
                     video_path_mp4_interp = video_path_prefix + "FILM.mp4"
                     imageio.imwrite(video_path_mp4_interp, interp_frames, fps=interp_fps, codec="h264")
                     
-                    # XXX need to test
                     video_paths.append(video_path_mp4_interp)
 
                 # save interpolated frames if saving PNG frames
