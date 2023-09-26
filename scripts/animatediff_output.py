@@ -27,8 +27,11 @@ class AnimateDiffOutput:
 
             video_list = self._add_reverse(params, video_list)
             video_paths += self._save(params, video_list, video_path_prefix, res, i)
-        if len(video_paths) > 0 and not p.is_api:
-            res.images = video_paths
+        if len(video_paths) > 0:
+            if not p.is_api:
+                res.images = video_paths
+            else:
+                res.images = self._encode_video_to_b64(video_paths)
 
     def _add_reverse(self, params: AnimateDiffProcess, video_list: list):
         if 0 in params.reverse:
@@ -128,3 +131,11 @@ class AnimateDiffOutput:
         res.images[i].info["loop_number"] = params.loop_number
         with open(video_path, "w", encoding="utf8") as file:
             file.write(f"{res.images[i].info}\n")
+
+    def _encode_video_to_b64(self,paths):
+        videos = []
+        for v_path in paths:
+            with open(v_path, "rb") as video_file:
+                encoded_video = base64.b64encode(video_file.read())
+            videos.append(encoded_video.decode("utf-8"))
+        return videos
