@@ -2,6 +2,7 @@ from pathlib import Path
 
 import imageio.v3 as imageio
 import numpy as np
+import base64
 from modules import images, shared
 from modules.processing import Processed, StableDiffusionProcessing
 
