@@ -59,6 +59,25 @@ class AnimateDiffMM:
             self.mm.half()
 
 
+    def _hash(self, model_path: str, model_name="mm_sd_v15.ckpt"):
+        model_hash = hashes.sha256(model_path, f"AnimateDiff/{model_name}")
+        with open(os.path.join(self.script_dir, "mm_zoo.json"), "r") as f:
+            model_zoo = json.load(f)
+        if model_hash in model_zoo:
+            model_official_name = model_zoo[model_hash]["name"]
+            logger.info(
+                f"You are using {model_official_name}, which has been tested and supported."
+            )
+            return model_hash, model_zoo[model_hash]["arch"] == 2
+        else:
+            logger.warn(
+                f"Your model {model_name} has not been tested and supported. "
+                "Either your download is incomplete or your model has not been tested. "
+                "Please use at your own risk."
+            )
+            return model_hash, False
+
+
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
         unet = sd_model.model.diffusion_model
         self._load(model_name)
@@ -103,9 +122,6 @@ class AnimateDiffMM:
             mm_idx0, mm_idx1 = unet_idx // 3, unet_idx % 3
             if unet_idx % 3 == 2 and unet_idx != 11:
                 unet.output_blocks[unet_idx].insert(
-                    self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1],
-                    -1,
-                )
                     -1, self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1]
                 )
             else:
