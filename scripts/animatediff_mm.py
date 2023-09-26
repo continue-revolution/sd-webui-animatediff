@@ -12,6 +12,7 @@ from modules import hashes, shared
 from modules.devices import cpu, device, torch_gc
 
 from motion_module import MotionWrapper, VanillaTemporalModule
+from safetensors import safe_open
 from scripts.animatediff_logger import logger_animatediff as logger
 
 
@@ -43,32 +44,19 @@ class AnimateDiffMM:
             raise RuntimeError("Please download models manually.")
         if self.mm is None or self.mm.mm_hash != model_hash:
             logger.info(f"Loading motion module {model_name} from {model_path}")
-            mm_state_dict = torch.load(model_path, map_location=device)
+            if model_path.endswith("safetensors"):
+                mm_state_dict = {}
+                with safe_open(model_path, framework="pt", device="cpu" if device == "cpu" else 0) as f:
+                    for k in f.keys():
+                        mm_state_dict[k] = f.get_tensor(k)
+            else:
+                mm_state_dict = torch.load(model_path, map_location=device)
             self.mm = MotionWrapper(model_hash, using_v2)
             missed_keys = self.mm.load_state_dict(mm_state_dict)
             logger.warn(f"Missing keys {missed_keys}")
         self.mm.to(device).eval()
         if not shared.cmd_opts.no_half:
             self.mm.half()
-
-
-    def _hash(self, model_path: str, model_name="mm_sd_v15.ckpt"):
-        model_hash = hashes.sha256(model_path, f"AnimateDiff/{model_name}")
-        with open(os.path.join(self.script_dir, "mm_zoo.json"), "r") as f:
-            model_zoo = json.load(f)
-        if model_hash in model_zoo:
-            model_official_name = model_zoo[model_hash]["name"]
-            logger.info(
-                f"You are using {model_official_name}, which has been tested and supported."
-            )
-            return model_hash, model_zoo[model_hash]["arch"] == 2
-        else:
-            logger.warn(
-                f"Your model {model_name} has not been tested and supported. "
-                "Either your download is incomplete or your model has not been tested. "
-                "Please use at your own risk."
-            )
-            return model_hash, False
 
 
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
@@ -115,6 +103,9 @@ class AnimateDiffMM:
             mm_idx0, mm_idx1 = unet_idx // 3, unet_idx % 3
             if unet_idx % 3 == 2 and unet_idx != 11:
                 unet.output_blocks[unet_idx].insert(
+                    self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1],
+                    -1,
+                )
                     -1, self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1]
                 )
             else:

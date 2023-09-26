@@ -22,5 +22,9 @@
     "69ed0f5fef82b110aca51bcab73b21104242bc65d6ab4b8b2a2a94d31cad1bf0": {
         "name": "mm_sd_v15_v2.ckpt",
         "arch": 2
+    },
+    "1cf5d6d6062b8d3d72cd5cdcabb578befd79b7a3e1ea41bf15d3ca594c0998da": {
+        "name": "mm_sd_v15_v2.safetensors",
+        "arch": 2
     }
 }
