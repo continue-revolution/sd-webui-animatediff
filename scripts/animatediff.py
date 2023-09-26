@@ -5,22 +5,33 @@ from modules import script_callbacks, scripts, shared
 from modules.processing import (Processed, StableDiffusionProcessing,
                                 StableDiffusionProcessingImg2Img)
 
+from scripts.animatediff_infv2v import AnimateDiffInfV2V
 from scripts.animatediff_latent import AnimateDiffI2VLatent
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
+from scripts.animatediff_lora import AnimateDiffLora
+
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
 
 
 class AnimateDiffScript(scripts.Script):
+
+    def __init__(self):
+        self.lora_hacker = None
+        self.cfg_hacker = None
+
+
     def title(self):
         return "AnimateDiff"
 
+
     def show(self, is_img2img):
         return scripts.AlwaysVisible
+
 
     def ui(self, is_img2img):
         model_dir = shared.opts.data.get(
@@ -28,12 +39,18 @@ class AnimateDiffScript(scripts.Script):
         )
         return (AnimateDiffUiGroup().render(is_img2img, model_dir),)
 
+
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
         if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
             logger.info("AnimateDiff process start.")
             params.set_p(p)
             motion_module.inject(p.sd_model, params.model)
+            self.lora_hacker = AnimateDiffLora(motion_module.mm.using_v2)
+            self.lora_hacker.hack()
+            # self.cfg_hacker = AnimateDiffInfV2V(p)
+            # self.cfg_hacker.hack_cfg_forward(params)
+
 
     def before_process_batch(
         self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs
@@ -42,11 +59,14 @@ class AnimateDiffScript(scripts.Script):
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img):
             AnimateDiffI2VLatent().randomize(p, params)
 
+
     def postprocess(
         self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess
     ):
         if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
+            # self.cfg_hacker.restore_cfg_forward()
+            self.lora_hacker.restore()
             motion_module.restore(p.sd_model)
             AnimateDiffOutput().output(p, res, params)
             logger.info("AnimateDiff process end.")
