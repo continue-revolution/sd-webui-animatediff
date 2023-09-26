@@ -16,7 +16,8 @@ class AnimateDiffOutput:
         video_paths = []
         logger.info("Merging images into GIF.")
         Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
-        for i in range(res.index_of_first_image, len(res.images), params.video_length):
+        step = params.video_length if params.video_length > params.batch_size else params.batch_size
+        for i in range(res.index_of_first_image, len(res.images), step):
             video_list = res.images[i : i + params.video_length]
 
             seq = images.get_next_sequence_number(

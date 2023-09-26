@@ -76,6 +76,10 @@ class AnimateDiffProcess:
             p.batch_size = self.batch_size
         else:
             p.batch_size = self.video_length
+        if self.video_length == 0:
+            self.video_length = p.batch_size
+        if self.overlap == -1:
+            self.overlap = self.batch_size // 4
         if "PNG" not in self.format:
             p.do_not_save_samples = True
 
@@ -145,7 +149,7 @@ class AnimateDiffUiGroup:
                     minimum=1,
                     maximum=32,
                     value=self.params.batch_size,
-                    label="Batch size",
+                    label="Context batch size",
                     step=1,
                     precision=0,
                 )

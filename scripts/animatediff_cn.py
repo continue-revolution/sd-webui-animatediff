@@ -57,6 +57,7 @@ class AnimateDiffControl:
         # 4. do not support img2img batch mode
 
         # import ControlNet packages
+        # TODO: what should I do for people who do not have CN?
         from scripts import external_code
         from scripts.controlnet import (Script, set_numpy_seed)
         from scripts.batch_hijack import InputMode
