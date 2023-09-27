@@ -8,11 +8,11 @@ from ldm.modules.attention import SpatialTransformer
 from ldm.modules.diffusionmodules.openaimodel import (TimestepBlock,
                                                       TimestepEmbedSequential)
 from ldm.modules.diffusionmodules.util import GroupNorm32
-from modules import hashes, shared
+from modules import hashes, shared, devices
 from modules.devices import cpu, device, torch_gc
 
 from motion_module import MotionWrapper, VanillaTemporalModule
-from safetensors import safe_open
+import safetensors
 from scripts.animatediff_logger import logger_animatediff as logger
 
 
@@ -46,9 +46,13 @@ class AnimateDiffMM:
             logger.info(f"Loading motion module {model_name} from {model_path}")
             if model_path.endswith("safetensors"):
                 mm_state_dict = {}
-                with safe_open(model_path, framework="pt", device="cpu" if device == "cpu" else 0) as f:
-                    for k in f.keys():
-                        mm_state_dict[k] = f.get_tensor(k)
+                model_device = shared.weight_load_location or devices.get_optimal_device_name()
+
+                if not shared.opts.disable_mmap_load_safetensors:
+                    mm_state_dict = safetensors.torch.load_file(model_path, device=model_device)
+                else:
+                    mm_state_dict = safetensors.torch.load(open(model_path, 'rb').read())
+                    mm_state_dict = {k: v.to(model_device) for k, v in mm_state_dict.items()}
             else:
                 mm_state_dict = torch.load(model_path, map_location=device)
             self.mm = MotionWrapper(model_hash, using_v2)
