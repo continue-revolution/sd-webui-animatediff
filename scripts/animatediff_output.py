@@ -18,7 +18,9 @@ class AnimateDiffOutput:
         logger.info("Merging images into GIF.")
         Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
         for i in range(res.index_of_first_image, len(res.images), params.video_length):
-            video_list = res.images[i : i + params.video_length]
+            # frame interpolation replaces video_list with interpolated frames
+            # so make a copy instead of a slice (reference), to avoid modifying res
+            video_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
             seq = images.get_next_sequence_number(
                 f"{p.outpath_samples}/AnimateDiff", ""
@@ -27,65 +29,58 @@ class AnimateDiffOutput:
             video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}."
 
             video_list = self._add_reverse(params, video_list)
-            video_paths += self._save(params, video_list, video_path_prefix, res, i)
 
-            interp_x = 10 # interpolate x10
-            interp_fps = 30 # interpolated video fps
-            try:
-                from deforum_helpers.frame_interpolation import calculate_frames_to_add, check_and_download_film_model
-                from film_interpolation.film_inference import run_film_interp_infer
-            except ImportError:
-                logger.error("Deforum not found. Please install: https://github.com/deforum-art/deforum-for-automatic1111-webui.git")
-            else:
-                import os
-                import glob
-                import shutil
-                import modules.paths as ph
-                deforum_models_path = ph.models_path + '/Deforum'
-                film_model_folder = os.path.join(deforum_models_path,'film_interpolation')
-                film_model_name = 'film_net_fp16.pt'
-                film_model_path = os.path.join(film_model_folder, film_model_name)
-                check_and_download_film_model('film_net_fp16.pt', film_model_folder)
-        
-                film_in_between_frames_count = calculate_frames_to_add(len(video_list), interp_x) 
+            if "FILM" in params.interp:
+                try:
+                    from deforum_helpers.frame_interpolation import calculate_frames_to_add, check_and_download_film_model
+                    from film_interpolation.film_inference import run_film_interp_infer
+                except ImportError:
+                    logger.error("Deforum not found. Please install: https://github.com/deforum-art/deforum-for-automatic1111-webui.git")
+                else:
+                    import os
+                    import glob
+                    import shutil
+                    import modules.paths as ph
+                    deforum_models_path = ph.models_path + '/Deforum'
+                    film_model_folder = os.path.join(deforum_models_path,'film_interpolation')
+                    film_model_name = 'film_net_fp16.pt'
+                    film_model_path = os.path.join(film_model_folder, film_model_name)
+                    check_and_download_film_model('film_net_fp16.pt', film_model_folder)
+            
+                    film_in_between_frames_count = calculate_frames_to_add(len(video_list), params.interp_x) 
 
-                # deforum takes a folder path and uses all frames in it
-                # so we save the frames to a tmp folder and remove later
-                tmp_folder = f"{p.outpath_samples}/AnimateDiff/tmp"
-                input_folder = f"{tmp_folder}/input"
-                os.makedirs(input_folder, exist_ok=True)
-                for i, frame in enumerate(video_list):
-                    imageio.imwrite(f"{input_folder}/{i:05}.png", frame)
+                    # save original frames to tmp folder for deforum input
+                    tmp_folder = f"{p.outpath_samples}/AnimateDiff/tmp"
+                    input_folder = f"{tmp_folder}/input"
+                    os.makedirs(input_folder, exist_ok=True)
+                    for tmp_seq, frame in enumerate(video_list):
+                        imageio.imwrite(f"{input_folder}/{tmp_seq:05}.png", frame)
 
-                # location to save interpolated frames
-                save_folder = f"{tmp_folder}/{filename}"
-                os.makedirs(save_folder, exist_ok=True)
+                    # deforum saves output frames to tmp/{filename}
+                    save_folder = f"{tmp_folder}/{filename}"
+                    os.makedirs(save_folder, exist_ok=True)
 
-                run_film_interp_infer(
-                    model_path = film_model_path,
-                    input_folder = input_folder,
-                    save_folder = save_folder,
-                    inter_frames = film_in_between_frames_count)
+                    run_film_interp_infer(
+                        model_path = film_model_path,
+                        input_folder = input_folder,
+                        save_folder = save_folder,
+                        inter_frames = film_in_between_frames_count)
 
-                if "MP4" in params.format:
-                    # load the interpolated frames
+                    # load deforum output frames and replace video_list
                     interp_frame_paths = sorted(glob.glob(os.path.join(save_folder, '*.png')))
-                    interp_frames = [imageio.imread(f) for f in interp_frame_paths]
+                    video_list = [imageio.imread(f) for f in interp_frame_paths]
+                     
+                    # if saving PNG, also save interpolated frames
+                    if "PNG" in params.format:
+                        save_interp_path = f"{p.outpath_samples}/AnimateDiff/interp"
+                        os.makedirs(save_interp_path, exist_ok=True)
+                        shutil.move(save_folder, save_interp_path)
 
-                    video_path_mp4_interp = video_path_prefix + "FILM.mp4"
-                    imageio.imwrite(video_path_mp4_interp, interp_frames, fps=interp_fps, codec="h264")
-                    
-                    video_paths.append(video_path_mp4_interp)
+                    # remove tmp folder
+                    try: shutil.rmtree(tmp_folder)
+                    except OSError as e: print(f"Error: {e}")
 
-                # save interpolated frames if saving PNG frames
-                if "PNG" in params.format:
-                    save_interp_path = f"{p.outpath_samples}/AnimateDiff/interp"
-                    os.makedirs(save_interp_path, exist_ok=True)
-                    shutil.move(save_folder, save_interp_path)
-
-                # remove tmp folder
-                try: shutil.rmtree(tmp_folder)
-                except OSError as e: print(f"Error: {e}")
+            video_paths += self._save(params, video_list, video_path_prefix, res, i)
 
         if len(video_paths) > 0:
             if not p.is_api:
