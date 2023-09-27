@@ -24,6 +24,8 @@ class AnimateDiffProcess:
         fps=8,
         model="mm_sd_v15_v2.ckpt",
         format=["GIF", "PNG"],
+        interp='Off',
+        interp_x=10,
         reverse=[],
         latent_power=1,
         latent_scale=32,
@@ -37,6 +39,8 @@ class AnimateDiffProcess:
         self.fps = fps
         self.model = model
         self.format = format
+        self.interp = interp
+        self.interp_x = interp_x
         self.reverse = reverse
         self.latent_power = latent_power
         self.latent_scale = latent_scale
@@ -135,6 +139,15 @@ class AnimateDiffUiGroup:
                     label="Reverse",
                     type="index",
                     value=self.params.reverse
+                )
+            with gr.Row():
+                self.params.interp = gr.Radio(
+                    choices=["Off", "FILM"],
+                    label="Frame Interpolation",
+                    value=self.params.interp
+                )
+                self.params.interp_x = gr.Number(
+                    value=self.params.interp_x, label="Interp X", precision=0
                 )
             if is_img2img:
                 with gr.Row():
