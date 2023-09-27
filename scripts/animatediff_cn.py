@@ -21,6 +21,7 @@ class AnimateDiffControl:
         self.original_processing_process_images_hijack = None
         self.original_controlnet_main_entry = None
         self.original_postprocess_batch = None
+        self.original_cn_forward = None
         try:
             from scripts.external_code import find_cn_script
             self.cn_script = find_cn_script(p.scripts)
@@ -546,6 +547,20 @@ class AnimateDiffControl:
                     images[i] = post_processor(images[i], i)
             return
 
+        from scripts.cldm import ControlNet
+        self.original_cn_forward = ControlNet.forward
+        original_cn_forward = self.original_cn_forward
+
+        def hacked_cn_forward(self, x, hint, timesteps, context, y=None, **kwargs):
+            hint_batch = hint.shape[0]
+            x_batch = x.shape[0]
+            assert hint_batch == 1 or hint_batch == x_batch / 2, f"Cannot match hint shape {hint.shape} and x shape {x.shape}. Please submit an issue to github with this assertion."
+            if hint_batch == x_batch / 2 and hint_batch != 1:
+                hint = hint.repeat(2, 1, 1, 1)
+            return original_cn_forward(self, x, hint, timesteps, context, y, **kwargs)
+        
+        ControlNet.forward = hacked_cn_forward
+        
         self.original_controlnet_main_entry = self.cn_script.controlnet_main_entry
         self.original_postprocess_batch = self.cn_script.postprocess_batch
         self.cn_script.controlnet_main_entry = MethodType(hacked_main_entry, self.cn_script)
@@ -557,6 +572,9 @@ class AnimateDiffControl:
         self.original_controlnet_main_entry = None
         self.cn_script.postprocess_batch = self.original_postprocess_batch
         self.original_postprocess_batch = None
+        from scripts.cldm import ControlNet
+        ControlNet.forward = self.original_cn_forward
+        self.original_cn_forward = None
 
 
     def hack(self, params: AnimateDiffProcess):
