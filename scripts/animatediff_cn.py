@@ -24,7 +24,6 @@ class AnimateDiffControl:
 
 
     def hack_batchhijack(self, params: AnimateDiffProcess):
-        logger.info('Hacking ControlNet BatchHijack')
         cn_script = self.cn_script
 
         def get_input_frames():
@@ -89,14 +88,12 @@ class AnimateDiffControl:
     
 
     def restore_batchhijack(self):
-        logger.info('Restoring ControlNet BatchHijack')
         from scripts.batch_hijack import BatchHijack
         BatchHijack.processing_process_images_hijack = self.original_processing_process_images_hijack
         self.original_processing_process_images_hijack = None
 
 
     def hack_cn_main_entry(self):
-        logger.info('Hacking ControlNet main entry')
         cn_script = self.cn_script
 
         # TODO: hack this and batch inpainting
@@ -487,18 +484,19 @@ class AnimateDiffControl:
 
 
     def restore_cn_main_entry(self):
-        logger.info('Restoring ControlNet main entry')
         self.cn_script.controlnet_main_entry = self.original_controlnet_main_entry
         self.original_controlnet_main_entry = None
 
 
     def hack(self, params: AnimateDiffProcess):
         if self.cn_script is not None:
+            logger.info(f"Hacking ControlNet.")
             self.hack_batchhijack(params)
             self.hack_cn_main_entry()
 
 
     def restore(self):
         if self.cn_script is not None:
+            logger.info(f"Restoring ControlNet.")
             self.restore_batchhijack()
             self.restore_cn_main_entry()
