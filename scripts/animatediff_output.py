@@ -1,8 +1,8 @@
+import base64
 from pathlib import Path
 
 import imageio.v3 as imageio
 import numpy as np
-import base64
 from modules import images, shared
 from modules.processing import Processed, StableDiffusionProcessing
 
@@ -60,17 +60,19 @@ class AnimateDiffOutput:
             return video_list
         
         try:
-            from deforum_helpers.frame_interpolation import calculate_frames_to_add, check_and_download_film_model
+            from deforum_helpers.frame_interpolation import (
+                calculate_frames_to_add, check_and_download_film_model)
             from film_interpolation.film_inference import run_film_interp_infer
         except ImportError:
             logger.error("Deforum not found. Please install: https://github.com/deforum-art/deforum-for-automatic1111-webui.git")
             return video_list
 
-        import os
         import glob
+        import os
         import shutil
+
         import modules.paths as ph
-        
+
         # load film model
         deforum_models_path = ph.models_path + '/Deforum'
         film_model_folder = os.path.join(deforum_models_path,'film_interpolation')
@@ -202,7 +204,7 @@ class AnimateDiffOutput:
         with open(video_path, "w", encoding="utf8") as file:
             file.write(f"{res.images[i].info}\n")
 
-    def _encode_video_to_b64(self,paths):
+    def _encode_video_to_b64(self, paths):
         videos = []
         for v_path in paths:
             with open(v_path, "rb") as video_file:

@@ -5,15 +5,14 @@ from modules import script_callbacks, scripts, shared
 from modules.processing import (Processed, StableDiffusionProcessing,
                                 StableDiffusionProcessingImg2Img)
 
-from scripts.animatediff_infv2v import AnimateDiffInfV2V
 from scripts.animatediff_cn import AnimateDiffControl
+from scripts.animatediff_infv2v import AnimateDiffInfV2V
 from scripts.animatediff_latent import AnimateDiffI2VLatent
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_lora import AnimateDiffLora
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
-from scripts.animatediff_lora import AnimateDiffLora
-
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)

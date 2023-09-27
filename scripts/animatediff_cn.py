@@ -1,14 +1,16 @@
-import cv2
 from pathlib import Path
-import torch
+
+import cv2
 import numpy as np
-from modules import shared, processing
+import torch
+from modules import processing, shared
 from modules.paths import data_path
 from modules.processing import (StableDiffusionProcessing,
                                 StableDiffusionProcessingImg2Img,
                                 StableDiffusionProcessingTxt2Img)
-from scripts.animatediff_ui import AnimateDiffProcess
+
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_ui import AnimateDiffProcess
 
 
 class AnimateDiffControl:
@@ -46,8 +48,8 @@ class AnimateDiffControl:
                 return params.video_path
             return ''
 
-        from scripts.batch_hijack import BatchHijack, InputMode
         from scripts import external_code
+        from scripts.batch_hijack import BatchHijack, InputMode
 
         def hacked_processing_process_images_hijack(self, p, *args, **kwargs):
             if self.is_batch:
@@ -105,17 +107,20 @@ class AnimateDiffControl:
         cn_script = self.cn_script
 
         from typing import Optional
-        from PIL import Image, ImageFilter, ImageOps
+
         from modules import images, masking
-        from scripts import global_state, hook, external_code
-        from scripts.processor import model_free_preprocessors
+        from PIL import Image, ImageFilter, ImageOps
+
+        from scripts import external_code, global_state, hook
         # from scripts.controlnet_lora import bind_control_lora # do not support control lora for sdxl
-        from scripts.adapter import Adapter, StyleAdapter, Adapter_light
-        # from scripts.controlnet_lllite import PlugableControlLLLite, clear_all_lllite # do not support controlllite for sdxl
-        from scripts.controlmodel_ipadapter import PlugableIPAdapter, clear_all_ip_adapter
-        from scripts.hook import ControlParams, UnetHook, ControlModelType
-        from scripts.logging import logger
+        from scripts.adapter import Adapter, Adapter_light, StyleAdapter
         from scripts.batch_hijack import InputMode
+        # from scripts.controlnet_lllite import PlugableControlLLLite, clear_all_lllite # do not support controlllite for sdxl
+        from scripts.controlmodel_ipadapter import (PlugableIPAdapter,
+                                                    clear_all_ip_adapter)
+        from scripts.hook import ControlModelType, ControlParams, UnetHook
+        from scripts.logging import logger
+        from scripts.processor import model_free_preprocessors
 
         def hacked_main_entry(self, p: StableDiffusionProcessing):
             def image_has_mask(input_image: np.ndarray) -> bool:
