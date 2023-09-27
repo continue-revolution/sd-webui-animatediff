@@ -25,6 +25,7 @@ class AnimateDiffControl:
 
     def hack_batchhijack(self, params: AnimateDiffProcess):
         logger.info('Hacking ControlNet BatchHijack')
+        cn_script = self.cn_script
 
         def get_input_frames():
             if params.video_source is not None and params.video_source != '':
@@ -56,9 +57,8 @@ class AnimateDiffControl:
             units = external_code.get_all_units_in_processing(p)
             units = [unit for unit in units if getattr(unit, 'enabled', False)]
             global_input_frames = get_input_frames()
-            for unit in units:
+            for idx, unit in enumerate(units):
                 # if no input given for this unit, use global input
-                # TODO: inpainting, SAM single image
                 if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
                     if isinstance(unit.batch_images, str) and unit.batch_images == '':
                         unit.batch_images = shared.listfiles(unit.batch_images)
@@ -66,9 +66,12 @@ class AnimateDiffControl:
                         assert global_input_frames != '', 'No input images found for ControlNet module'
                         unit.batch_images = global_input_frames
                 elif unit.image is None:
-                    assert global_input_frames != '', 'No input images found for ControlNet module'
-                    unit.batch_images = global_input_frames
-                    unit.input_mode = InputMode.BATCH
+                    try:
+                        cn_script.choose_input_image(p, unit, idx)
+                    except:
+                        assert global_input_frames != '', 'No input images found for ControlNet module'
+                        unit.batch_images = global_input_frames
+                        unit.input_mode = InputMode.BATCH
 
             video_length = min(len(getattr(unit, 'batch_images', []))
                             for unit in units
@@ -94,9 +97,67 @@ class AnimateDiffControl:
 
     def hack_cn_main_entry(self):
         logger.info('Hacking ControlNet main entry')
-        # TODO: hack this!
-        # TODO: remove tmp_frame_dir
-        def hacked_main_entry(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):          
+        cn_script = self.cn_script
+
+        # TODO: hack this and batch inpainting
+        from typing import Optional
+        from PIL import Image, ImageFilter, ImageOps
+        from modules import images, masking
+        from scripts import global_state, hook, external_code
+        from scripts.processor import model_free_preprocessors
+        from scripts.controlnet_lora import bind_control_lora
+        from scripts.adapter import Adapter, StyleAdapter, Adapter_light
+        from scripts.controlnet_lllite import PlugableControlLLLite, clear_all_lllite
+        from scripts.controlmodel_ipadapter import PlugableIPAdapter, clear_all_ip_adapter
+        from scripts.hook import ControlParams, UnetHook, ControlModelType
+        from scripts.logging import logger
+
+        def hacked_main_entry(self, p: StableDiffusionProcessing):
+            def image_has_mask(input_image: np.ndarray) -> bool:
+                return (
+                    input_image.ndim == 3 and 
+                    input_image.shape[2] == 4 and 
+                    np.max(input_image[:, :, 3]) > 127
+                )
+
+
+            def prepare_mask(
+                mask: Image.Image, p: processing.StableDiffusionProcessing
+            ) -> Image.Image:
+                mask = mask.convert("L")
+                if getattr(p, "inpainting_mask_invert", False):
+                    mask = ImageOps.invert(mask)
+                
+                if hasattr(p, 'mask_blur_x'):
+                    if getattr(p, "mask_blur_x", 0) > 0:
+                        np_mask = np.array(mask)
+                        kernel_size = 2 * int(2.5 * p.mask_blur_x + 0.5) + 1
+                        np_mask = cv2.GaussianBlur(np_mask, (kernel_size, 1), p.mask_blur_x)
+                        mask = Image.fromarray(np_mask)
+                    if getattr(p, "mask_blur_y", 0) > 0:
+                        np_mask = np.array(mask)
+                        kernel_size = 2 * int(2.5 * p.mask_blur_y + 0.5) + 1
+                        np_mask = cv2.GaussianBlur(np_mask, (1, kernel_size), p.mask_blur_y)
+                        mask = Image.fromarray(np_mask)
+                else:
+                    if getattr(p, "mask_blur", 0) > 0:
+                        mask = mask.filter(ImageFilter.GaussianBlur(p.mask_blur))
+                
+                return mask
+
+
+            def set_numpy_seed(p: processing.StableDiffusionProcessing) -> Optional[int]:
+                try:
+                    tmp_seed = int(p.all_seeds[0] if p.seed == -1 else max(int(p.seed), 0))
+                    tmp_subseed = int(p.all_seeds[0] if p.subseed == -1 else max(int(p.subseed), 0))
+                    seed = (tmp_seed + tmp_subseed) & 0xFFFFFFFF
+                    np.random.seed(seed)
+                    return seed
+                except Exception as e:
+                    logger.warning(e)
+                    logger.warning('Warning: Failed to use consistent random seed.')
+                    return None
+
             sd_ldm = p.sd_model
             unet = sd_ldm.model.diffusion_model
             self.noise_modifier = None
@@ -108,10 +169,10 @@ class AnimateDiffControl:
                 self.latest_network.restore()
 
             # always clear (~0.05s)
-            clear_all_secondary_control_models()
+            clear_all_lllite()
+            clear_all_ip_adapter()
 
-            if not batch_hijack.instance.is_batch:
-                self.enabled_units = Script.get_enabled_units(p)
+            self.enabled_units = cn_script.get_enabled_units(p)
 
             if len(self.enabled_units) == 0:
                 self.latest_network = None
@@ -123,7 +184,7 @@ class AnimateDiffControl:
 
             # cache stuff
             if self.latest_model_hash != p.sd_model.sd_model_hash:
-                Script.clear_control_model_cache()
+                cn_script.clear_control_model_cache()
 
             for idx, unit in enumerate(self.enabled_units):
                 unit.module = global_state.get_module_basename(unit.module)
@@ -136,7 +197,7 @@ class AnimateDiffControl:
 
             self.latest_model_hash = p.sd_model.sd_model_hash
             for idx, unit in enumerate(self.enabled_units):
-                Script.bound_check_params(unit)
+                cn_script.bound_check_params(unit)
 
                 resize_mode = external_code.resize_mode_from_value(unit.resize_mode)
                 control_mode = external_code.control_mode_from_value(unit.control_mode)
@@ -144,7 +205,7 @@ class AnimateDiffControl:
                 if unit.module in model_free_preprocessors:
                     model_net = None
                 else:
-                    model_net = Script.load_control_model(p, unet, unit.model)
+                    model_net = cn_script.load_control_model(p, unet, unit.model)
                     model_net.reset()
 
                     if getattr(model_net, 'is_control_lora', False):
@@ -152,7 +213,7 @@ class AnimateDiffControl:
                         bind_control_lora(unet, control_lora)
                         p.controlnet_control_loras.append(control_lora)
 
-                input_image, image_from_a1111 = Script.choose_input_image(p, unit, idx)
+                input_image, image_from_a1111 = cn_script.choose_input_image(p, unit, idx)
                 if image_from_a1111:
                     a1111_i2i_resize_mode = getattr(p, "resize_mode", None)
                     if a1111_i2i_resize_mode is not None:
@@ -226,7 +287,7 @@ class AnimateDiffControl:
 
                 if unit.module == 'inpaint_only+lama' and resize_mode == external_code.ResizeMode.OUTER_FIT:
                     # inpaint_only+lama is special and required outpaint fix
-                    _, input_image = Script.detectmap_proc(input_image, unit.module, resize_mode, hr_y, hr_x)
+                    _, input_image = cn_script.detectmap_proc(input_image, unit.module, resize_mode, hr_y, hr_x)
 
                 control_model_type = ControlModelType.ControlNet
                 global_average_pooling = False
@@ -273,7 +334,7 @@ class AnimateDiffControl:
 
                 if high_res_fix:
                     if is_image:
-                        hr_control, hr_detected_map = Script.detectmap_proc(detected_map, unit.module, resize_mode, hr_y, hr_x)
+                        hr_control, hr_detected_map = cn_script.detectmap_proc(detected_map, unit.module, resize_mode, hr_y, hr_x)
                         detected_maps.append((hr_detected_map, unit.module))
                     else:
                         hr_control = detected_map
@@ -281,7 +342,7 @@ class AnimateDiffControl:
                     hr_control = None
 
                 if is_image:
-                    control, detected_map = Script.detectmap_proc(detected_map, unit.module, resize_mode, h, w)
+                    control, detected_map = cn_script.detectmap_proc(detected_map, unit.module, resize_mode, h, w)
                     detected_maps.append((detected_map, unit.module))
                 else:
                     control = detected_map
@@ -419,6 +480,7 @@ class AnimateDiffControl:
 
             self.detected_map = detected_maps
             self.post_processors = post_processors
+            Path(f'{data_path}/tmp/animatediff-frames/').rmdir()
 
         self.original_controlnet_main_entry = self.cn_script.controlnet_main_entry
         self.cn_script.controlnet_main_entry = hacked_main_entry
