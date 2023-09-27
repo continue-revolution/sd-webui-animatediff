@@ -19,7 +19,9 @@ class AnimateDiffOutput:
         Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
         step = params.video_length if params.video_length > params.batch_size else params.batch_size
         for i in range(res.index_of_first_image, len(res.images), step):
-            video_list = res.images[i : i + params.video_length]
+            # frame interpolation replaces video_list with interpolated frames
+            # so make a copy instead of a slice (reference), to avoid modifying res
+            video_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
             seq = images.get_next_sequence_number(
                 f"{p.outpath_samples}/AnimateDiff", ""
@@ -28,7 +30,9 @@ class AnimateDiffOutput:
             video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}."
 
             video_list = self._add_reverse(params, video_list)
+            video_list = self._interp(p, params, video_list, filename)
             video_paths += self._save(params, video_list, video_path_prefix, res, i)
+
         if len(video_paths) > 0:
             if not p.is_api:
                 res.images = video_paths
@@ -43,6 +47,70 @@ class AnimateDiffOutput:
             if 2 in params.reverse:
                 video_list_reverse.pop(-1)
             return video_list + video_list_reverse
+        return video_list
+
+    def _interp(
+        self,
+        p: StableDiffusionProcessing,
+        params: AnimateDiffProcess,
+        video_list: list,
+        filename: str
+    ):
+        if params.interp not in ['FILM']:
+            return video_list
+        
+        try:
+            from deforum_helpers.frame_interpolation import calculate_frames_to_add, check_and_download_film_model
+            from film_interpolation.film_inference import run_film_interp_infer
+        except ImportError:
+            logger.error("Deforum not found. Please install: https://github.com/deforum-art/deforum-for-automatic1111-webui.git")
+            return video_list
+
+        import os
+        import glob
+        import shutil
+        import modules.paths as ph
+        
+        # load film model
+        deforum_models_path = ph.models_path + '/Deforum'
+        film_model_folder = os.path.join(deforum_models_path,'film_interpolation')
+        film_model_name = 'film_net_fp16.pt'
+        film_model_path = os.path.join(film_model_folder, film_model_name)
+        check_and_download_film_model('film_net_fp16.pt', film_model_folder)
+
+        film_in_between_frames_count = calculate_frames_to_add(len(video_list), params.interp_x) 
+
+        # save original frames to tmp folder for deforum input
+        tmp_folder = f"{p.outpath_samples}/AnimateDiff/tmp"
+        input_folder = f"{tmp_folder}/input"
+        os.makedirs(input_folder, exist_ok=True)
+        for tmp_seq, frame in enumerate(video_list):
+            imageio.imwrite(f"{input_folder}/{tmp_seq:05}.png", frame)
+
+        # deforum saves output frames to tmp/{filename}
+        save_folder = f"{tmp_folder}/{filename}"
+        os.makedirs(save_folder, exist_ok=True)
+
+        run_film_interp_infer(
+            model_path = film_model_path,
+            input_folder = input_folder,
+            save_folder = save_folder,
+            inter_frames = film_in_between_frames_count)
+
+        # load deforum output frames and replace video_list
+        interp_frame_paths = sorted(glob.glob(os.path.join(save_folder, '*.png')))
+        video_list = [imageio.imread(f) for f in interp_frame_paths]
+        
+        # if saving PNG, also save interpolated frames
+        if "PNG" in params.format:
+            save_interp_path = f"{p.outpath_samples}/AnimateDiff/interp"
+            os.makedirs(save_interp_path, exist_ok=True)
+            shutil.move(save_folder, save_interp_path)
+
+        # remove tmp folder
+        try: shutil.rmtree(tmp_folder)
+        except OSError as e: print(f"Error: {e}")
+
         return video_list
 
     def _save(

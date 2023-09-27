@@ -28,6 +28,8 @@ class AnimateDiffProcess:
         stride=1,
         overlap=-1,
         format=["GIF", "PNG"],
+        interp='Off',
+        interp_x=10,
         reverse=[],
         video_source=None,
         video_path='',
@@ -47,6 +49,8 @@ class AnimateDiffProcess:
         self.stride = stride
         self.overlap = overlap
         self.format = format
+        self.interp = interp
+        self.interp_x = interp_x
         self.reverse = reverse
         self.video_source = video_source
         self.video_path = video_path
@@ -177,6 +181,15 @@ class AnimateDiffUiGroup:
                     label="Reverse",
                     type="index",
                     value=self.params.reverse
+                )
+            with gr.Row():
+                self.params.interp = gr.Radio(
+                    choices=["Off", "FILM"],
+                    label="Frame Interpolation",
+                    value=self.params.interp
+                )
+                self.params.interp_x = gr.Number(
+                    value=self.params.interp_x, label="Interp X", precision=0
                 )
             self.params.video_source = gr.Video(
                 value=self.params.video_source,
