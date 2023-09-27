@@ -16,6 +16,7 @@ class AnimateDiffControl:
     def __init__(self, p: StableDiffusionProcessing):
         self.original_processing_process_images_hijack = None
         self.original_controlnet_main_entry = None
+        self.original_postprocess_batch = None
         try:
             from scripts.external_code import find_cn_script
             self.cn_script = find_cn_script(p.scripts)
@@ -59,9 +60,7 @@ class AnimateDiffControl:
             for idx, unit in enumerate(units):
                 # if no input given for this unit, use global input
                 if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
-                    if isinstance(unit.batch_images, str) and unit.batch_images == '':
-                        unit.batch_images = shared.listfiles(unit.batch_images)
-                    else:
+                    if not (isinstance(unit.batch_images, str) and unit.batch_images != ''):
                         assert global_input_frames != '', 'No input images found for ControlNet module'
                         unit.batch_images = global_input_frames
                 elif unit.image is None:
@@ -71,8 +70,17 @@ class AnimateDiffControl:
                         assert global_input_frames != '', 'No input images found for ControlNet module'
                         unit.batch_images = global_input_frames
                         unit.input_mode = InputMode.BATCH
+                
+                if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
+                    if 'inpaint' in unit.module:
+                        images = shared.listfiles(f'{unit.batch_images}/image')
+                        masks = shared.listfiles(f'{unit.batch_images}/mask')
+                        assert len(images) == len(masks), 'Inpainting image mask count mismatch'
+                        unit.batch_images = [{'image': images[i], 'mask': masks[i]} for i in range(len(images))]
+                    else:
+                        unit.batch_images = shared.listfiles(unit.batch_images)
 
-            video_length = min(len(getattr(unit, 'batch_images', []))
+            video_length = min(len(unit.batch_images)
                             for unit in units
                             if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH)
             # ensure that params.video_length <= video_length and params.batch_size <= video_length
@@ -93,21 +101,21 @@ class AnimateDiffControl:
         self.original_processing_process_images_hijack = None
 
 
-    def hack_cn_main_entry(self):
+    def hack_cn(self):
         cn_script = self.cn_script
 
-        # TODO: hack this and batch inpainting
         from typing import Optional
         from PIL import Image, ImageFilter, ImageOps
         from modules import images, masking
         from scripts import global_state, hook, external_code
         from scripts.processor import model_free_preprocessors
-        from scripts.controlnet_lora import bind_control_lora
+        # from scripts.controlnet_lora import bind_control_lora # do not support control lora for sdxl
         from scripts.adapter import Adapter, StyleAdapter, Adapter_light
-        from scripts.controlnet_lllite import PlugableControlLLLite, clear_all_lllite
+        # from scripts.controlnet_lllite import PlugableControlLLLite, clear_all_lllite # do not support controlllite for sdxl
         from scripts.controlmodel_ipadapter import PlugableIPAdapter, clear_all_ip_adapter
         from scripts.hook import ControlParams, UnetHook, ControlModelType
         from scripts.logging import logger
+        from scripts.batch_hijack import InputMode
 
         def hacked_main_entry(self, p: StableDiffusionProcessing):
             def image_has_mask(input_image: np.ndarray) -> bool:
@@ -166,7 +174,7 @@ class AnimateDiffControl:
                 self.latest_network.restore()
 
             # always clear (~0.05s)
-            clear_all_lllite()
+            # clear_all_lllite() # do not support controlllite for sdxl
             clear_all_ip_adapter()
 
             self.enabled_units = cn_script.get_enabled_units(p)
@@ -205,62 +213,74 @@ class AnimateDiffControl:
                     model_net = cn_script.load_control_model(p, unet, unit.model)
                     model_net.reset()
 
-                    if getattr(model_net, 'is_control_lora', False):
-                        control_lora = model_net.control_model
-                        bind_control_lora(unet, control_lora)
-                        p.controlnet_control_loras.append(control_lora)
+                    # if getattr(model_net, 'is_control_lora', False): # do not support control lora for sdxl
+                    #     control_lora = model_net.control_model
+                    #     bind_control_lora(unet, control_lora)
+                    #     p.controlnet_control_loras.append(control_lora)
 
-                input_image, image_from_a1111 = cn_script.choose_input_image(p, unit, idx)
-                if image_from_a1111:
-                    a1111_i2i_resize_mode = getattr(p, "resize_mode", None)
-                    if a1111_i2i_resize_mode is not None:
-                        resize_mode = external_code.resize_mode_from_value(a1111_i2i_resize_mode)
-                
-                a1111_mask_image : Optional[Image.Image] = getattr(p, "image_mask", None)
-                if 'inpaint' in unit.module and not image_has_mask(input_image) and a1111_mask_image is not None:
-                    a1111_mask = np.array(prepare_mask(a1111_mask_image, p))
-                    if a1111_mask.ndim == 2:
-                        if a1111_mask.shape[0] == input_image.shape[0]:
-                            if a1111_mask.shape[1] == input_image.shape[1]:
-                                input_image = np.concatenate([input_image[:, :, 0:3], a1111_mask[:, :, None]], axis=2)
-                                a1111_i2i_resize_mode = getattr(p, "resize_mode", None)
-                                if a1111_i2i_resize_mode is not None:
-                                    resize_mode = external_code.resize_mode_from_value(a1111_i2i_resize_mode)
+                if unit.getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
+                    input_images = []
+                    for img in unit.batch_images:
+                        unit.image = img # TODO: SAM extension should use new API
+                        input_image, _ = cn_script.choose_input_image(p, unit, idx)
+                        input_images.append(input_image)
+                else:
+                    input_image, image_from_a1111 = cn_script.choose_input_image(p, unit, idx)
+                    input_images = [input_image]
 
-                if 'reference' not in unit.module and issubclass(type(p), StableDiffusionProcessingImg2Img) \
-                        and p.inpaint_full_res and a1111_mask_image is not None:
-                    logger.debug("A1111 inpaint mask START")
-                    input_image = [input_image[:, :, i] for i in range(input_image.shape[2])]
-                    input_image = [Image.fromarray(x) for x in input_image]
+                    if image_from_a1111:
+                        a1111_i2i_resize_mode = getattr(p, "resize_mode", None)
+                        if a1111_i2i_resize_mode is not None:
+                            resize_mode = external_code.resize_mode_from_value(a1111_i2i_resize_mode)
 
-                    mask = prepare_mask(a1111_mask_image, p)
+                for idx, input_image in enumerate(input_images):
+                    a1111_mask_image : Optional[Image.Image] = getattr(p, "image_mask", None)
+                    if 'inpaint' in unit.module and not image_has_mask(input_image) and a1111_mask_image is not None:
+                        a1111_mask = np.array(prepare_mask(a1111_mask_image, p))
+                        if a1111_mask.ndim == 2:
+                            if a1111_mask.shape[0] == input_image.shape[0]:
+                                if a1111_mask.shape[1] == input_image.shape[1]:
+                                    input_image = np.concatenate([input_image[:, :, 0:3], a1111_mask[:, :, None]], axis=2)
+                                    a1111_i2i_resize_mode = getattr(p, "resize_mode", None)
+                                    if a1111_i2i_resize_mode is not None:
+                                        resize_mode = external_code.resize_mode_from_value(a1111_i2i_resize_mode)
 
-                    crop_region = masking.get_crop_region(np.array(mask), p.inpaint_full_res_padding)
-                    crop_region = masking.expand_crop_region(crop_region, p.width, p.height, mask.width, mask.height)
+                    if 'reference' not in unit.module and issubclass(type(p), StableDiffusionProcessingImg2Img) \
+                            and p.inpaint_full_res and a1111_mask_image is not None:
+                        logger.debug("A1111 inpaint mask START")
+                        input_image = [input_image[:, :, i] for i in range(input_image.shape[2])]
+                        input_image = [Image.fromarray(x) for x in input_image]
 
-                    input_image = [
-                        images.resize_image(resize_mode.int_value(), i, mask.width, mask.height) 
-                        for i in input_image
-                    ]
+                        mask = prepare_mask(a1111_mask_image, p)
 
-                    input_image = [x.crop(crop_region) for x in input_image]
-                    input_image = [
-                        images.resize_image(external_code.ResizeMode.OUTER_FIT.int_value(), x, p.width, p.height) 
-                        for x in input_image
-                    ]
+                        crop_region = masking.get_crop_region(np.array(mask), p.inpaint_full_res_padding)
+                        crop_region = masking.expand_crop_region(crop_region, p.width, p.height, mask.width, mask.height)
 
-                    input_image = [np.asarray(x)[:, :, 0] for x in input_image]
-                    input_image = np.stack(input_image, axis=2)
-                    logger.debug("A1111 inpaint mask END")
+                        input_image = [
+                            images.resize_image(resize_mode.int_value(), i, mask.width, mask.height) 
+                            for i in input_image
+                        ]
+
+                        input_image = [x.crop(crop_region) for x in input_image]
+                        input_image = [
+                            images.resize_image(external_code.ResizeMode.OUTER_FIT.int_value(), x, p.width, p.height) 
+                            for x in input_image
+                        ]
+
+                        input_image = [np.asarray(x)[:, :, 0] for x in input_image]
+                        input_image = np.stack(input_image, axis=2)
+                        logger.debug("A1111 inpaint mask END")
+
+                    # safe numpy
+                    logger.debug("Safe numpy convertion START")
+                    input_image = np.ascontiguousarray(input_image.copy()).copy()
+                    logger.debug("Safe numpy convertion END")
+
+                    input_images[idx] = input_image
 
                 if 'inpaint_only' == unit.module and issubclass(type(p), StableDiffusionProcessingImg2Img) and p.image_mask is not None:
                     logger.warning('A1111 inpaint and ControlNet inpaint duplicated. ControlNet support enabled.')
                     unit.module = 'inpaint'
-
-                # safe numpy
-                logger.debug("Safe numpy convertion START")
-                input_image = np.ascontiguousarray(input_image.copy()).copy()
-                logger.debug("Safe numpy convertion END")
 
                 logger.info(f"Loading preprocessor: {unit.module}")
                 preprocessor = self.preprocessor[unit.module]
@@ -284,7 +304,9 @@ class AnimateDiffControl:
 
                 if unit.module == 'inpaint_only+lama' and resize_mode == external_code.ResizeMode.OUTER_FIT:
                     # inpaint_only+lama is special and required outpaint fix
-                    _, input_image = cn_script.detectmap_proc(input_image, unit.module, resize_mode, hr_y, hr_x)
+                    for idx, input_image in enumerate(input_images):
+                        _, input_image = cn_script.detectmap_proc(input_image, unit.module, resize_mode, hr_y, hr_x)
+                        input_images[idx] = input_image
 
                 control_model_type = ControlModelType.ControlNet
                 global_average_pooling = False
@@ -299,8 +321,8 @@ class AnimateDiffControl:
                     control_model_type = ControlModelType.T2I_StyleAdapter
                 elif isinstance(model_net, PlugableIPAdapter):
                     control_model_type = ControlModelType.IPAdapter
-                elif isinstance(model_net, PlugableControlLLLite):
-                    control_model_type = ControlModelType.Controlllite
+                # elif isinstance(model_net, PlugableControlLLLite): # do not support controlllite for sdxl
+                #     control_model_type = ControlModelType.Controlllite
 
                 if control_model_type is ControlModelType.ControlNet:
                     global_average_pooling = model_net.control_model.global_average_pooling
@@ -322,34 +344,48 @@ class AnimateDiffControl:
                 # - shuffle
                 seed = set_numpy_seed(p)
                 logger.debug(f"Use numpy seed {seed}.")
-                detected_map, is_image = preprocessor(
-                    input_image, 
-                    res=preprocessor_resolution, 
-                    thr_a=unit.threshold_a,
-                    thr_b=unit.threshold_b,
-                )
 
-                if high_res_fix:
-                    if is_image:
-                        hr_control, hr_detected_map = cn_script.detectmap_proc(detected_map, unit.module, resize_mode, hr_y, hr_x)
-                        detected_maps.append((hr_detected_map, unit.module))
+                controls = []
+                hr_controls = []
+                for idx, input_image in enumerate(input_images):
+                    detected_map, is_image = preprocessor(
+                        input_image, 
+                        res=preprocessor_resolution, 
+                        thr_a=unit.threshold_a,
+                        thr_b=unit.threshold_b,
+                    )
+
+                    if high_res_fix:
+                        if is_image:
+                            hr_control, hr_detected_map = cn_script.detectmap_proc(detected_map, unit.module, resize_mode, hr_y, hr_x)
+                            detected_maps.append((hr_detected_map, unit.module))
+                        else:
+                            hr_control = detected_map
                     else:
-                        hr_control = detected_map
+                        hr_control = None
+
+                    if is_image:
+                        control, detected_map = cn_script.detectmap_proc(detected_map, unit.module, resize_mode, h, w)
+                        detected_maps.append((detected_map, unit.module))
+                    else:
+                        control = detected_map
+                        detected_maps.append((input_image, unit.module))
+
+                    if control_model_type == ControlModelType.T2I_StyleAdapter:
+                        control = control['last_hidden_state']
+
+                    if control_model_type == ControlModelType.ReVision:
+                        control = control['image_embeds']
+                    
+                    controls.append(control)
+                    if hr_control is not None:
+                        hr_controls.append(hr_control)
+                
+                controls = torch.cat(controls, dim=0)
+                if len(hr_controls) > 0:
+                    hr_controls = torch.cat(hr_controls, dim=0)
                 else:
-                    hr_control = None
-
-                if is_image:
-                    control, detected_map = cn_script.detectmap_proc(detected_map, unit.module, resize_mode, h, w)
-                    detected_maps.append((detected_map, unit.module))
-                else:
-                    control = detected_map
-                    detected_maps.append((input_image, unit.module))
-
-                if control_model_type == ControlModelType.T2I_StyleAdapter:
-                    control = control['last_hidden_state']
-
-                if control_model_type == ControlModelType.ReVision:
-                    control = control['image_embeds']
+                    hr_controls = None
 
                 preprocessor_dict = dict(
                     name=unit.module,
@@ -361,7 +397,7 @@ class AnimateDiffControl:
                 forward_param = ControlParams(
                     control_model=model_net,
                     preprocessor=preprocessor_dict,
-                    hint_cond=control,
+                    hint_cond=controls,
                     weight=unit.weight,
                     guidance_stopped=False,
                     start_guidance_percent=unit.guidance_start,
@@ -369,32 +405,39 @@ class AnimateDiffControl:
                     advanced_weighting=None,
                     control_model_type=control_model_type,
                     global_average_pooling=global_average_pooling,
-                    hr_hint_cond=hr_control,
+                    hr_hint_cond=hr_controls,
                     soft_injection=control_mode != external_code.ControlMode.BALANCED,
                     cfg_injection=control_mode == external_code.ControlMode.CONTROL,
                 )
                 forward_params.append(forward_param)
 
+                unit_is_batch = unit.getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH
                 if 'inpaint_only' in unit.module:
-                    final_inpaint_feed = hr_control if hr_control is not None else control
-                    final_inpaint_feed = final_inpaint_feed.detach().cpu().numpy()
-                    final_inpaint_feed = np.ascontiguousarray(final_inpaint_feed).copy()
-                    final_inpaint_mask = final_inpaint_feed[0, 3, :, :].astype(np.float32)
-                    final_inpaint_raw = final_inpaint_feed[0, :3].astype(np.float32)
-                    sigma = shared.opts.data.get("control_net_inpaint_blur_sigma", 7)
-                    final_inpaint_mask = cv2.dilate(final_inpaint_mask, np.ones((sigma, sigma), dtype=np.uint8))
-                    final_inpaint_mask = cv2.blur(final_inpaint_mask, (sigma, sigma))[None]
-                    _, Hmask, Wmask = final_inpaint_mask.shape
-                    final_inpaint_raw = torch.from_numpy(np.ascontiguousarray(final_inpaint_raw).copy())
-                    final_inpaint_mask = torch.from_numpy(np.ascontiguousarray(final_inpaint_mask).copy())
+                    final_inpaint_raws = []
+                    final_inpaint_masks = []
+                    for i in range(len(controls)):
+                        final_inpaint_feed = hr_controls[i] if hr_controls is not None else controls[i]
+                        final_inpaint_feed = final_inpaint_feed.detach().cpu().numpy()
+                        final_inpaint_feed = np.ascontiguousarray(final_inpaint_feed).copy()
+                        final_inpaint_mask = final_inpaint_feed[0, 3, :, :].astype(np.float32)
+                        final_inpaint_raw = final_inpaint_feed[0, :3].astype(np.float32)
+                        sigma = shared.opts.data.get("control_net_inpaint_blur_sigma", 7)
+                        final_inpaint_mask = cv2.dilate(final_inpaint_mask, np.ones((sigma, sigma), dtype=np.uint8))
+                        final_inpaint_mask = cv2.blur(final_inpaint_mask, (sigma, sigma))[None]
+                        _, Hmask, Wmask = final_inpaint_mask.shape
+                        final_inpaint_raw = torch.from_numpy(np.ascontiguousarray(final_inpaint_raw).copy())
+                        final_inpaint_mask = torch.from_numpy(np.ascontiguousarray(final_inpaint_mask).copy())
+                        final_inpaint_raws.append(final_inpaint_raw)
+                        final_inpaint_masks.append(final_inpaint_mask)
 
-                    def inpaint_only_post_processing(x):
+                    def inpaint_only_post_processing(x, i):
                         _, H, W = x.shape
                         if Hmask != H or Wmask != W:
                             logger.error('Error: ControlNet find post-processing resolution mismatch. This could be related to other extensions hacked processing.')
                             return x
-                        r = final_inpaint_raw.to(x.dtype).to(x.device)
-                        m = final_inpaint_mask.to(x.dtype).to(x.device)
+                        idx = i if unit_is_batch else 0
+                        r = final_inpaint_raw[idx].to(x.dtype).to(x.device)
+                        m = final_inpaint_mask[idx].to(x.dtype).to(x.device)
                         y = m * x.clip(0, 1) + (1 - m) * r
                         y = y.clip(0, 1)
                         return y
@@ -402,16 +445,19 @@ class AnimateDiffControl:
                     post_processors.append(inpaint_only_post_processing)
 
                 if 'recolor' in unit.module:
-                    final_feed = hr_control if hr_control is not None else control
-                    final_feed = final_feed.detach().cpu().numpy()
-                    final_feed = np.ascontiguousarray(final_feed).copy()
-                    final_feed = final_feed[0, 0, :, :].astype(np.float32)
-                    final_feed = (final_feed * 255).clip(0, 255).astype(np.uint8)
-                    Hfeed, Wfeed = final_feed.shape
+                    final_feeds = []
+                    for i in range(len(controls)):
+                        final_feed = hr_control if hr_control is not None else control
+                        final_feed = final_feed.detach().cpu().numpy()
+                        final_feed = np.ascontiguousarray(final_feed).copy()
+                        final_feed = final_feed[0, 0, :, :].astype(np.float32)
+                        final_feed = (final_feed * 255).clip(0, 255).astype(np.uint8)
+                        Hfeed, Wfeed = final_feed.shape
+                        final_feeds.append(final_feed)
 
                     if 'luminance' in unit.module:
 
-                        def recolor_luminance_post_processing(x):
+                        def recolor_luminance_post_processing(x, i):
                             C, H, W = x.shape
                             if Hfeed != H or Wfeed != W or C != 3:
                                 logger.error('Error: ControlNet find post-processing resolution mismatch. This could be related to other extensions hacked processing.')
@@ -419,7 +465,7 @@ class AnimateDiffControl:
                             h = x.detach().cpu().numpy().transpose((1, 2, 0))
                             h = (h * 255).clip(0, 255).astype(np.uint8)
                             h = cv2.cvtColor(h, cv2.COLOR_RGB2LAB)
-                            h[:, :, 0] = final_feed
+                            h[:, :, 0] = final_feed[i if unit_is_batch else 0]
                             h = cv2.cvtColor(h, cv2.COLOR_LAB2RGB)
                             h = (h.astype(np.float32) / 255.0).transpose((2, 0, 1))
                             y = torch.from_numpy(h).clip(0, 1).to(x)
@@ -429,7 +475,7 @@ class AnimateDiffControl:
 
                     if 'intensity' in unit.module:
 
-                        def recolor_intensity_post_processing(x):
+                        def recolor_intensity_post_processing(x, i):
                             C, H, W = x.shape
                             if Hfeed != H or Wfeed != W or C != 3:
                                 logger.error('Error: ControlNet find post-processing resolution mismatch. This could be related to other extensions hacked processing.')
@@ -437,7 +483,7 @@ class AnimateDiffControl:
                             h = x.detach().cpu().numpy().transpose((1, 2, 0))
                             h = (h * 255).clip(0, 255).astype(np.uint8)
                             h = cv2.cvtColor(h, cv2.COLOR_RGB2HSV)
-                            h[:, :, 2] = final_feed
+                            h[:, :, 2] = final_feed[i if unit_is_batch else 0]
                             h = cv2.cvtColor(h, cv2.COLOR_HSV2RGB)
                             h = (h.astype(np.float32) / 255.0).transpose((2, 0, 1))
                             y = torch.from_numpy(h).clip(0, 1).to(x)
@@ -478,25 +524,36 @@ class AnimateDiffControl:
             self.detected_map = detected_maps
             self.post_processors = post_processors
             Path(f'{data_path}/tmp/animatediff-frames/').rmdir()
+        
+        def hacked_postprocess_batch(self, p, *args, **kwargs):
+            images = kwargs.get('images', [])
+            for post_processor in self.post_processors:
+                for i in range(len(images)):
+                    images[i] = post_processor(images[i], i)
+            return
 
         self.original_controlnet_main_entry = self.cn_script.controlnet_main_entry
+        self.original_postprocess_batch = self.cn_script.postprocess_batch
         self.cn_script.controlnet_main_entry = hacked_main_entry
+        self.cn_script.postprocess_batch = hacked_postprocess_batch
 
 
-    def restore_cn_main_entry(self):
+    def restore_cn(self):
         self.cn_script.controlnet_main_entry = self.original_controlnet_main_entry
         self.original_controlnet_main_entry = None
+        self.cn_script.postprocess_batch = self.original_postprocess_batch
+        self.original_postprocess_batch = None
 
 
     def hack(self, params: AnimateDiffProcess):
         if self.cn_script is not None:
             logger.info(f"Hacking ControlNet.")
             self.hack_batchhijack(params)
-            self.hack_cn_main_entry()
+            self.hack_cn()
 
 
     def restore(self):
         if self.cn_script is not None:
             logger.info(f"Restoring ControlNet.")
             self.restore_batchhijack()
-            self.restore_cn_main_entry()
+            self.restore_cn()

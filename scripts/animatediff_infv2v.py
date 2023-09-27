@@ -80,7 +80,8 @@ class AnimateDiffInfV2V:
 
         def mm_cfg_forward(self, x, sigma, uncond, cond, cond_scale, s_min_uncond, image_cond):
             for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
-                # take control images for current context
+                # take control images for current context.
+                # controlllite is for sdxl and we do not support it. reserve here for future use is needed.
                 if cn_script is not None and cn_script.latest_network is not None:
                     from scripts.hook import ControlModelType
                     for control in cn_script.latest_network.control_params:
@@ -95,11 +96,11 @@ class AnimateDiffInfV2V:
                             control.control_model.image_emb = control.control_model.image_emb[context]
                             control.control_model.uncond_image_emb_backup = control.control_model.uncond_image_emb
                             control.control_model.uncond_image_emb = control.control_model.uncond_image_emb[context]
-                        if control.control_model_type == ControlModelType.Controlllite:
-                            for module in control.control_model.modules.values():
-                                if module.cond_image.shape[0] > len(context):
-                                    module.cond_image_backup = module.cond_image
-                                    module.set_cond_image(module.cond_image[context])
+                        # if control.control_model_type == ControlModelType.Controlllite:
+                        #     for module in control.control_model.modules.values():
+                        #         if module.cond_image.shape[0] > len(context):
+                        #             module.cond_image_backup = module.cond_image
+                        #             module.set_cond_image(module.cond_image[context])
                 # run original forward function for the current context
                 x[context] = cfg_original_forward(self, x[context], sigma, uncond[context], cond[context], cond_scale, s_min_uncond, image_cond)
                 # restore control images for next context
@@ -113,10 +114,10 @@ class AnimateDiffInfV2V:
                         if control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
                             control.control_model.image_emb = control.control_model.image_emb_backup
                             control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
-                        if control.control_model_type == ControlModelType.Controlllite:
-                            for module in control.control_model.modules.values():
-                                if module.cond_image.shape[0] > len(context):
-                                    module.set_cond_image(module.cond_image_backup)
+                        # if control.control_model_type == ControlModelType.Controlllite:
+                        #     for module in control.control_model.modules.values():
+                        #         if module.cond_image.shape[0] > len(context):
+                        #             module.set_cond_image(module.cond_image_backup)
 
                 self.step -= 1
             self.step += 1
