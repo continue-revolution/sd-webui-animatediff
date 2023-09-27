@@ -1,5 +1,6 @@
 import numpy as np
 from modules.sd_samplers_cfg_denoiser import CFGDenoiser
+from modules.prompt_parser import MulticondLearnedConditioning
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
@@ -102,7 +103,11 @@ class AnimateDiffInfV2V:
                         #             module.cond_image_backup = module.cond_image
                         #             module.set_cond_image(module.cond_image[context])
                 # run original forward function for the current context
-                x[context] = cfg_original_forward(self, x[context], sigma, uncond[context], cond[context], cond_scale, s_min_uncond, image_cond)
+                # TODO: what to do with cond?
+                x[context] = cfg_original_forward(
+                    self, x[context], sigma[context], [uncond[i] for i in context], 
+                    MulticondLearnedConditioning(len(context), [cond.batch[i] for i in context]), 
+                    cond_scale, s_min_uncond, image_cond[context])
                 # restore control images for next context
                 if cn_script is not None and cn_script.latest_network is not None:
                     from scripts.hook import ControlModelType
