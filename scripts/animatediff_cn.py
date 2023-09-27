@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import os
+import shutil
 import cv2
 import numpy as np
 import torch
@@ -49,8 +51,7 @@ class AnimateDiffControl:
             return ''
 
         from scripts import external_code
-        from scripts.batch_hijack import BatchHijack, InputMode
-
+        from scripts.batch_hijack import InputMode, BatchHijack, instance
         def hacked_processing_process_images_hijack(self, p, *args, **kwargs):
             if self.is_batch:
                 # we are in img2img batch tab, do a single batch iteration
@@ -90,22 +91,28 @@ class AnimateDiffControl:
                 params.video_length = video_length
             if params.batch_size > video_length:
                 params.batch_size = video_length
+            for unit in units:
+                if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
+                    unit.batch_images = unit.batch_images[:params.video_length]
 
             return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
         
         self.original_processing_process_images_hijack = BatchHijack.processing_process_images_hijack
         BatchHijack.processing_process_images_hijack = hacked_processing_process_images_hijack
+        processing.process_images_inner = instance.processing_process_images_hijack
     
 
     def restore_batchhijack(self):
-        from scripts.batch_hijack import BatchHijack
+        from scripts.batch_hijack import BatchHijack, instance
         BatchHijack.processing_process_images_hijack = self.original_processing_process_images_hijack
         self.original_processing_process_images_hijack = None
+        processing.process_images_inner = instance.processing_process_images_hijack
 
 
     def hack_cn(self):
         cn_script = self.cn_script
 
+        from types import MethodType
         from typing import Optional
 
         from modules import images, masking
@@ -172,7 +179,7 @@ class AnimateDiffControl:
             unet = sd_ldm.model.diffusion_model
             self.noise_modifier = None
 
-            setattr(p, 'controlnet_control_loras', [])
+            # setattr(p, 'controlnet_control_loras', []) # do not support control lora for sdxl
 
             if self.latest_network is not None:
                 # always restore (~0.05s)
@@ -223,7 +230,7 @@ class AnimateDiffControl:
                     #     bind_control_lora(unet, control_lora)
                     #     p.controlnet_control_loras.append(control_lora)
 
-                if unit.getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
+                if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
                     input_images = []
                     for img in unit.batch_images:
                         unit.image = img # TODO: SAM extension should use new API
@@ -416,7 +423,7 @@ class AnimateDiffControl:
                 )
                 forward_params.append(forward_param)
 
-                unit_is_batch = unit.getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH
+                unit_is_batch = getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH
                 if 'inpaint_only' in unit.module:
                     final_inpaint_raws = []
                     final_inpaint_masks = []
@@ -528,7 +535,9 @@ class AnimateDiffControl:
 
             self.detected_map = detected_maps
             self.post_processors = post_processors
-            Path(f'{data_path}/tmp/animatediff-frames/').rmdir()
+
+            if os.path.exists(f'{data_path}/tmp/animatediff-frames/'):
+                shutil.rmtree(f'{data_path}/tmp/animatediff-frames/')
         
         def hacked_postprocess_batch(self, p, *args, **kwargs):
             images = kwargs.get('images', [])
@@ -539,8 +548,8 @@ class AnimateDiffControl:
 
         self.original_controlnet_main_entry = self.cn_script.controlnet_main_entry
         self.original_postprocess_batch = self.cn_script.postprocess_batch
-        self.cn_script.controlnet_main_entry = hacked_main_entry
-        self.cn_script.postprocess_batch = hacked_postprocess_batch
+        self.cn_script.controlnet_main_entry = MethodType(hacked_main_entry, self.cn_script)
+        self.cn_script.postprocess_batch = MethodType(hacked_postprocess_batch, self.cn_script)
 
 
     def restore_cn(self):

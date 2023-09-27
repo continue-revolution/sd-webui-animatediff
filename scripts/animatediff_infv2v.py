@@ -7,7 +7,7 @@ from scripts.animatediff_ui import AnimateDiffProcess
 
 class AnimateDiffInfV2V:
 
-    def __init__(self):
+    def __init__(self, p):
         self.cfg_original_forward = None
         try:
             from scripts.external_code import find_cn_script
