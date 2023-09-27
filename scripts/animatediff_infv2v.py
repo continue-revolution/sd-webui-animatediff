@@ -1,5 +1,6 @@
 import numpy as np
 from modules.sd_samplers_cfg_denoiser import CFGDenoiser
+from modules.prompt_parser import MulticondLearnedConditioning
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
@@ -7,8 +8,13 @@ from scripts.animatediff_ui import AnimateDiffProcess
 
 class AnimateDiffInfV2V:
 
-    def __init__(self):
+    def __init__(self, p):
         self.cfg_original_forward = None
+        try:
+            from scripts.external_code import find_cn_script
+            self.cn_script = find_cn_script(p.scripts)
+        except:
+            self.cn_script = None
 
 
     # Returns fraction that has denominator that is a power of 2
@@ -67,19 +73,64 @@ class AnimateDiffInfV2V:
                     yield batch_list
 
 
-    def hack_cfg_forward(self, params: AnimateDiffProcess):
+    def hack(self, params: AnimateDiffProcess):
         logger.info(f"Hacking CFGDenoiser forward function.")
         self.cfg_original_forward = CFGDenoiser.forward
         cfg_original_forward = self.cfg_original_forward
+        cn_script = self.cn_script
+
         def mm_cfg_forward(self, x, sigma, uncond, cond, cond_scale, s_min_uncond, image_cond):
             for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
-                x[context] = cfg_original_forward(self, x[context], sigma, uncond[context], cond[context], cond_scale, s_min_uncond, image_cond)
+                # take control images for current context.
+                # controlllite is for sdxl and we do not support it. reserve here for future use is needed.
+                if cn_script is not None and cn_script.latest_network is not None:
+                    from scripts.hook import ControlModelType
+                    for control in cn_script.latest_network.control_params:
+                        if control.hint_cond.shape[0] > len(context):
+                            control.hint_cond_backup = control.hint_cond
+                            control.hint_cond = control.hint_cond[context]
+                        if control.hr_hint_cond is not None and control.hr_hint_cond.shape[0] > len(context):
+                            control.hr_hint_cond_backup = control.hr_hint_cond
+                            control.hr_hint_cond = control.hr_hint_cond[context]
+                        if control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
+                            control.control_model.image_emb_backup = control.control_model.image_emb
+                            control.control_model.image_emb = control.control_model.image_emb[context]
+                            control.control_model.uncond_image_emb_backup = control.control_model.uncond_image_emb
+                            control.control_model.uncond_image_emb = control.control_model.uncond_image_emb[context]
+                        # if control.control_model_type == ControlModelType.Controlllite:
+                        #     for module in control.control_model.modules.values():
+                        #         if module.cond_image.shape[0] > len(context):
+                        #             module.cond_image_backup = module.cond_image
+                        #             module.set_cond_image(module.cond_image[context])
+                # run original forward function for the current context
+                # TODO: what to do with cond?
+                x[context] = cfg_original_forward(
+                    self, x[context], sigma[context], [uncond[i] for i in context], 
+                    MulticondLearnedConditioning(len(context), [cond.batch[i] for i in context]), 
+                    cond_scale, s_min_uncond, image_cond[context])
+                # restore control images for next context
+                if cn_script is not None and cn_script.latest_network is not None:
+                    from scripts.hook import ControlModelType
+                    for control in cn_script.latest_network.control_params:
+                        if control.hint_cond.shape[0] > len(context):
+                            control.hint_cond = control.hint_cond_backup
+                        if control.hr_hint_cond is not None and control.hr_hint_cond.shape[0] > len(context):
+                            control.hr_hint_cond = control.hr_hint_cond_backup
+                        if control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
+                            control.control_model.image_emb = control.control_model.image_emb_backup
+                            control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
+                        # if control.control_model_type == ControlModelType.Controlllite:
+                        #     for module in control.control_model.modules.values():
+                        #         if module.cond_image.shape[0] > len(context):
+                        #             module.set_cond_image(module.cond_image_backup)
+
                 self.step -= 1
             self.step += 1
             return x
+
         CFGDenoiser.forward = mm_cfg_forward
 
 
-    def restore_cfg_forward(self):
+    def restore(self):
         logger.info(f"Restoring CFGDenoiser forward function.")
         CFGDenoiser.forward = self.cfg_original_forward

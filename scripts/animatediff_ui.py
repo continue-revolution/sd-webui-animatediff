@@ -18,30 +18,42 @@ class ToolButton(gr.Button, gr.components.FormComponent):
 class AnimateDiffProcess:
     def __init__(
         self,
-        enable=False,
-        loop_number=0,
-        video_length=16,
-        fps=8,
         model="mm_sd_v15_v2.ckpt",
+        enable=False,
+        video_length=0,
+        fps=8,
+        loop_number=0,
+        closed_loop=False,
+        batch_size=16,
+        stride=1,
+        overlap=-1,
         format=["GIF", "PNG"],
         interp='Off',
         interp_x=10,
         reverse=[],
+        video_source=None,
+        video_path='',
         latent_power=1,
         latent_scale=32,
         last_frame=None,
         latent_power_last=1,
         latent_scale_last=32,
     ):
+        self.model = model
         self.enable = enable
-        self.loop_number = loop_number
         self.video_length = video_length
         self.fps = fps
-        self.model = model
+        self.loop_number = loop_number
+        self.closed_loop = closed_loop
+        self.batch_size = batch_size
+        self.stride = stride
+        self.overlap = overlap
         self.format = format
         self.interp = interp
         self.interp_x = interp_x
         self.reverse = reverse
+        self.video_source = video_source
+        self.video_path = video_path
         self.latent_power = latent_power
         self.latent_scale = latent_scale
         self.last_frame = last_frame
@@ -56,7 +68,7 @@ class AnimateDiffProcess:
 
     def _check(self):
         assert (
-            self.video_length > 0 and self.fps > 0
+            self.video_length >= 0 and self.fps > 0
         ), "Video length and FPS should be positive."
         assert not set(["GIF", "MP4", "PNG"]).isdisjoint(
             self.format
@@ -64,7 +76,14 @@ class AnimateDiffProcess:
 
     def set_p(self, p):
         self._check()
-        p.batch_size = self.video_length
+        if self.video_length < self.batch_size:
+            p.batch_size = self.batch_size
+        else:
+            p.batch_size = self.video_length
+        if self.video_length == 0:
+            self.video_length = p.batch_size
+        if self.overlap == -1:
+            self.overlap = self.batch_size // 4
         if "PNG" not in self.format:
             p.do_not_save_samples = True
 
@@ -110,21 +129,44 @@ class AnimateDiffUiGroup:
                 self.params.enable = gr.Checkbox(
                     value=self.params.enable, label="Enable AnimateDiff"
                 )
-                self.params.video_length = gr.Slider(
-                    minimum=1,
-                    maximum=32,
+                self.params.video_length = gr.Number(
+                    minimum=0,
                     value=self.params.video_length,
-                    step=1,
                     label="Number of frames",
                     precision=0,
                 )
                 self.params.fps = gr.Number(
-                    value=self.params.fps, label="Frames per second (FPS)", precision=0
+                    value=self.params.fps, label="FPS", precision=0
                 )
                 self.params.loop_number = gr.Number(
                     minimum=0,
                     value=self.params.loop_number,
-                    label="Display loop number (0 = infinite loop)",
+                    label="Display loop number",
+                    precision=0,
+                )
+            with gr.Row():
+                self.params.closed_loop = gr.Checkbox(
+                    value=self.params.closed_loop,
+                    label="Closed loop",
+                )
+                self.params.batch_size = gr.Slider(
+                    minimum=1,
+                    maximum=32,
+                    value=self.params.batch_size,
+                    label="Context batch size",
+                    step=1,
+                    precision=0,
+                )
+                self.params.stride = gr.Number(
+                    minimum=1,
+                    value=self.params.stride,
+                    label="Stride",
+                    precision=0,
+                )
+                self.params.overlap = gr.Number(
+                    minimum=-1,
+                    value=self.params.overlap,
+                    label="Overlap",
                     precision=0,
                 )
             with gr.Row():
@@ -149,6 +191,14 @@ class AnimateDiffUiGroup:
                 self.params.interp_x = gr.Number(
                     value=self.params.interp_x, label="Interp X", precision=0
                 )
+            self.params.video_source = gr.Video(
+                value=self.params.video_source,
+                label="Video source",
+            )
+            self.params.video_path = gr.Textbox(
+                value=self.params.video_path,
+                label="Video path",
+            )
             if is_img2img:
                 with gr.Row():
                     self.params.latent_power = gr.Slider(
