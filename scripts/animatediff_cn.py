@@ -345,7 +345,7 @@ class AnimateDiffControl:
                 preprocessor_resolution = unit.processor_res
                 if unit.pixel_perfect:
                     preprocessor_resolution = external_code.pixel_perfect_resolution(
-                        input_image,
+                        input_images[0],
                         target_H=h,
                         target_W=w,
                         resize_mode=resize_mode
