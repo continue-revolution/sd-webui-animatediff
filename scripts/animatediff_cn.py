@@ -88,9 +88,12 @@ class AnimateDiffControl:
                     else:
                         unit.batch_images = shared.listfiles(unit.batch_images)
 
-            video_length = min(len(unit.batch_images)
-                            for unit in units
-                            if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH)
+            unit_batch_list = [len(unit.batch_images) for unit in units
+                               if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH]
+            if len(unit_batch_list) == 0:
+                return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
+
+            video_length = min(unit_batch_list)
             # ensure that params.video_length <= video_length and params.batch_size <= video_length
             if params.video_length > video_length:
                 params.video_length = video_length
