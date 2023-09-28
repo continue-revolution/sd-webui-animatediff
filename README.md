@@ -1,59 +1,61 @@
 # AnimateDiff for Stable Diffusion WebUI
 
-This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui). You can generate GIFs in exactly the same way as generating images after enabling this extension.
+This extension is aimed at integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui), so you can generate videos as easily as you currently generate images.
 
 This extension implements AnimateDiff in a different way. It does not require you to clone the whole SD1.5 repository. It also applied (probably) the least modification to `ldm`, so that you do not need to reload your model weights if you don't want to.
 
-Batch size on WebUI will be replaced by GIF frame number internally: 1 full GIF generated in 1 batch. If you want to generate multiple GIF at once, please change batch number. 
-
-Batch number is NOT the same as batch size. In A1111 WebUI, batch number is above batch size. Batch number means the number of sequential steps, but batch size means the number of parallel steps. You do not have to worry too much when you increase batch number, but you do need to worry about your VRAM when you increase your batch size (where in this extension, video frame number). You do not need to change batch size at all when you are using this extension.
-
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything).
 
-## How to Use
+### Remarks:
+- The extension replaces A111's `Batch Size` with its own `Number of frames` setting, which acts the same way by controlling parallel image generation. **Caution: this could eat up VRAM if set too high**. 
+- `Batch Size` still works if you use a bigger number than `Number of frames`, the extra frames won't be put together as a GIF/Video but will still be generated as PNGs if you choose this format as `Save` format
+- *Reminder: `Batch Count` manages sequential operations, which shouldn't affect VRAM.*
+- For now, **this extension only works with models based on Stable Diffusion 1.5 base model**
 
-1. Install this extension via link.
-1. Download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save the model weights, please go to `Settings/AnimateDiff`. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
-1. Enable `Pad prompt/negative prompt to be same length` and `Batch cond/uncond` and click `Apply settings` in `Settings`. You must do this to prevent generating two separate unrelated GIFs.
+## How to Use :
+1. Install this extension using this URL of this repo via the `Install From URL` tab in A111's WebUI.
+2. Download one or more [motion module](#motion-module-model-zoo) and put it under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. *You can change this path in* `Settings/AnimateDiff`.
+3. To avoid consistency issues, enable `Pad prompt/negative prompt to be same length` & `Batch cond/uncond` in A111's `Settings` (don't forget to `Apply settings`).
+4. To generate Videos from simple text prompts, use the `Txt2Img` tab, to use an image as input, use the `Img2Img` tab.
+5. Enable AnimateDiff, set your [parameters](#parameters) & click `Generate`.
+6. 
 
-### WebUI
-1. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
-1. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
-1. Enable AnimateDiff extension, and set up each parameter, and click `Generate`.
-   1. **Number of frames** — [**!!!Infinite V2V feature, DO NOT CHANGE, KEEP IT 0!!!**] Choose whatever number you like. 
-      
-      If you enter 0 (default):
-      - If you submit a video via `Video source` / enter a video path via `Video path` / enable ANY batch ControlNet, the number of frames will be the number of frames in the video (use shortest if more than one videos are submitted).
-      - Otherwise, the number of frames will be your `Batch size` described below.
+### Parameters:
+*If you want to use **Infinite V2V**, set those parameters to the value indicated in parenthesis*
+1. `Number of frames` — (**IV2V** : 0) How many frames will be generated (16 recommended).
+   > *Set it to 0 if you want to use the number of frames of the input video you set using `Video source` or `Video path`, or ANY batch ControlNet (if more than one videos is submitted, it will use the shortest).*
+2. `FPS` — Frames per second, which is how many images will be shown every second. Video duratio is then `Number of frames` / `FPS`, example : 16 Frames at 8 fps will create a 16/8 = 2 second video.
+   > *Using an input video will override this FPS setting*
+3. `Display loop number` — How many times the GIF will loop. Set it to `0` for infinite loops.
+4. `Closed loop` — (**IV2V** : unchecked) Will try to make the loop seamless by making the last frame look like the first
+5. `Stride` — (**IV2V** : 1) Max motion stride as a power of 2 (default: 1).  [**what does it mean ⁉️**]
+6. `Overlap` — (**IV2V** : -1) Number of frames to overlap in context. If overlap is -1 (default): your overlap will be `Batch size` // 4.  [**what does it mean ⁉️**]
+7. `Save` — Format of the generated videos. Choose at least one of "GIF"|"MP4"|"PNG". Check "TXT" if you want generation info as a .txt file alongside the video files
+    > *You can optimize GIF outputs with [gifsicle](https://github.com/continue-revolution/sd-webui-animatediff/pull/91) and/or [palette](https://github.com/continue-revolution/sd-webui-animatediff/pull/104). Go to `Settings/AnimateDiff` to enable them.*
+8.  `Reverse` — Options to make a boomerang effect on the video by reversing it at the end. Enable by checking `Add Reverse Frame`.
+    > *`Remove head` or `Remove tail` will remove the first or last frame respectively on the reversed part to avoid frame duplication.*
+9.  `Frame Interpolation` — ⚠️Requires Deforum extension⚠️. Interpolates frames with Deforum's FILM implementation .
+    > *See discussion [#128](https://github.com/continue-revolution/sd-webui-animatediff/pull/128) for current progress on this implementation.*
+10. `Interp X` — [**needs more intuitive name**] Number of frames to interpolate between generated frames.
+11. `Video source` — [Optional] Video source file for video to video generation.
+    >*⚠️ Requires Controlnet to be enabled, the video will then be the source control for ALL ControlNet units that you enable unless you manually set them in the ControlNet panel.*
+12. `Video path` — [Optional & overriden by `Video source`] Same as `Video source`, but if you want the path of an image sequence instead.
+    > ℹ️ **You can inpaint videos using this field!** Create two sub folders at this path : `image` containing the images of the source video & `mask` containing the inpaint masked frames. Using my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) extension can make your life much easier.
 
-      If you enter something smaller than your `Batch size` other than 0: you will get the first `Number of frames` frames as your output GIF from your whole generation. All following frames will not appear in your generated GIF, but will be saved as PNGs as usual.
-   1. **FPS** — Frames per second, which is how many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds. If you submit a source video, your FPS will be the same as the source video.
-   1. **Display loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
-   1. **Batch size** — How many frames will be passed into the motion module at once. The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`. Choose [1, 24] for V1 motion modules and [1, 32] for V2 motion modules.
-   1. **Closed loop** — [**!!!Infinite V2V feature, DO NOT CHANGE, KEEP IT False!!!**] If you enable this option and your number of frames is greater than your batch size, this extension will try to make the last frame the same as the first frame.
-   1. **Stride** — [**!!!Infinite V2V feature, DO NOT CHANGE, KEEP IT 1!!!**] Max motion stride as a power of 2 (default: 1).
-   1. **Overlap** — [**!!!Infinite V2V feature, DO NOT CHANGE, KEEP IT -1!!!**] Number of frames to overlap in context. If overlap is -1 (default): your overlap will be `Batch size` // 4.
-   1. **Save** — Format of the output. Choose at least one of "GIF"|"MP4"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF.
-        1. You can optimize GIF with `gifsicle` (`apt install gifsicle` required, read [#91](https://github.com/continue-revolution/sd-webui-animatediff/pull/91) for more information) and/or `palette` (read [#104](https://github.com/continue-revolution/sd-webui-animatediff/pull/104) for more information). Go to `Settings/AnimateDiff` to enable them.
-   1. **Reverse** — Append reversed frames to your output. See [#112](https://github.com/continue-revolution/sd-webui-animatediff/issues/112) for instruction.
-   1. **Frame Interpolation** Interpolate between frames with Deforum's FILM implementation. Requires Deforum extension. [#128](https://github.com/continue-revolution/sd-webui-animatediff/pull/128)
-   1. **Interp X** Replace each input frame with X interpolated output frames. [#128](https://github.com/continue-revolution/sd-webui-animatediff/pull/128).
-   1. **Video source** — [Optional] Video source file for video to video generation. You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel. You can of course submit a control image via `Single Image` tab or an input directory via `Batch` tab, they will override this video source input and work as usual.
-   1. **Video path** — [Optional] Folder for source frames for video to video generation, but lower priority than `Video source`. You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet. You can of course submit a control image via `Single Image` tab or an input directory via `Batch` tab, they will override this video path input and work as usual.
-      - For people who want to inpaint videos: enter a folder which contains two sub-folders `image` and `mask`. They should contain the same number of images. This extension will match them according to the same sequence. You should not upload a video directly to **Video source** mentioned above. Using my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) extension can make your life much easier.
-1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`.
+#### img2vid
 
-#### img2GIF
-
-You need to go to img2img and submit an init frame via A1111 panel. You can optionally submit a last frame via extension panel (experiment feature, not tested, not sure if it will work).
+1. Use the img2img tab as usual to use an image as input.
+2. (Experimental) You can optionally submit a last frame in the extension panel.
 
 By default: your `init_latent` will be changed to 
 ```
 init_alpha = (1 - frame_number ^ latent_power / latent_scale)
 init_latent = init_latent * init_alpha + random_tensor * (1 - init_alpha)
-```
+``` 
 
 If you upload a last frame: your `init_latent` will be changed in a similar way. Read [this code](https://github.com/continue-revolution/sd-webui-animatediff/tree/v1.5.0/scripts/animatediff_latent.py#L28-L65) to understand how it works.
+
+[**whole part is confusing**]
 
 ### API
 Just like how you use ControlNet. Here is a sample. You will get a list of generated frames. You will have to view GIF in your file system, as mentioned at [#WebUI](#webui) item 4.
@@ -105,11 +107,11 @@ Infinite V2V, Prompt Travel and other CLI features are currently work in progres
 1.  Q: How much VRAM do I need?
 
     A: Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. I list some data tested on Ubuntu 22.04, NVIDIA 4090, torch 2.0.1+cu117, H=W=512, frame=16 (default setting):
-    | Optimization | VRAM usage |
-    | --- | --- |
-    | No optimization | 12.13GB |
-    | xformers/sdp | 5.60GB |
-    | sub-quadratic | 10.39GB |
+    | Optimization    | VRAM usage |
+    | --------------- | ---------- |
+    | No optimization | 12.13GB    |
+    | xformers/sdp    | 5.60GB     |
+    | sub-quadratic   | 10.39GB    |
 
 1.  Q: Can I use SDXL to generate GIFs?
 
@@ -126,21 +128,21 @@ Coming soon.
 
 ## Samples
 
-| AnimateDiff | Extension v1.2.0 | Extension v1.3.0 | img2img |
-| --- | --- | --- | --- |
+| AnimateDiff                                                                                                     | Extension v1.2.0                                                                                                                                | Extension v1.3.0                                                                                                                                | img2img                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) | ![00023-10788741199826055168](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c35a952a-a127-491b-876d-cda97771f7ee) | ![00013-10788741199826055000](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/43b9cf34-dbd1-4120-b220-ea8cb7882272) | ![00018-727621716](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/d04bb573-c8ca-4ae6-a2d9-81f8012bec3a) |
 
 Note that I did not modify random tensor generation when producing v1.3.0 samples.
 
 ### Motion LoRA
 
-| No LoRA | PanDown | PanLeft |
-| --- | --- | --- |
+| No LoRA                                                                                                                               | PanDown                                                                                                                               | PanLeft                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | ![00094-1401397431](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/d8d2b860-c781-4dd0-8c0a-0eb26970130b) | ![00095-3197605735](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/aed2243f-5494-4fe3-a10a-96c57f6f2906) | ![00093-2722547708](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c32e9aaf-54f2-4f40-879b-e800c7c7848c) |
 
 ## Sponsor
 You can sponsor me via WeChat, AliPay or Paypal.
 
-| WeChat | AliPay | Paypal |
-| --- | --- | --- |
+| WeChat                                                                                                                                    | AliPay                                                                                                                                    | Paypal                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | ![216aff0250c7fd2bb32eeb4f7aae623](https://user-images.githubusercontent.com/63914308/232824466-21051be9-76ce-4862-bb0d-a431c186fce1.jpg) | ![15fe95b4ada738acf3e44c1d45a1805](https://user-images.githubusercontent.com/63914308/232824545-fb108600-729d-4204-8bec-4fd5cc8a14ec.jpg) | ![IMG_1419_](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/eaa7b114-a2e6-4ecc-a29f-253ace06d1ea) |
