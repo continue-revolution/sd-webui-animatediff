@@ -18,7 +18,7 @@ You might also be interested in another extension I created: [Segment Anything f
 3. To avoid consistency issues, enable `Pad prompt/negative prompt to be same length` & `Batch cond/uncond` in A111's `Settings` (don't forget to `Apply settings`).
 4. To generate Videos from simple text prompts, use the `Txt2Img` tab, to use an image as input, use the `Img2Img` tab.
 5. Enable AnimateDiff, set your [parameters](#parameters) & click `Generate`.
-6. Find the generated videos in your usual Output folder.
+6. Find the generated videos in your usual Output folder
 
 ### Parameters:
 *If you want to use **Infinite V2V**, set those parameters to the value indicated in parenthesis*
@@ -143,8 +143,6 @@ Note that I did not modify random tensor generation when producing v1.3.0 sample
 ## Sponsor
 You can sponsor me via WeChat, AliPay or Paypal.
 
-| ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| ![216aff0250c7fd2bb32eeb4f7aae623](https://user-images.githubusercontent.com/63914308/232824466-21051be9-76ce-4862-bb0d-a431c186fce1.jpg) | ![15fe95b4ada738acf3e44c1d45a1805](https://user-images.githubusercontent.com/63914308/232824545-fb108600-729d-4204-8bec-4fd5cc8a14ec.jpg) | ![IMG_1419_](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/eaa7b114-a2e6-4ecc-a29f-253ace06d1ea) |
 | WeChat | AliPay | Paypal |
 | --- | --- | --- |
 | ![216aff0250c7fd2bb32eeb4f7aae623](https://user-images.githubusercontent.com/63914308/232824466-21051be9-76ce-4862-bb0d-a431c186fce1.jpg) | ![15fe95b4ada738acf3e44c1d45a1805](https://user-images.githubusercontent.com/63914308/232824545-fb108600-729d-4204-8bec-4fd5cc8a14ec.jpg) | ![IMG_1419_](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/eaa7b114-a2e6-4ecc-a29f-253ace06d1ea) |
