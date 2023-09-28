@@ -22,7 +22,7 @@ class AnimateDiffOutput:
         for i in range(res.index_of_first_image, len(res.images), step):
             # frame interpolation replaces video_list with interpolated frames
             # so make a copy instead of a slice (reference), to avoid modifying res
-            video_list = [image.copy() for image in res.images[i : i + step]]
+            video_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
             seq = images.get_next_sequence_number(
                 f"{p.outpath_samples}/AnimateDiff", ""
