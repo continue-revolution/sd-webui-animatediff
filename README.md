@@ -18,7 +18,7 @@ You might also be interested in another extension I created: [Segment Anything f
 3. To avoid consistency issues, enable `Pad prompt/negative prompt to be same length` & `Batch cond/uncond` in A111's `Settings` (don't forget to `Apply settings`).
 4. To generate Videos from simple text prompts, use the `Txt2Img` tab, to use an image as input, use the `Img2Img` tab.
 5. Enable AnimateDiff, set your [parameters](#parameters) & click `Generate`.
-6. 
+6. Find the generated videos in your usual Output folder.
 
 ### Parameters:
 *If you want to use **Infinite V2V**, set those parameters to the value indicated in parenthesis*
@@ -107,11 +107,11 @@ Infinite V2V, Prompt Travel and other CLI features are currently work in progres
 1.  Q: How much VRAM do I need?
 
     A: Actual VRAM usage depends on your image size and video frame number. You can try to reduce image size or video frame number to reduce VRAM usage. I list some data tested on Ubuntu 22.04, NVIDIA 4090, torch 2.0.1+cu117, H=W=512, frame=16 (default setting):
-    | Optimization    | VRAM usage |
-    | --------------- | ---------- |
-    | No optimization | 12.13GB    |
-    | xformers/sdp    | 5.60GB     |
-    | sub-quadratic   | 10.39GB    |
+    | Optimization | VRAM usage |
+    | --- | --- |
+    | No optimization | 12.13GB |
+    | xformers/sdp | 5.60GB |
+    | sub-quadratic | 10.39GB |
 
 1.  Q: Can I use SDXL to generate GIFs?
 
@@ -128,21 +128,23 @@ Coming soon.
 
 ## Samples
 
-| AnimateDiff                                                                                                     | Extension v1.2.0                                                                                                                                | Extension v1.3.0                                                                                                                                | img2img                                                                                                                              |
-| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| AnimateDiff | Extension v1.2.0 | Extension v1.3.0 | img2img |
+| --- | --- | --- | --- |
 | ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) | ![00023-10788741199826055168](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c35a952a-a127-491b-876d-cda97771f7ee) | ![00013-10788741199826055000](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/43b9cf34-dbd1-4120-b220-ea8cb7882272) | ![00018-727621716](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/d04bb573-c8ca-4ae6-a2d9-81f8012bec3a) |
 
 Note that I did not modify random tensor generation when producing v1.3.0 samples.
 
 ### Motion LoRA
 
-| No LoRA                                                                                                                               | PanDown                                                                                                                               | PanLeft                                                                                                                               |
-| ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| No LoRA | PanDown | PanLeft |
+| --- | --- | --- |
 | ![00094-1401397431](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/d8d2b860-c781-4dd0-8c0a-0eb26970130b) | ![00095-3197605735](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/aed2243f-5494-4fe3-a10a-96c57f6f2906) | ![00093-2722547708](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c32e9aaf-54f2-4f40-879b-e800c7c7848c) |
 
 ## Sponsor
 You can sponsor me via WeChat, AliPay or Paypal.
 
-| WeChat                                                                                                                                    | AliPay                                                                                                                                    | Paypal                                                                                                                         |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| ![216aff0250c7fd2bb32eeb4f7aae623](https://user-images.githubusercontent.com/63914308/232824466-21051be9-76ce-4862-bb0d-a431c186fce1.jpg) | ![15fe95b4ada738acf3e44c1d45a1805](https://user-images.githubusercontent.com/63914308/232824545-fb108600-729d-4204-8bec-4fd5cc8a14ec.jpg) | ![IMG_1419_](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/eaa7b114-a2e6-4ecc-a29f-253ace06d1ea) |
+| WeChat | AliPay | Paypal |
+| --- | --- | --- |
 | ![216aff0250c7fd2bb32eeb4f7aae623](https://user-images.githubusercontent.com/63914308/232824466-21051be9-76ce-4862-bb0d-a431c186fce1.jpg) | ![15fe95b4ada738acf3e44c1d45a1805](https://user-images.githubusercontent.com/63914308/232824545-fb108600-729d-4204-8bec-4fd5cc8a14ec.jpg) | ![IMG_1419_](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/eaa7b114-a2e6-4ecc-a29f-253ace06d1ea) |
