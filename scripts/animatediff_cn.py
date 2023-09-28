@@ -60,6 +60,10 @@ class AnimateDiffControl:
 
             units = external_code.get_all_units_in_processing(p)
             units = [unit for unit in units if getattr(unit, 'enabled', False)]
+
+            if len(units) == 0:
+                return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
+
             global_input_frames = get_input_frames()
             for idx, unit in enumerate(units):
                 # if no input given for this unit, use global input
