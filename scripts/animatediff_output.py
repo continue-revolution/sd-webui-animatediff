@@ -3,6 +3,7 @@ from pathlib import Path
 
 import imageio.v3 as imageio
 import numpy as np
+from PIL import Image
 from modules import images, shared
 from modules.processing import Processed, StableDiffusionProcessing
 
@@ -21,7 +22,7 @@ class AnimateDiffOutput:
         for i in range(res.index_of_first_image, len(res.images), step):
             # frame interpolation replaces video_list with interpolated frames
             # so make a copy instead of a slice (reference), to avoid modifying res
-            video_list = [image.copy() for image in res.images[i : i + params.video_length]]
+            video_list = [image.copy() for image in res.images[i : i + step]]
 
             seq = images.get_next_sequence_number(
                 f"{p.outpath_samples}/AnimateDiff", ""
@@ -101,7 +102,7 @@ class AnimateDiffOutput:
 
         # load deforum output frames and replace video_list
         interp_frame_paths = sorted(glob.glob(os.path.join(save_folder, '*.png')))
-        video_list = [imageio.imread(f) for f in interp_frame_paths]
+        video_list = [Image.open(f) for f in interp_frame_paths]
         
         # if saving PNG, also save interpolated frames
         if "PNG" in params.format:
