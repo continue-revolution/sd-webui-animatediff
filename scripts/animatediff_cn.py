@@ -42,7 +42,7 @@ class AnimateDiffControl:
                     ret, frame = cap.read()
                     if not ret:
                         break
-                    cv2.imwrite(tmp_frame_dir/f"{frame_count}.png", frame)
+                    cv2.imwrite(f"{tmp_frame_dir}/{frame_count}.png", frame)
                     frame_count += 1
                 cap.release()
                 return str(tmp_frame_dir)
