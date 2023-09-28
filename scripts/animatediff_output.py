@@ -3,6 +3,7 @@ from pathlib import Path
 
 import imageio.v3 as imageio
 import numpy as np
+from PIL import Image
 from modules import images, shared
 from modules.processing import Processed, StableDiffusionProcessing
 
@@ -101,7 +102,7 @@ class AnimateDiffOutput:
 
         # load deforum output frames and replace video_list
         interp_frame_paths = sorted(glob.glob(os.path.join(save_folder, '*.png')))
-        video_list = [imageio.imread(f) for f in interp_frame_paths]
+        video_list = [Image.open(f) for f in interp_frame_paths]
         
         # if saving PNG, also save interpolated frames
         if "PNG" in params.format:
