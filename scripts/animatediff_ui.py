@@ -175,7 +175,7 @@ class AnimateDiffUiGroup:
                     value=self.params.stride,
                     label="Stride",
                     precision=0,
-                    tooltip="",
+                    tooltip="Adjusts the spacing between selected frames in the animation. A larger stride creates more variation between frames.",
                     elem_id=f"{elemid_prefix}stride",
                 )
                 self.params.overlap = gr.Number(
@@ -234,7 +234,7 @@ class AnimateDiffUiGroup:
                         value=self.params.latent_power,
                         step=0.1,
                         label="Latent power",
-                        tooltip="",
+                        tooltip="Controls the exponent used in the initial alpha calculation. Higher values will result in a more drastic initial change in the animation.",
                         elem_id=f"{elemid_prefix}latent-power",
                     )
                     self.params.latent_scale = gr.Slider(
@@ -242,7 +242,7 @@ class AnimateDiffUiGroup:
                         maximum=128,
                         value=self.params.latent_scale,
                         label="Latent scale",
-                        tooltip="",
+                        tooltip="Determines the scale of the initial alpha values. A larger scale will result in smaller initial alpha values, leading to a more subtle initial change in the animation.",
                         elem_id=f"{elemid_prefix}latent-scale"
                     )
                     self.params.latent_power_last = gr.Slider(
@@ -251,7 +251,7 @@ class AnimateDiffUiGroup:
                         value=self.params.latent_power_last,
                         step=0.1,
                         label="Optional latent power for last frame",
-                        tooltip="",
+                        tooltip="Controls the exponent used in the last alpha calculation. Higher values will result in a more drastic change towards the end of the animation if a last frame is specified.",
                         elem_id=f"{elemid_prefix}latent-power-last",
                     )
                     self.params.latent_scale_last = gr.Slider(
@@ -259,7 +259,7 @@ class AnimateDiffUiGroup:
                         maximum=128,
                         value=self.params.latent_scale_last,
                         label="Optional latent scale for last frame",
-                        tooltip="",
+                        tooltip="Determines the scale of the last alpha values. A larger scale will result in smaller last alpha values, leading to a more subtle change towards the end of the animation if a last frame is specified.",
                         elem_id=f"{elemid_prefix}latent-scale-last"
                     )
                 self.params.last_frame = gr.Image(
