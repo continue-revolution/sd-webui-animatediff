@@ -102,7 +102,11 @@ class AnimateDiffOutput:
 
         # load deforum output frames and replace video_list
         interp_frame_paths = sorted(glob.glob(os.path.join(save_folder, '*.png')))
-        video_list = [Image.open(f) for f in interp_frame_paths]
+        video_list = []
+        for f in interp_frame_paths:
+            with Image.open(f) as img:
+                img.load()
+                video_list.append(img)
         
         # if saving PNG, also save interpolated frames
         if "PNG" in params.format:
