@@ -34,7 +34,6 @@ class AnimateDiffControl:
         def get_input_frames():
             if params.video_source is not None and params.video_source != '':
                 cap = cv2.VideoCapture(params.video_source)
-                params.fps = int(cap.get(cv2.CAP_PROP_FPS))
                 frame_count = 0
                 tmp_frame_dir = Path(f'{data_path}/tmp/animatediff-frames/')
                 tmp_frame_dir.mkdir(parents=True, exist_ok=True)
