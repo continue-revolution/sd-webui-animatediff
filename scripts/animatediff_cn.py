@@ -21,7 +21,6 @@ class AnimateDiffControl:
         self.original_processing_process_images_hijack = None
         self.original_controlnet_main_entry = None
         self.original_postprocess_batch = None
-        self.original_cn_forward = None
         try:
             from scripts.external_code import find_cn_script
             self.cn_script = find_cn_script(p.scripts)
@@ -43,7 +42,7 @@ class AnimateDiffControl:
                     ret, frame = cap.read()
                     if not ret:
                         break
-                    cv2.imwrite(tmp_frame_dir/f"{frame_count}.png", frame)
+                    cv2.imwrite(f"{tmp_frame_dir}/{frame_count}.png", frame)
                     frame_count += 1
                 cap.release()
                 return str(tmp_frame_dir)
@@ -60,6 +59,10 @@ class AnimateDiffControl:
 
             units = external_code.get_all_units_in_processing(p)
             units = [unit for unit in units if getattr(unit, 'enabled', False)]
+
+            if len(units) == 0:
+                return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
+
             global_input_frames = get_input_frames()
             for idx, unit in enumerate(units):
                 # if no input given for this unit, use global input
@@ -84,16 +87,19 @@ class AnimateDiffControl:
                     else:
                         unit.batch_images = shared.listfiles(unit.batch_images)
 
-            video_length = min(len(unit.batch_images)
-                            for unit in units
-                            if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH)
+            unit_batch_list = [len(unit.batch_images) for unit in units
+                               if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH]
+            if len(unit_batch_list) == 0:
+                return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
+
+            video_length = min(unit_batch_list)
             # ensure that params.video_length <= video_length and params.batch_size <= video_length
             if params.video_length > video_length:
                 params.video_length = video_length
             if params.batch_size > video_length:
                 params.batch_size = video_length
-            # if params.video_length == 0: # TODO: support inf length
-            #     params.video_length = video_length
+            if params.video_default:
+                params.video_length = video_length
             for unit in units:
                 if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
                     unit.batch_images = unit.batch_images[:params.video_length]
@@ -362,6 +368,8 @@ class AnimateDiffControl:
 
                 controls = []
                 hr_controls = []
+                controls_ipadapter = {'hidden_states': [], 'image_embeds': []}
+                hr_controls_ipadapter = {'hidden_states': [], 'image_embeds': []}
                 for idx, input_image in enumerate(input_images):
                     detected_map, is_image = preprocessor(
                         input_image, 
@@ -391,16 +399,47 @@ class AnimateDiffControl:
 
                     if control_model_type == ControlModelType.ReVision:
                         control = control['image_embeds']
-                    
-                    controls.append(control)
-                    if hr_control is not None:
-                        hr_controls.append(hr_control)
+
+                    if control_model_type == ControlModelType.IPAdapter:
+                        if model_net.is_plus:
+                            controls_ipadapter['hidden_states'].append(control['hidden_states'][-2])
+                        else:
+                            controls_ipadapter['image_embeds'].append(control['image_embeds'])
+                        if hr_control is not None:
+                            if model_net.is_plus:
+                                hr_controls_ipadapter['hidden_states'].append(hr_control['hidden_states'][-2])
+                            else:
+                                hr_controls_ipadapter['image_embeds'].append(hr_control['image_embeds'])
+                        else:
+                            hr_controls_ipadapter = None
+                    else:
+                        controls.append(control)
+                        if hr_control is not None:
+                            hr_controls.append(hr_control)
+                        else:
+                            hr_controls = None
                 
-                controls = torch.cat(controls, dim=0)
-                if len(hr_controls) > 0:
-                    hr_controls = torch.cat(hr_controls, dim=0)
+                if control_model_type == ControlModelType.IPAdapter:
+                    ipadapter_key = 'hidden_states' if model_net.is_plus else 'image_embeds'
+                    controls = {ipadapter_key: torch.cat(controls_ipadapter[ipadapter_key], dim=0)}
+                    if controls[ipadapter_key].shape[0] > 1:
+                        controls[ipadapter_key] = torch.cat([controls[ipadapter_key], controls[ipadapter_key]], dim=0)
+                    if model_net.is_plus:
+                        controls[ipadapter_key] = [controls[ipadapter_key], None]
+                    if hr_controls_ipadapter is not None:
+                        hr_controls = {ipadapter_key: torch.cat(hr_controls_ipadapter[ipadapter_key], dim=0)}
+                        if hr_controls[ipadapter_key].shape[0] > 1:
+                            hr_controls[ipadapter_key] = torch.cat([hr_controls[ipadapter_key], hr_controls[ipadapter_key]], dim=0)
+                        if model_net.is_plus:
+                            hr_controls[ipadapter_key] = [hr_controls[ipadapter_key], None]
                 else:
-                    hr_controls = None
+                    controls = torch.cat(controls, dim=0)
+                    if controls.shape[0] > 1:
+                        controls = torch.cat([controls, controls], dim=0)
+                    if hr_controls is not None:
+                        hr_controls = torch.cat(hr_controls, dim=0)
+                        if hr_controls.shape[0] > 1:
+                            hr_controls = torch.cat([hr_controls, hr_controls], dim=0)
 
                 preprocessor_dict = dict(
                     name=unit.module,
@@ -548,20 +587,6 @@ class AnimateDiffControl:
                 for i in range(len(images)):
                     images[i] = post_processor(images[i], i)
             return
-
-        from scripts.cldm import ControlNet
-        self.original_cn_forward = ControlNet.forward
-        original_cn_forward = self.original_cn_forward
-
-        def hacked_cn_forward(self, x, hint, timesteps, context, y=None, **kwargs):
-            hint_batch = hint.shape[0]
-            x_batch = x.shape[0]
-            assert hint_batch == 1 or hint_batch == x_batch / 2, f"Cannot match hint shape {hint.shape} and x shape {x.shape}. Please submit an issue to github with this assertion."
-            if hint_batch == x_batch / 2 and hint_batch != 1:
-                hint = hint.repeat(2, 1, 1, 1)
-            return original_cn_forward(self, x, hint, timesteps, context, y, **kwargs)
-        
-        ControlNet.forward = hacked_cn_forward
         
         self.original_controlnet_main_entry = self.cn_script.controlnet_main_entry
         self.original_postprocess_batch = self.cn_script.postprocess_batch
@@ -574,9 +599,6 @@ class AnimateDiffControl:
         self.original_controlnet_main_entry = None
         self.cn_script.postprocess_batch = self.original_postprocess_batch
         self.original_postprocess_batch = None
-        from scripts.cldm import ControlNet
-        ControlNet.forward = self.original_cn_forward
-        self.original_cn_forward = None
 
 
     def hack(self, params: AnimateDiffProcess):
