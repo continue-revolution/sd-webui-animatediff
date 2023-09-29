@@ -1,5 +1,6 @@
 import os
 
+import cv2
 import gradio as gr
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
@@ -220,6 +221,16 @@ class AnimateDiffUiGroup:
                 value=self.params.video_source,
                 label="Video source",
             )
+            def update_fps(video_source):
+                if video_source is not None and video_source != '':
+                    cap = cv2.VideoCapture(video_source)
+                    fps = int(cap.get(cv2.CAP_PROP_FPS))
+                    cap.release()
+                    return fps
+                else:
+                    return self.params.fps
+            self.params.video_source.change(update_fps, inputs=self.params.video_source, outputs=self.params.fps)
+            
             self.params.video_path = gr.Textbox(
                 value=self.params.video_path,
                 label="Video path",
