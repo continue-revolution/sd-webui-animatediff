@@ -230,7 +230,6 @@ class AnimateDiffUiGroup:
                 else:
                     return self.params.fps
             self.params.video_source.change(update_fps, inputs=self.params.video_source, outputs=self.params.fps)
-            
             self.params.video_path = gr.Textbox(
                 value=self.params.video_path,
                 label="Video path",
