@@ -47,8 +47,8 @@ class AnimateDiffScript(scripts.Script):
             motion_module.inject(p.sd_model, params.model)
             self.lora_hacker = AnimateDiffLora(motion_module.mm.using_v2)
             self.lora_hacker.hack()
-            # self.cfg_hacker = AnimateDiffInfV2V(p)
-            # self.cfg_hacker.hack(params)
+            self.cfg_hacker = AnimateDiffInfV2V(p)
+            self.cfg_hacker.hack(params)
             self.cn_hacker = AnimateDiffControl(p)
             self.cn_hacker.hack(params)
 
@@ -67,7 +67,7 @@ class AnimateDiffScript(scripts.Script):
         if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
             self.cn_hacker.restore()
-            # self.cfg_hacker.restore()
+            self.cfg_hacker.restore()
             self.lora_hacker.restore()
             motion_module.restore(p.sd_model)
             AnimateDiffOutput().output(p, res, params)
