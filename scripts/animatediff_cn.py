@@ -97,8 +97,9 @@ class AnimateDiffControl:
                 params.video_length = video_length
             if params.batch_size > video_length:
                 params.batch_size = video_length
-            # if params.video_length == 0: # TODO: support inf length
-            #     params.video_length = video_length
+            if params.video_default:
+                params.video_length = video_length
+                p.batch_size = video_length
             for unit in units:
                 if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
                     unit.batch_images = unit.batch_images[:params.video_length]
