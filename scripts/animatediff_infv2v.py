@@ -198,7 +198,7 @@ class AnimateDiffInfV2V:
                     for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
                         # run original forward function for the current context
                         _context = context + [c + params.video_length for c in context]
-                        print(f"context: {_context}, shape: {x_in.shape}, {sigma_in.shape}, {cond_in.shape}, {image_cond_in.shape}")
+                        # print(f"context: {_context}, shape: {x_in.shape}, {sigma_in.shape}, {cond_in.shape}, {image_cond_in.shape}")
                         mm_cn_select(_context)
                         x_out[_context] = self.inner_model(x_in[_context], sigma_in[_context], cond=make_condition_dict(cond_in[_context], image_cond_in[_context]))
                         mm_cn_restore(_context)
