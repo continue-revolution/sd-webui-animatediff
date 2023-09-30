@@ -83,6 +83,9 @@ class AnimateDiffProcess:
             p.batch_size = self.video_length
         if self.video_length == 0:
             self.video_length = p.batch_size
+            self.video_default = True
+        else:
+            self.video_default = False
         if self.overlap == -1:
             self.overlap = self.batch_size // 4
         if "PNG" not in self.format:

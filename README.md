@@ -20,7 +20,7 @@ You might also be interested in another extension I created: [Segment Anything f
 1. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
 1. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please change batch number, instead of batch size.
 1. Enable AnimateDiff extension, and set up each parameter, and click `Generate`.
-   1. **Number of frames** — [**!!!Infinite V2V feature, DO NOT CHANGE, KEEP IT 0!!!**] Choose whatever number you like. 
+   1. **Number of frames** — Choose whatever number you like. 
       
       If you enter 0 (default):
       - If you submit a video via `Video source` / enter a video path via `Video path` / enable ANY batch ControlNet, the number of frames will be the number of frames in the video (use shortest if more than one videos are submitted).
@@ -30,9 +30,9 @@ You might also be interested in another extension I created: [Segment Anything f
    1. **FPS** — Frames per second, which is how many frames (images) are shown every second. If 16 frames are generated at 8 frames per second, your GIF’s duration is 2 seconds. If you submit a source video, your FPS will be the same as the source video.
    1. **Display loop number** — How many times the GIF is played. A value of `0` means the GIF never stops playing.
    1. **Batch size** — How many frames will be passed into the motion module at once. The model is trained with 16 frames, so it’ll give the best results when the number of frames is set to `16`. Choose [1, 24] for V1 motion modules and [1, 32] for V2 motion modules.
-   1. **Closed loop** — [**!!!Infinite V2V feature, DO NOT CHANGE, KEEP IT False!!!**] If you enable this option and your number of frames is greater than your batch size, this extension will try to make the last frame the same as the first frame.
-   1. **Stride** — [**!!!Infinite V2V feature, DO NOT CHANGE, KEEP IT 1!!!**] Max motion stride as a power of 2 (default: 1).
-   1. **Overlap** — [**!!!Infinite V2V feature, DO NOT CHANGE, KEEP IT -1!!!**] Number of frames to overlap in context. If overlap is -1 (default): your overlap will be `Batch size` // 4.
+   1. **Closed loop** — If you enable this option and your number of frames is greater than your batch size, this extension will try to make the last frame the same as the first frame.
+   1. **Stride** — Max motion stride as a power of 2 (default: 1).
+   1. **Overlap** — Number of frames to overlap in context. If overlap is -1 (default): your overlap will be `Batch size` // 4.
    1. **Save** — Format of the output. Choose at least one of "GIF"|"MP4"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF.
         1. You can optimize GIF with `gifsicle` (`apt install gifsicle` required, read [#91](https://github.com/continue-revolution/sd-webui-animatediff/pull/91) for more information) and/or `palette` (read [#104](https://github.com/continue-revolution/sd-webui-animatediff/pull/104) for more information). Go to `Settings/AnimateDiff` to enable them.
    1. **Reverse** — Append reversed frames to your output. See [#112](https://github.com/continue-revolution/sd-webui-animatediff/issues/112) for instruction.
@@ -97,9 +97,10 @@ Just like how you use ControlNet. Here is a sample. You will get a list of gener
 - `2023/09/19`: [v1.5.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.1): support xformers, sdp, sub-quadratic attention optimization - VRAM usage decrease to 5.60GB with default setting. See [FAQ](#faq) 1st item for more information.
 - `2023/09/22`: [v1.5.2](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.2): option to disable xformers at `Settings/AnimateDiff` [due to a bug in xformers](https://github.com/facebookresearch/xformers/issues/845), API support, option to enable GIF paletter optimization at `Settings/AnimateDiff` (credit to [@rkfg](https://github.com/rkfg)), gifsicle optimization move to `Settings/AnimateDiff`.
 - `2023/09/25`: [v1.6.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.6.0): [motion LoRA](https://github.com/guoyww/AnimateDiff#features) supported. Download and use them like any other LoRA you use (example: download motion lora to `stable-diffusion-webui/models/Lora` and add `<lora:v2_lora_PanDown:0.8>` to your positive prompt). **Motion LoRA only supports V2 motion modules**.
-- `2023/09/27`: [v1.7.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.7.0): [ControlNet](https://github.com/Mikubill/sd-webui-controlnet) supported. Please closely follow the instructions in [How to Use](#how-to-use), especially the explanation of `Video source` and `Video path` attributes. ControlNet is way more complex than what I can test and I ask you to test for me. Please submit an issue whenever you find a bug. [Demo and video instructions](#demo-and-video-instructions) are coming soon. Safetensors for some motion modules are also available now. See [model zoo](#motion-module-model-zoo). You may want to check `Do not append detectmap to output` in `Settings/ControlNet` to avoid having a series of control images in your output gallery. You should not change some attributes in your extension UI because they are for infinite v2v, see [WebUI](#webui) for what you should not change.
+- `2023/09/27`: [v1.7.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.7.0): [ControlNet](https://github.com/Mikubill/sd-webui-controlnet) supported. Please closely follow the instructions in [How to Use](#how-to-use), especially the explanation of `Video source` and `Video path` attributes. ControlNet is way more complex than what I can test and I ask you to test for me. Please submit an issue whenever you find a bug. You may want to check `Do not append detectmap to output` in `Settings/ControlNet` to avoid having a series of control images in your output gallery. [Safetensors](#motion-module-model-zoo) for some motion modules are also available now.
+- `2023/09/29`: [v1.8.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.8.0): Infinite generation (with/without ControlNet) supported. [Demo and video instructions](#demo-and-video-instructions) are coming soon. 
 
-Infinite V2V, Prompt Travel and other CLI features are currently work in progress inside [#121](https://github.com/continue-revolution/sd-webui-animatediff/pull/121). Stay tuned and they should be released within a week.
+Prompt Travel and other CLI features are currently work in progress inside [#71](https://github.com/continue-revolution/sd-webui-animatediff/pull/71). Stay tuned and they should be released soon.
 
 ## FAQ
 1.  Q: How much VRAM do I need?
@@ -114,10 +115,6 @@ Infinite V2V, Prompt Travel and other CLI features are currently work in progres
 1.  Q: Can I use SDXL to generate GIFs?
 
     A: You will have to wait for someone to train SDXL-specific motion modules which will have a different model architecture. This extension essentially inject multiple motion modules into SD1.5 UNet. It does not work for other variations of SD, such as SD2.1 and SDXL.
-
-1.  Q: Can I override the limitation of 24/32 frames per generation?
-
-    A: Not at this time, but will be supported via supporting [AnimateDIFF CLI Prompt Travel](https://github.com/s9roll7/animatediff-cli-prompt-travel) in the near future. This is a huge amount of work and life is busy, so expect to wait for a long time before updating.
 
 
 ## Demo and Video Instructions
