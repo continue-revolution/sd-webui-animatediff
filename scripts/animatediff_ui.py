@@ -289,7 +289,7 @@ class AnimateDiffUiGroup:
         return self.register_unit(is_img2img)
 
     def register_unit(self, is_img2img: bool):
-        unit = gr.State()
+        unit = gr.State(value=AnimateDiffProcess)
         (
             AnimateDiffUiGroup.img2img_submit_button
             if is_img2img
