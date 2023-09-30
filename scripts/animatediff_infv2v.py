@@ -99,11 +99,15 @@ class AnimateDiffInfV2V:
             if cn_script is not None and cn_script.latest_network is not None:
                 from scripts.hook import ControlModelType
                 for control in cn_script.latest_network.control_params:
-                    if control.hint_cond.shape[0] > len(context):
+                    if getattr(control, "hint_cond_backup", None) is not None:
+                        control.hint_cond_backup[context] = control.hint_cond
                         control.hint_cond = control.hint_cond_backup
-                    if control.hr_hint_cond is not None and control.hr_hint_cond.shape[0] > len(context):
+                    if control.hr_hint_cond is not None and getattr(control, "hr_hint_cond_backup", None) is not None:
+                        control.hr_hint_cond_backup[context] = control.hr_hint_cond
                         control.hr_hint_cond = control.hr_hint_cond_backup
-                    if control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
+                    if control.control_model_type == ControlModelType.IPAdapter and getattr(control.control_model, "image_emb_backup", None) is not None:
+                        control.control_model.image_emb_backup[context] = control.control_model.image_emb
+                        control.control_model.uncond_image_emb_backup[context] = control.control_model.uncond_image_emb
                         control.control_model.image_emb = control.control_model.image_emb_backup
                         control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
                     # if control.control_model_type == ControlModelType.Controlllite:
