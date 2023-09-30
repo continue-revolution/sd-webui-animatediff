@@ -63,22 +63,7 @@ class AnimateDiffInfV2V:
                 video_length + pad + (0 if closed_loop else -overlap),
                 (batch_size * context_step - overlap),
             ):
-                batch_list = [e % video_length for e in range(j, j + batch_size * context_step, context_step)]
-                if not closed_loop and batch_list[-1] < batch_list[0]:
-                    batch_list_end = batch_list[: video_length - batch_list[0]]
-                    batch_list_front = batch_list[video_length - batch_list[0] :]
-                    if len(batch_list_end) < len(batch_list_front):
-                        batch_list_front_end = batch_list_front[-1]
-                        for i in range(len(batch_list_end)):
-                            batch_list_front.append(batch_list_front_end + i + 1)
-                        yield batch_list_front
-                    else:
-                        batch_list_end_front = batch_list_end[0]
-                        for i in range(len(batch_list_front)):
-                            batch_list_end.insert(0, batch_list_end_front - i - 1)
-                        yield batch_list_end
-                else:
-                    yield batch_list
+                yield [e % video_length for e in range(j, j + batch_size * context_step, context_step)]
 
 
     def hack(self, params: AnimateDiffProcess):
@@ -126,18 +111,6 @@ class AnimateDiffInfV2V:
                     #         if module.cond_image.shape[0] > len(context):
                     #             module.set_cond_image(module.cond_image_backup)
 
-        # def mm_cfg_forward(self, x, sigma, uncond, cond, cond_scale, s_min_uncond, image_cond):
-        #     for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
-        #         # run original forward function for the current context
-        #         x[context] = cfg_original_forward(
-        #             self, x[context], sigma[context], [uncond[i] for i in context], 
-        #             MulticondLearnedConditioning(len(context), [cond.batch[i] for i in context]), 
-        #             cond_scale, s_min_uncond, image_cond[context])
-
-        #         self.step -= 1
-        #     self.step += 1
-        #     return x
-
         def mm_cfg_forward(self, x, sigma, uncond, cond, cond_scale, s_min_uncond, image_cond):
             if state.interrupted or state.skipped:
                 raise sd_samplers_common.InterruptedException
@@ -162,7 +135,7 @@ class AnimateDiffInfV2V:
             repeats = [len(conds_list[i]) for i in range(batch_size)]
 
             if shared.sd_model.model.conditioning_key == "crossattn-adm":
-                image_uncond = torch.zeros_like(image_cond)
+                image_uncond = torch.zeros_like(image_cond) # this should not be supported.
                 make_condition_dict = lambda c_crossattn, c_adm: {"c_crossattn": [c_crossattn], "c_adm": c_adm}
             else:
                 image_uncond = image_cond
@@ -215,8 +188,16 @@ class AnimateDiffInfV2V:
                 else:
                     cond_in = catenate_conds([tensor, uncond])
 
-                if shared.opts.batch_cond_uncond: # 
-                    x_out = self.inner_model(x_in, sigma_in, cond=make_condition_dict(cond_in, image_cond_in))
+                if shared.opts.batch_cond_uncond: # only support this branch
+                    # x_out = self.inner_model(x_in, sigma_in, cond=make_condition_dict(cond_in, image_cond_in))
+                    x_out = torch.zeros_like(x_in, dtype=x_in.dtype, device=x_in.device)
+                    for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
+                        # run original forward function for the current context
+                        _context = context + [c + params.video_length for c in context]
+                        print(f"context: {_context}, shape: {x_in.shape}, {sigma_in.shape}, {cond_in.shape}, {image_cond_in.shape}")
+                        mm_cn_select(_context)
+                        x_out[_context] = self.inner_model(x_in[_context], sigma_in[_context], cond=make_condition_dict(cond_in[_context], image_cond_in[_context]))
+                        mm_cn_restore(_context)
                 else:
                     x_out = torch.zeros_like(x_in)
                     for batch_offset in range(0, x_out.shape[0], batch_size):
