@@ -97,50 +97,6 @@ class AnimateDiffProcess:
             self.overlap = self.batch_size // 4
         if "PNG" not in self.format:
             p.do_not_save_samples = True
-        self.parse_prompt(p)
-
-
-    def parse_prompt(self, p):
-        self.prompt_map = None
-        if type(p.prompt) is not str:
-            logger.warn("prompt is not str, cannot support prompt map")
-            return
-
-        lines = prompt.strip().split('\n')
-        data = {
-            'head_prompts': [],
-            'mapp_prompts': {},
-            'tail_prompts': []
-        }
-
-        mode = 'head'
-        for line in lines:
-            if mode == 'head':
-                if re.match(r'^\d+:', line):
-                    mode = 'mapp'
-                else:
-                    data['head_prompts'].append(line)
-                    
-            if mode == 'mapp':
-                match = re.match(r'^(\d+): (.+)$', line)
-                if match:
-                    number, prompt = match.groups()
-                    data['mapp_prompts'][int(number)] = prompt
-                else:
-                    mode = 'tail'
-                    
-            if mode == 'tail':
-                data['tail_prompts'].append(line)
-        
-        if data['mapp_prompts']:
-            logger.info("You are using prompt travel.")
-            self.prompt_map = {}
-            prompt_list = []
-            for number, prompt in data['mapp_prompts'].items():
-                current_prompt = f"{', '.join(data['head_prompts'])}, {prompt}, {', '.join(data['tail_prompts'])}"
-                self.prompt_map[number] = current_prompt
-                prompt_list.append(current_prompt)
-            p.prompt = prompt_list
 
 
 class AnimateDiffUiGroup:
