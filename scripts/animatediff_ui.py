@@ -12,11 +12,13 @@ class ToolButton(gr.Button, gr.components.FormComponent):
     def __init__(self, **kwargs):
         super().__init__(variant="tool", **kwargs)
 
+
     def get_block_name(self):
         return "button"
 
 
 class AnimateDiffProcess:
+
     def __init__(
         self,
         model="mm_sd_v15_v2.ckpt",
@@ -61,11 +63,13 @@ class AnimateDiffProcess:
         self.latent_power_last = latent_power_last
         self.latent_scale_last = latent_scale_last
 
+
     def get_list(self, is_img2img: bool):
         list_var = list(vars(self).values())
         if not is_img2img:
             list_var = list_var[:-5]
         return list_var
+
 
     def _check(self):
         assert (
@@ -74,6 +78,7 @@ class AnimateDiffProcess:
         assert not set(["GIF", "MP4", "PNG"]).isdisjoint(
             self.format
         ), "At least one saving format should be selected."
+
 
     def set_p(self, p):
         self._check()
@@ -98,6 +103,7 @@ class AnimateDiffUiGroup:
 
     def __init__(self):
         self.params = AnimateDiffProcess()
+
 
     def render(self, is_img2img: bool, model_dir: str):
         if not os.path.isdir(model_dir):
@@ -288,6 +294,7 @@ class AnimateDiffUiGroup:
                 remove.click(fn=motion_module.remove)
         return self.register_unit(is_img2img)
 
+
     def register_unit(self, is_img2img: bool):
         unit = gr.State(value=AnimateDiffProcess)
         (
@@ -301,6 +308,7 @@ class AnimateDiffUiGroup:
             queue=False,
         )
         return unit
+
 
     @staticmethod
     def on_after_component(component, **_kwargs):
