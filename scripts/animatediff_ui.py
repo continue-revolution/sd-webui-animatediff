@@ -4,7 +4,6 @@ import cv2
 import gradio as gr
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
-from scripts.animatediff_logger import logger_animatediff as logger
 
 
 class ToolButton(gr.Button, gr.components.FormComponent):
