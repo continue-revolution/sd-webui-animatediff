@@ -1,5 +1,4 @@
 import os
-import re
 
 import cv2
 import gradio as gr
