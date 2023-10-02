@@ -144,8 +144,8 @@ class AnimateDiffInfV2V:
                             control.hr_hint_cond_backup[context] = control.hr_hint_cond
                             control.hr_hint_cond = control.hr_hint_cond_backup
                     if control.control_model_type == ControlModelType.IPAdapter and getattr(control.control_model, "image_emb_backup", None) is not None:
-                        control.control_model.image_emb_backup[context] = control.control_model.image_emb
-                        control.control_model.uncond_image_emb_backup[context] = control.control_model.uncond_image_emb
+                        # control.control_model.image_emb_backup[context] = control.control_model.image_emb
+                        # control.control_model.uncond_image_emb_backup[context] = control.control_model.uncond_image_emb
                         control.control_model.image_emb = control.control_model.image_emb_backup
                         control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
                     # if control.control_model_type == ControlModelType.Controlllite:
