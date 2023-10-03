@@ -28,7 +28,7 @@ class AnimateDiffOutput:
                 f"{p.outpath_samples}/AnimateDiff", ""
             )
             filename = f"{seq:05}-{res.seed}"
-            video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}."
+            video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}"
 
             video_list = self._add_reverse(params, video_list)
             video_list = self._interp(p, params, video_list, filename)
@@ -132,7 +132,7 @@ class AnimateDiffOutput:
         video_paths = []
         video_array = [np.array(v) for v in video_list]
         if "GIF" in params.format:
-            video_path_gif = video_path_prefix + "gif"
+            video_path_gif = video_path_prefix + ".gif"
             video_paths.append(video_path_gif)
             if shared.opts.data.get("animatediff_optimize_gif_palette", False):
                 try:
@@ -173,11 +173,11 @@ class AnimateDiffOutput:
             if shared.opts.data.get("animatediff_optimize_gif_gifsicle", False):
                 self._optimize_gif(video_path_gif)
         if "MP4" in params.format:
-            video_path_mp4 = video_path_prefix + "mp4"
+            video_path_mp4 = video_path_prefix + ".mp4"
             video_paths.append(video_path_mp4)
             imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
         if "TXT" in params.format and res.images[index].info is not None:
-            video_path_txt = video_path_prefix + "txt"
+            video_path_txt = video_path_prefix + ".txt"
             self._save_txt(params, video_path_txt, res, index)
         return video_paths
 
