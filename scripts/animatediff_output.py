@@ -34,10 +34,6 @@ class AnimateDiffOutput:
             video_list = self._interp(p, params, video_list, filename)
             video_paths += self._save(params, video_list, video_path_prefix, res, i)
 
-            # change save location for PNG frames
-            png_path = f"{p.outpath_samples}/AnimateDiff/{filename}"
-            Path(png_path).mkdir(exist_ok=True, parents=True)
-            p.outpath_samples = png_path
 
         if len(video_paths) > 0:
             if not p.is_api:
