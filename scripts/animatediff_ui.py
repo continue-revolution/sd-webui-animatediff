@@ -88,8 +88,8 @@ class AnimateDiffProcess:
             self.video_default = False
         if self.overlap == -1:
             self.overlap = self.batch_size // 4
-        if "PNG" not in self.format:
-            p.do_not_save_samples = True
+        # _save will save frames to subfolders when saving PNG output
+        p.do_not_save_samples = True
 
 
 class AnimateDiffUiGroup:

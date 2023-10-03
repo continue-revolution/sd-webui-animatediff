@@ -3,7 +3,7 @@ from pathlib import Path
 
 import imageio.v3 as imageio
 import numpy as np
-from PIL import Image
+from PIL import Image, PngImagePlugin
 from modules import images, shared
 from modules.processing import Processed, StableDiffusionProcessing
 
@@ -131,6 +131,14 @@ class AnimateDiffOutput:
     ):
         video_paths = []
         video_array = [np.array(v) for v in video_list]
+        if "PNG" in params.format:
+            Path(video_path_prefix).mkdir(exist_ok=True, parents=True)
+            for i, frame in enumerate(video_list):
+                png_filename = f"{video_path_prefix}/{i:05}.png"
+                png_info = PngImagePlugin.PngInfo()
+                png_info.add_text('parameters', res.infotexts[0])
+                imageio.imwrite(png_filename, frame, pnginfo=png_info)
+
         if "GIF" in params.format:
             video_path_gif = video_path_prefix + ".gif"
             video_paths.append(video_path_gif)
