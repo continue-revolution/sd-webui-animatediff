@@ -3,6 +3,8 @@ import os
 import cv2
 import gradio as gr
 
+from modules import shared
+
 from scripts.animatediff_mm import mm_animatediff as motion_module
 
 
@@ -93,8 +95,9 @@ class AnimateDiffProcess:
             self.video_default = False
         if self.overlap == -1:
             self.overlap = self.batch_size // 4
-        # _save will save frames to subfolders when saving PNG output
-        p.do_not_save_samples = True
+        if shared.opts.data.get("animatediff_do_not_save_samples", False):
+            # disable saving images to txt2img and img2img folders
+            p.do_not_save_samples = True
 
 
 class AnimateDiffUiGroup:

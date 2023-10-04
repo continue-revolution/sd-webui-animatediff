@@ -104,6 +104,15 @@ def on_ui_settings():
         )
     )
     shared.opts.add_option(
+        "animatediff_do_not_save_samples",
+        shared.OptionInfo(
+            False,
+            "Disable saving images to txt2img and img2img folders when AnimateDiff is enabled. Does not affect PNG output.",
+            gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
         "animatediff_xformers",
         shared.OptionInfo(
             "Optimize attention layers with xformers",
