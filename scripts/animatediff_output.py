@@ -37,8 +37,9 @@ class AnimateDiffOutput:
         if len(video_paths) > 0:
             if not p.is_api:
                 res.images = video_paths
-            # else:
-            #     res.images = self._encode_video_to_b64(video_paths)
+            else:
+                # res.images = self._encode_video_to_b64(video_paths)
+                res.images = video_list
 
     def _add_reverse(self, params: AnimateDiffProcess, video_list: list):
         if 0 in params.reverse:
