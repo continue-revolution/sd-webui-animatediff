@@ -154,14 +154,16 @@ class AnimateDiffInfV2V:
                     #             module.set_cond_image(module.cond_image_backup)
 
         def mm_sd_forward(self, x_in, sigma_in, cond_in, image_cond_in, make_condition_dict):
-            x_out = torch.zeros_like(x_in, dtype=x_in.dtype, device=x_in.device)
+            x_out = torch.zeros_like(x_in)
             for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
                 if shared.opts.batch_cond_uncond:
                     _context = context + [c + params.video_length for c in context]
                 else:
                     _context = context
                 mm_cn_select(_context)
-                x_out[_context] = self.inner_model(x_in[_context], sigma_in[_context], cond=make_condition_dict(cond_in[_context], image_cond_in[_context]))
+                out = self.inner_model(x_in[_context], sigma_in[_context], cond=make_condition_dict(cond_in[_context], image_cond_in[_context]))
+                x_out = x_out.to(dtype=out.dtype)
+                x_out[_context] = out
                 mm_cn_restore(_context)
             return x_out
 
