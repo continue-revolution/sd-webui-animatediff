@@ -409,6 +409,7 @@ class AnimateDiffControl:
                                 hr_controls_ipadapter['image_embeds'].append(hr_control['image_embeds'])
                         else:
                             hr_controls_ipadapter = None
+                            hr_controls = None
                     else:
                         controls.append(control)
                         if hr_control is not None:
@@ -562,15 +563,16 @@ class AnimateDiffControl:
                         dtype=torch.float32,
                         start=param.start_guidance_percent,
                         end=param.stop_guidance_percent
-                    )
-                if param.control_model_type == ControlModelType.Controlllite:
-                    param.control_model.hook(
-                        model=unet,
-                        cond=param.hint_cond,
-                        weight=param.weight,
-                        start=param.start_guidance_percent,
-                        end=param.stop_guidance_percent
-                    )
+                    ) 
+                # Do not support controlllite for sdxl
+                # if param.control_model_type == ControlModelType.Controlllite:
+                #     param.control_model.hook(
+                #         model=unet,
+                #         cond=param.hint_cond,
+                #         weight=param.weight,
+                #         start=param.start_guidance_percent,
+                #         end=param.stop_guidance_percent
+                #     )
 
             self.detected_map = detected_maps
             self.post_processors = post_processors

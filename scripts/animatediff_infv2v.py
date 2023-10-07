@@ -77,12 +77,30 @@ class AnimateDiffInfV2V:
             if cn_script is not None and cn_script.latest_network is not None:
                 from scripts.hook import ControlModelType
                 for control in cn_script.latest_network.control_params:
-                    if control.hint_cond.shape[0] > len(context):
-                        control.hint_cond_backup = control.hint_cond
-                        control.hint_cond = control.hint_cond[context]
-                    if control.hr_hint_cond is not None and control.hr_hint_cond.shape[0] > len(context):
-                        control.hr_hint_cond_backup = control.hr_hint_cond
-                        control.hr_hint_cond = control.hr_hint_cond[context]
+                    if control.control_model_type == ControlModelType.IPAdapter:
+                        ip_adapter_key = list(control.hint_cond)[0]
+                        match ip_adapter_key:
+                            case "image_embeds":
+                                if control.hint_cond[ip_adapter_key].shape[0] > len(context):
+                                    control.hint_cond_backup = control.hint_cond[ip_adapter_key]
+                                    control.hint_cond[ip_adapter_key] = control.hint_cond[ip_adapter_key][context]
+                                if control.hr_hint_cond is not None and control.hr_hint_cond[ip_adapter_key].shape[0] > len(context):
+                                    control.hr_hint_cond_backup = control.hr_hint_cond[ip_adapter_key]
+                                    control.hr_hint_cond[ip_adapter_key] = control.hr_hint_cond[ip_adapter_key][context]
+                            case "hidden_states":
+                                if control.hint_cond[ip_adapter_key][-2].shape[0] > len(context):
+                                    control.hint_cond_backup = control.hint_cond[ip_adapter_key][-2]
+                                    control.hint_cond[ip_adapter_key][-2] = control.hint_cond[ip_adapter_key][-2][context]
+                                if control.hr_hint_cond is not None and control.hr_hint_cond[ip_adapter_key][-2].shape[0] > len(context):
+                                    control.hr_hint_cond_backup = control.hr_hint_cond[ip_adapter_key][-2]
+                                    control.hr_hint_cond[ip_adapter_key][-2] = control.hr_hint_cond[ip_adapter_key][-2][context]
+                    else:
+                        if control.hint_cond.shape[0] > len(context):
+                            control.hint_cond_backup = control.hint_cond
+                            control.hint_cond = control.hint_cond[context]
+                        if control.hr_hint_cond is not None and control.hr_hint_cond.shape[0] > len(context):
+                            control.hr_hint_cond_backup = control.hr_hint_cond
+                            control.hr_hint_cond = control.hr_hint_cond[context]
                     if control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
                         control.control_model.image_emb_backup = control.control_model.image_emb
                         control.control_model.image_emb = control.control_model.image_emb[context]
@@ -100,14 +118,34 @@ class AnimateDiffInfV2V:
                 from scripts.hook import ControlModelType
                 for control in cn_script.latest_network.control_params:
                     if getattr(control, "hint_cond_backup", None) is not None:
-                        control.hint_cond_backup[context] = control.hint_cond
-                        control.hint_cond = control.hint_cond_backup
+                        if control.control_model_type == ControlModelType.IPAdapter:
+                            ip_adapter_key = list(control.hint_cond_backup)[0]
+                            match ip_adapter_key:
+                                case "image_embeds":
+                                    control.hint_cond_backup[context] = control.hint_cond[ip_adapter_key]
+                                    control.hint_cond[ip_adapter_key] = control.hint_cond_backup
+                                case "hidden_states":
+                                    control.hint_cond_backup[context] = control.hint_cond[ip_adapter_key][-2]
+                                    control.hint_cond[ip_adapter_key][-2] = control.hint_cond_backup
+                        else:
+                            control.hint_cond_backup[context] = control.hint_cond
+                            control.hint_cond = control.hint_cond_backup
                     if control.hr_hint_cond is not None and getattr(control, "hr_hint_cond_backup", None) is not None:
-                        control.hr_hint_cond_backup[context] = control.hr_hint_cond
-                        control.hr_hint_cond = control.hr_hint_cond_backup
+                        if control.control_model_type == ControlModelType.IPAdapter:
+                            ip_adapter_key = list(control.hr_hint_cond_backup)[0]
+                            match ip_adapter_key:
+                                case "image_embeds":
+                                    control.hr_hint_cond_backup[ip_adapter_key][context] = control.hr_hint_cond[ip_adapter_key]
+                                    control.hr_hint_cond[ip_adapter_key] = control.hr_hint_cond_backup[ip_adapter_key]
+                                case "hidden_states":
+                                    control.hr_hint_cond_backup[context] = control.hr_hint_cond[ip_adapter_key][-2]
+                                    control.hr_hint_cond[ip_adapter_key][-2] = control.hr_hint_cond_backup
+                        else:
+                            control.hr_hint_cond_backup[context] = control.hr_hint_cond
+                            control.hr_hint_cond = control.hr_hint_cond_backup
                     if control.control_model_type == ControlModelType.IPAdapter and getattr(control.control_model, "image_emb_backup", None) is not None:
-                        control.control_model.image_emb_backup[context] = control.control_model.image_emb
-                        control.control_model.uncond_image_emb_backup[context] = control.control_model.uncond_image_emb
+                        # control.control_model.image_emb_backup[context] = control.control_model.image_emb
+                        # control.control_model.uncond_image_emb_backup[context] = control.control_model.uncond_image_emb
                         control.control_model.image_emb = control.control_model.image_emb_backup
                         control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
                     # if control.control_model_type == ControlModelType.Controlllite:
@@ -116,14 +154,16 @@ class AnimateDiffInfV2V:
                     #             module.set_cond_image(module.cond_image_backup)
 
         def mm_sd_forward(self, x_in, sigma_in, cond_in, image_cond_in, make_condition_dict):
-            x_out = torch.zeros_like(x_in, dtype=x_in.dtype, device=x_in.device)
+            x_out = torch.zeros_like(x_in)
             for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
                 if shared.opts.batch_cond_uncond:
                     _context = context + [c + params.video_length for c in context]
                 else:
                     _context = context
                 mm_cn_select(_context)
-                x_out[_context] = self.inner_model(x_in[_context], sigma_in[_context], cond=make_condition_dict(cond_in[_context], image_cond_in[_context]))
+                out = self.inner_model(x_in[_context], sigma_in[_context], cond=make_condition_dict(cond_in[_context], image_cond_in[_context]))
+                x_out = x_out.to(dtype=out.dtype)
+                x_out[_context] = out
                 mm_cn_restore(_context)
             return x_out
 
