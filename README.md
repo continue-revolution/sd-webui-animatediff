@@ -101,6 +101,7 @@ Just like how you use ControlNet. Here is a sample. You will get a list of gener
 - `2023/09/29`: [v1.8.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.8.0): Infinite generation (with/without ControlNet) supported. [Demo and video instructions](#demo-and-video-instructions) are coming soon.
 - `2023/10/01`: [v1.8.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.8.1): Now you can uncheck `Batch cond/uncond` in `Settings/Optimization` if you want. This will reduce your VRAM (5.31GB -> 4.21GB for SDP) but take longer time.
 - `2023/10/08`: [v1.9.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.0): Prompt travel supported. You must have ControlNet installed (you do not need to enable ControlNet) to try it. See [FAQ](#faq) for how to trigger this feature.
+- `2023/10/?`: [v1.9.1](ttps://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.1): TODO
 
 
 ## FAQ
