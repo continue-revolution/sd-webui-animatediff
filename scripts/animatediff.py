@@ -11,6 +11,7 @@ from scripts.animatediff_latent import AnimateDiffI2VLatent
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_lora import AnimateDiffLora
 from scripts.animatediff_mm import mm_animatediff as motion_module
+from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 
@@ -24,6 +25,7 @@ class AnimateDiffScript(scripts.Script):
         self.lora_hacker = None
         self.cfg_hacker = None
         self.cn_hacker = None
+        self.prompt_scheduler = None
 
 
     def title(self):
@@ -45,11 +47,12 @@ class AnimateDiffScript(scripts.Script):
             logger.info("AnimateDiff process start.")
             params.set_p(p)
             motion_module.inject(p.sd_model, params.model)
+            self.prompt_scheduler = AnimateDiffPromptSchedule()
             self.lora_hacker = AnimateDiffLora(motion_module.mm.using_v2)
             self.lora_hacker.hack()
-            self.cfg_hacker = AnimateDiffInfV2V(p)
+            self.cfg_hacker = AnimateDiffInfV2V(p, self.prompt_scheduler)
             self.cfg_hacker.hack(params)
-            self.cn_hacker = AnimateDiffControl(p)
+            self.cn_hacker = AnimateDiffControl(p, self.prompt_scheduler)
             self.cn_hacker.hack(params)
 
 

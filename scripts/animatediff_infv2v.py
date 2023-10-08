@@ -12,17 +12,19 @@ from modules.sd_samplers_cfg_denoiser import CFGDenoiser, catenate_conds, subscr
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
+from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 
 
 class AnimateDiffInfV2V:
 
-    def __init__(self, p):
+    def __init__(self, p, prompt_scheduler: AnimateDiffPromptSchedule):
         self.cfg_original_forward = None
         try:
             from scripts.external_code import find_cn_script
             self.cn_script = find_cn_script(p.scripts)
         except:
             self.cn_script = None
+        self.prompt_scheduler = prompt_scheduler
 
 
     # Returns fraction that has denominator that is a power of 2
@@ -70,6 +72,7 @@ class AnimateDiffInfV2V:
         logger.info(f"Hacking CFGDenoiser forward function.")
         self.cfg_original_forward = CFGDenoiser.forward
         cn_script = self.cn_script
+        prompt_scheduler = self.prompt_scheduler
 
         def mm_cn_select(context: List[int]):
             # take control images for current context.
@@ -161,7 +164,14 @@ class AnimateDiffInfV2V:
                 else:
                     _context = context
                 mm_cn_select(_context)
-                out = self.inner_model(x_in[_context], sigma_in[_context], cond=make_condition_dict(cond_in[_context], image_cond_in[_context]))
+                out = self.inner_model(
+                    x_in[_context],
+                    sigma_in[_context], 
+                    cond=make_condition_dict(
+                        prompt_scheduler.get_current_cond_in_from_text(
+                            _context, params.video_length, cond_in),
+                        image_cond_in[_context])
+                    )
                 x_out = x_out.to(dtype=out.dtype)
                 x_out[_context] = out
                 mm_cn_restore(_context)

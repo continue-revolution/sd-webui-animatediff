@@ -1,3 +1,5 @@
+from typing import List
+
 import re
 import torch
 
@@ -59,12 +61,12 @@ class AnimateDiffPromptSchedule:
             p.prompt = prompt_list * p.n_iter
 
 
-    def get_current_prompt_embeds_from_text(
-        self,
-        center_frame = None,
-        video_length : int = 0,
-        prompt_embeds_map : dict = None,
-        ):
+    def get_current_cond_in_from_text(
+        self, context: List[int], video_length: int, cond_in: dict = None):
+        if self.prompt_map is None:
+            return cond_in[context]
+
+        center_frame = context[len(context) // 2]
 
         key_prev = list(self.prompt_map.keys())[0]
         key_next = list(self.prompt_map.keys())[-1]
@@ -83,11 +85,11 @@ class AnimateDiffPromptSchedule:
             dist_next += video_length
 
         if key_prev == key_next or dist_prev + dist_next == 0:
-            return prompt_embeds_map[key_prev]
+            return cond_in[key_prev]
 
         rate = dist_prev / (dist_prev + dist_next)
 
-        return AnimateDiffPromptSchedule.slerp( prompt_embeds_map[key_prev], prompt_embeds_map[key_next], rate )
+        return AnimateDiffPromptSchedule.slerp(cond_in[key_prev], cond_in[key_next], rate)
 
 
     @staticmethod
