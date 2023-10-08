@@ -63,7 +63,7 @@ Just like how you use ControlNet. Here is a sample. You will get a list of gener
   	'args': [{
   		  'enable': True,         # enable AnimateDiff
   		  'video_length': 16,     # video frame number, 0-24 for v1 and 0-32 for v2
-  		  'format': 'MP4',        # 'GIF' | 'MP4' | 'PNG' | 'TXT'
+  		  'format': ['GIF', 'PNG'],        # 'GIF' | 'MP4' | 'PNG' | 'TXT'
   		  'loop_number': 0,       # 0 = infinite loop
   		  'fps': 8,               # frames per second
   		  'model': 'mm_sd_v15_v2.ckpt',   # motion module name
@@ -100,8 +100,8 @@ Just like how you use ControlNet. Here is a sample. You will get a list of gener
 - `2023/09/27`: [v1.7.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.7.0): [ControlNet](https://github.com/Mikubill/sd-webui-controlnet) supported. Please closely follow the instructions in [How to Use](#how-to-use), especially the explanation of `Video source` and `Video path` attributes. ControlNet is way more complex than what I can test and I ask you to test for me. Please submit an issue whenever you find a bug. You may want to check `Do not append detectmap to output` in `Settings/ControlNet` to avoid having a series of control images in your output gallery. [Safetensors](#motion-module-model-zoo) for some motion modules are also available now.
 - `2023/09/29`: [v1.8.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.8.0): Infinite generation (with/without ControlNet) supported. [Demo and video instructions](#demo-and-video-instructions) are coming soon.
 - `2023/10/01`: [v1.8.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.8.1): Now you can uncheck `Batch cond/uncond` in `Settings/Optimization` if you want. This will reduce your VRAM (5.31GB -> 4.21GB for SDP) but take longer time.
+- `2023/10/08`: [v1.9.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.0): Prompt travel supported. You must have ControlNet installed (you do not need to enable ControlNet) to try it. See [FAQ](#faq) for how to trigger this feature.
 
-Prompt Travel and other CLI features are currently work in progress inside [#71](https://github.com/continue-revolution/sd-webui-animatediff/pull/71). Stay tuned and they should be released soon.
 
 ## FAQ
 1.  Q: How much VRAM do I need?
@@ -116,6 +116,16 @@ Prompt Travel and other CLI features are currently work in progress inside [#71]
 1.  Q: Can I use SDXL to generate GIFs?
 
     A: You will have to wait for someone to train SDXL-specific motion modules which will have a different model architecture. This extension essentially inject multiple motion modules into SD1.5 UNet. It does not work for other variations of SD, such as SD2.1 and SDXL.
+
+1.  Q: How should I write prompts to trigger prompt travel?
+
+    A: See example below. The first line is head prompt, which is optional. You can write no/single/multiple lines of head prompts. The second and third lines are for prompt interpolation, in format `frame number`: `prompt`. You must start from 0. The last line if tail prompt, which is optional. You can write no/single/multiple lines of tail prompts. If you don't need this feature, just write prompts in the old way.
+    ```
+    1girl, yoimiya (genshin impact), origen, line, comet, wink, Masterpiece, BestQuality. UltraDetailed, <lora:LineLine2D:0.7>,  <lora:yoimiya:0.8>, 
+    0: closed mouth
+    8: open mouse
+    smile
+    ```
 
 
 ## Demo and Video Instructions
