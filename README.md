@@ -119,7 +119,7 @@ Just like how you use ControlNet. Here is a sample. You will get a list of gener
 
 1.  Q: How should I write prompts to trigger prompt travel?
 
-    A: See example below. The first line is head prompt, which is optional. You can write no/single/multiple lines of head prompts. The second and third lines are for prompt interpolation, in format `frame number`: `prompt`. You must start from 0. The last line if tail prompt, which is optional. You can write no/single/multiple lines of tail prompts. If you don't need this feature, just write prompts in the old way.
+    A: See example below. The first line is head prompt, which is optional. You can write no/single/multiple lines of head prompts. The second and third lines are for prompt interpolation, in format `frame number`: `prompt`. The last line if tail prompt, which is optional. You can write no/single/multiple lines of tail prompts. If you don't need this feature, just write prompts in the old way.
     ```
     1girl, yoimiya (genshin impact), origen, line, comet, wink, Masterpiece, BestQuality. UltraDetailed, <lora:LineLine2D:0.7>,  <lora:yoimiya:0.8>, 
     0: closed mouth
