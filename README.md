@@ -123,7 +123,7 @@ Just like how you use ControlNet. Here is a sample. You will get a list of gener
     ```
     1girl, yoimiya (genshin impact), origen, line, comet, wink, Masterpiece, BestQuality. UltraDetailed, <lora:LineLine2D:0.7>,  <lora:yoimiya:0.8>, 
     0: closed mouth
-    8: open mouse
+    8: open mouth
     smile
     ```
 
