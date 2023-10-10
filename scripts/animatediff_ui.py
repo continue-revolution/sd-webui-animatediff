@@ -242,6 +242,15 @@ class AnimateDiffUiGroup:
                 else:
                     return int(self.params.fps.value)
             self.params.video_source.change(update_fps, inputs=self.params.video_source, outputs=self.params.fps)
+            def update_frames(video_source):
+                if video_source is not None and video_source != '':
+                    cap = cv2.VideoCapture(video_source)
+                    frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                    cap.release()
+                    return frames
+                else:
+                    return int(self.params.video_length.value)
+            self.params.video_source.change(update_frames, inputs=self.params.video_source, outputs=self.params.video_length)
             self.params.video_path = gr.Textbox(
                 value=self.params.video_path,
                 label="Video path",

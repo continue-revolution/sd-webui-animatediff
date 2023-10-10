@@ -12,17 +12,19 @@ from modules.sd_samplers_cfg_denoiser import CFGDenoiser, catenate_conds, subscr
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
+from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 
 
 class AnimateDiffInfV2V:
 
-    def __init__(self, p):
+    def __init__(self, p, prompt_scheduler: AnimateDiffPromptSchedule):
         self.cfg_original_forward = None
         try:
             from scripts.external_code import find_cn_script
             self.cn_script = find_cn_script(p.scripts)
         except:
             self.cn_script = None
+        self.prompt_scheduler = prompt_scheduler
 
 
     # Returns fraction that has denominator that is a power of 2
@@ -70,6 +72,7 @@ class AnimateDiffInfV2V:
         logger.info(f"Hacking CFGDenoiser forward function.")
         self.cfg_original_forward = CFGDenoiser.forward
         cn_script = self.cn_script
+        prompt_scheduler = self.prompt_scheduler
 
         def mm_cn_select(context: List[int]):
             # take control images for current context.
@@ -154,14 +157,16 @@ class AnimateDiffInfV2V:
                     #             module.set_cond_image(module.cond_image_backup)
 
         def mm_sd_forward(self, x_in, sigma_in, cond_in, image_cond_in, make_condition_dict):
-            x_out = torch.zeros_like(x_in, dtype=x_in.dtype, device=x_in.device)
+            x_out = torch.zeros_like(x_in)
             for context in AnimateDiffInfV2V.uniform(self.step, params.video_length, params.batch_size, params.stride, params.overlap, params.closed_loop):
                 if shared.opts.batch_cond_uncond:
                     _context = context + [c + params.video_length for c in context]
                 else:
                     _context = context
                 mm_cn_select(_context)
-                x_out[_context] = self.inner_model(x_in[_context], sigma_in[_context], cond=make_condition_dict(cond_in[_context], image_cond_in[_context]))
+                out = self.inner_model(x_in[_context], sigma_in[_context], cond=make_condition_dict(cond_in[_context], image_cond_in[_context]))
+                x_out = x_out.to(dtype=out.dtype)
+                x_out[_context] = out
                 mm_cn_restore(_context)
             return x_out
 
@@ -235,6 +240,7 @@ class AnimateDiffInfV2V:
                     self.padded_cond_uncond = True
 
             if tensor.shape[1] == uncond.shape[1] or skip_uncond:
+                tensor = prompt_scheduler.multi_cond(tensor) # hook
                 if is_edit_model:
                     cond_in = catenate_conds([tensor, uncond, uncond])
                 elif skip_uncond:
@@ -242,16 +248,14 @@ class AnimateDiffInfV2V:
                 else:
                     cond_in = catenate_conds([tensor, uncond])
 
-                if shared.opts.batch_cond_uncond: # only support this branch
-                    # x_out = self.inner_model(x_in, sigma_in, cond=make_condition_dict(cond_in, image_cond_in))
-                    x_out = mm_sd_forward(self, x_in, sigma_in, cond_in, image_cond_in, make_condition_dict)
+                if shared.opts.batch_cond_uncond:
+                    x_out = mm_sd_forward(self, x_in, sigma_in, cond_in, image_cond_in, make_condition_dict) # hook
                 else:
                     x_out = torch.zeros_like(x_in)
                     for batch_offset in range(0, x_out.shape[0], batch_size):
                         a = batch_offset
                         b = a + batch_size
-                        # x_out[a:b] = self.inner_model(x_in[a:b], sigma_in[a:b], cond=make_condition_dict(subscript_cond(cond_in, a, b), image_cond_in[a:b]))
-                        x_out[a:b] = mm_sd_forward(self, x_in[a:b], sigma_in[a:b], subscript_cond(cond_in, a, b), subscript_cond(image_cond_in, a, b), make_condition_dict)
+                        x_out[a:b] = mm_sd_forward(self, x_in[a:b], sigma_in[a:b], subscript_cond(cond_in, a, b), subscript_cond(image_cond_in, a, b), make_condition_dict) # hook
             else:
                 x_out = torch.zeros_like(x_in)
                 batch_size = batch_size*2 if shared.opts.batch_cond_uncond else batch_size

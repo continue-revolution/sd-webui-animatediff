@@ -13,11 +13,12 @@ from modules.processing import (StableDiffusionProcessing,
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
+from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 
 
 class AnimateDiffControl:
 
-    def __init__(self, p: StableDiffusionProcessing):
+    def __init__(self, p: StableDiffusionProcessing, prompt_scheduler: AnimateDiffPromptSchedule):
         self.original_processing_process_images_hijack = None
         self.original_controlnet_main_entry = None
         self.original_postprocess_batch = None
@@ -26,10 +27,12 @@ class AnimateDiffControl:
             self.cn_script = find_cn_script(p.scripts)
         except:
             self.cn_script = None
+        self.prompt_scheduler = prompt_scheduler
 
 
     def hack_batchhijack(self, params: AnimateDiffProcess):
         cn_script = self.cn_script
+        prompt_scheduler = self.prompt_scheduler
 
         def get_input_frames():
             if params.video_source is not None and params.video_source != '':
@@ -101,6 +104,7 @@ class AnimateDiffControl:
                         if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
                             unit.batch_images = unit.batch_images[:params.video_length]
 
+            prompt_scheduler.parse_prompt(p)
             return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
         
         self.original_processing_process_images_hijack = BatchHijack.processing_process_images_hijack
