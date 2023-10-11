@@ -182,7 +182,15 @@ class AnimateDiffOutput:
         if "MP4" in params.format:
             video_path_mp4 = video_path_prefix + ".mp4"
             video_paths.append(video_path_mp4)
-            imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
+            try:
+                imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
+            except:
+                from launch import run_pip
+                run_pip(
+                    "install imageio[ffmpeg]",
+                    "sd-webui-animatediff save mp4 requirement: imageio[ffmpeg]",
+                )
+                imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
         if "TXT" in params.format and res.images[index].info is not None:
             video_path_txt = video_path_prefix + ".txt"
             self._save_txt(params, video_path_txt, res, index)
@@ -203,9 +211,7 @@ class AnimateDiffOutput:
             try:
                 pygifsicle.optimize(video_path)
             except FileNotFoundError:
-                logger.warn(
-                    "gifsicle not found, required for optimized GIFs, try: apt install gifsicle"
-                )
+                logger.warn("gifsicle not found, required for optimized GIFs, try: apt install gifsicle")
 
     def _save_txt(
         self, params: AnimateDiffProcess, video_path: str, res: Processed, i: int

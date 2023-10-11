@@ -192,7 +192,7 @@ class AnimateDiffUiGroup:
             with gr.Row():
                 self.params.format = gr.CheckboxGroup(
                     choices=["GIF", "MP4", "PNG", "TXT"],
-                    label="Save",
+                    label="Save format",
                     type="value",
                     elem_id=f"{elemid_prefix}save-format",
                     value=self.params.format,
