@@ -3,6 +3,8 @@ import os
 import cv2
 import gradio as gr
 
+from modules import shared
+
 from scripts.animatediff_mm import mm_animatediff as motion_module
 
 
@@ -93,7 +95,7 @@ class AnimateDiffProcess:
             self.video_default = False
         if self.overlap == -1:
             self.overlap = self.batch_size // 4
-        if "PNG" not in self.format:
+        if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", False):
             p.do_not_save_samples = True
 
 
