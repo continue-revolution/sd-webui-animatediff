@@ -33,17 +33,18 @@ class AnimateDiffMM:
 
     def _load(self, model_name):
         model_path = os.path.join(
-            shared.opts.data.get(
-                "animatediff_model_path", os.path.join(self.script_dir, "model")
-            ),
+            shared.opts.data.get("animatediff_model_path", os.path.join(self.script_dir, "model")),
             model_name,
         )
-        model_hash, using_v2 = self._hash(model_path, model_name)
+        model_hash, using_v2, guess = self._hash(model_path, model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
         if self.mm is None or self.mm.mm_hash != model_hash:
             logger.info(f"Loading motion module {model_name} from {model_path}")
             mm_state_dict = sd_models.read_state_dict(model_path)
+            if guess:
+                using_v2 = "mid_block.motion_modules.0.temporal_transformer.proj_out.bias" in mm_state_dict.keys()
+                logger.warn(f"Guessed mm architecture : {'v2' if using_v2 else 'v1'}")
             self.mm = MotionWrapper(model_hash, using_v2)
             missed_keys = self.mm.load_state_dict(mm_state_dict)
             logger.warn(f"Missing keys {missed_keys}")
@@ -58,17 +59,16 @@ class AnimateDiffMM:
             model_zoo = json.load(f)
         if model_hash in model_zoo:
             model_official_name = model_zoo[model_hash]["name"]
-            logger.info(
-                f"You are using {model_official_name}, which has been tested and supported."
-            )
-            return model_hash, model_zoo[model_hash]["arch"] == 2
+            logger.info(f"You are using tested mm {model_official_name}.")
+            return model_hash, model_zoo[model_hash]["arch"] == 2, False
         else:
             logger.warn(
-                f"Your model {model_name} has not been tested and supported. "
+                f"You are using unknown mm {model_name}. "
                 "Either your download is incomplete or your model has not been tested. "
-                "Please use at your own risk."
+                "Please use at your own risk. "
+                "AnimateDiff will guess mm architecture via state_dict."
             )
-            return model_hash, False
+            return model_hash, False, True
 
 
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
