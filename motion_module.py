@@ -82,7 +82,7 @@ class VanillaTemporalModule(nn.Module):
             self.temporal_transformer.proj_out = zero_module(self.temporal_transformer.proj_out)
 
 
-    def forward(self, input_tensor, encoder_hidden_states, attention_mask=None):
+    def forward(self, input_tensor, encoder_hidden_states=None, attention_mask=None): # TODO: encoder_hidden_states do seem to be always None
         return self.temporal_transformer(input_tensor, encoder_hidden_states, attention_mask)
 
 
