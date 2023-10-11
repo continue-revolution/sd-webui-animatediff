@@ -95,8 +95,7 @@ class AnimateDiffProcess:
             self.video_default = False
         if self.overlap == -1:
             self.overlap = self.batch_size // 4
-        if shared.opts.data.get("animatediff_do_not_save_samples", False):
-            # disable saving images to txt2img and img2img folders
+        if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", False):
             p.do_not_save_samples = True
 
 

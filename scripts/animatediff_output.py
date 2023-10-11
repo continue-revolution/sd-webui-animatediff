@@ -24,9 +24,7 @@ class AnimateDiffOutput:
             # so make a copy instead of a slice (reference), to avoid modifying res
             video_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
-            seq = images.get_next_sequence_number(
-                f"{p.outpath_samples}/AnimateDiff", ""
-            )
+            seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
             filename = f"{seq:05}-{res.seed}"
             video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}"
 

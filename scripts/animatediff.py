@@ -107,10 +107,11 @@ def on_ui_settings():
         )
     )
     shared.opts.add_option(
-        "animatediff_do_not_save_samples",
+        "animatediff_save_to_custom",
         shared.OptionInfo(
             False,
-            "Disable saving images to txt2img and img2img folders when AnimateDiff is enabled. Does not affect PNG output.",
+            "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/ "
+            "instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
             gr.Checkbox,
             section=section
         )
