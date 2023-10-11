@@ -130,7 +130,7 @@ class AnimateDiffOutput:
     ):
         video_paths = []
         video_array = [np.array(v) for v in video_list]
-        if "PNG" in params.format:
+        if "PNG" in params.format and shared.opts.data.get("animatediff_save_to_custom", False):
             Path(video_path_prefix).mkdir(exist_ok=True, parents=True)
             for i, frame in enumerate(video_list):
                 png_filename = f"{video_path_prefix}/{i:05}.png"
