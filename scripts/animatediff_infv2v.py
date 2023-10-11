@@ -82,21 +82,20 @@ class AnimateDiffInfV2V:
                 for control in cn_script.latest_network.control_params:
                     if control.control_model_type == ControlModelType.IPAdapter:
                         ip_adapter_key = list(control.hint_cond)[0]
-                        match ip_adapter_key:
-                            case "image_embeds":
-                                if control.hint_cond[ip_adapter_key].shape[0] > len(context):
-                                    control.hint_cond_backup = control.hint_cond[ip_adapter_key]
-                                    control.hint_cond[ip_adapter_key] = control.hint_cond[ip_adapter_key][context]
-                                if control.hr_hint_cond is not None and control.hr_hint_cond[ip_adapter_key].shape[0] > len(context):
-                                    control.hr_hint_cond_backup = control.hr_hint_cond[ip_adapter_key]
-                                    control.hr_hint_cond[ip_adapter_key] = control.hr_hint_cond[ip_adapter_key][context]
-                            case "hidden_states":
-                                if control.hint_cond[ip_adapter_key][-2].shape[0] > len(context):
-                                    control.hint_cond_backup = control.hint_cond[ip_adapter_key][-2]
-                                    control.hint_cond[ip_adapter_key][-2] = control.hint_cond[ip_adapter_key][-2][context]
-                                if control.hr_hint_cond is not None and control.hr_hint_cond[ip_adapter_key][-2].shape[0] > len(context):
-                                    control.hr_hint_cond_backup = control.hr_hint_cond[ip_adapter_key][-2]
-                                    control.hr_hint_cond[ip_adapter_key][-2] = control.hr_hint_cond[ip_adapter_key][-2][context]
+                        if ip_adapter_key == "image_embeds":
+                            if control.hint_cond[ip_adapter_key].shape[0] > len(context):
+                                control.hint_cond_backup = control.hint_cond[ip_adapter_key]
+                                control.hint_cond[ip_adapter_key] = control.hint_cond[ip_adapter_key][context]
+                            if control.hr_hint_cond is not None and control.hr_hint_cond[ip_adapter_key].shape[0] > len(context):
+                                control.hr_hint_cond_backup = control.hr_hint_cond[ip_adapter_key]
+                                control.hr_hint_cond[ip_adapter_key] = control.hr_hint_cond[ip_adapter_key][context]
+                        elif ip_adapter_key == "hidden_states":
+                            if control.hint_cond[ip_adapter_key][-2].shape[0] > len(context):
+                                control.hint_cond_backup = control.hint_cond[ip_adapter_key][-2]
+                                control.hint_cond[ip_adapter_key][-2] = control.hint_cond[ip_adapter_key][-2][context]
+                            if control.hr_hint_cond is not None and control.hr_hint_cond[ip_adapter_key][-2].shape[0] > len(context):
+                                control.hr_hint_cond_backup = control.hr_hint_cond[ip_adapter_key][-2]
+                                control.hr_hint_cond[ip_adapter_key][-2] = control.hr_hint_cond[ip_adapter_key][-2][context]
                     else:
                         if control.hint_cond.shape[0] > len(context):
                             control.hint_cond_backup = control.hint_cond
@@ -123,26 +122,24 @@ class AnimateDiffInfV2V:
                     if getattr(control, "hint_cond_backup", None) is not None:
                         if control.control_model_type == ControlModelType.IPAdapter:
                             ip_adapter_key = list(control.hint_cond_backup)[0]
-                            match ip_adapter_key:
-                                case "image_embeds":
-                                    control.hint_cond_backup[context] = control.hint_cond[ip_adapter_key]
-                                    control.hint_cond[ip_adapter_key] = control.hint_cond_backup
-                                case "hidden_states":
-                                    control.hint_cond_backup[context] = control.hint_cond[ip_adapter_key][-2]
-                                    control.hint_cond[ip_adapter_key][-2] = control.hint_cond_backup
+                            if ip_adapter_key == "image_embeds":
+                                control.hint_cond_backup[context] = control.hint_cond[ip_adapter_key]
+                                control.hint_cond[ip_adapter_key] = control.hint_cond_backup
+                            elif ip_adapter_key == "hidden_states":
+                                control.hint_cond_backup[context] = control.hint_cond[ip_adapter_key][-2]
+                                control.hint_cond[ip_adapter_key][-2] = control.hint_cond_backup
                         else:
                             control.hint_cond_backup[context] = control.hint_cond
                             control.hint_cond = control.hint_cond_backup
                     if control.hr_hint_cond is not None and getattr(control, "hr_hint_cond_backup", None) is not None:
                         if control.control_model_type == ControlModelType.IPAdapter:
                             ip_adapter_key = list(control.hr_hint_cond_backup)[0]
-                            match ip_adapter_key:
-                                case "image_embeds":
-                                    control.hr_hint_cond_backup[ip_adapter_key][context] = control.hr_hint_cond[ip_adapter_key]
-                                    control.hr_hint_cond[ip_adapter_key] = control.hr_hint_cond_backup[ip_adapter_key]
-                                case "hidden_states":
-                                    control.hr_hint_cond_backup[context] = control.hr_hint_cond[ip_adapter_key][-2]
-                                    control.hr_hint_cond[ip_adapter_key][-2] = control.hr_hint_cond_backup
+                            if ip_adapter_key == "image_embeds":
+                                control.hr_hint_cond_backup[ip_adapter_key][context] = control.hr_hint_cond[ip_adapter_key]
+                                control.hr_hint_cond[ip_adapter_key] = control.hr_hint_cond_backup[ip_adapter_key]
+                            elif ip_adapter_key == "hidden_states":
+                                control.hr_hint_cond_backup[context] = control.hr_hint_cond[ip_adapter_key][-2]
+                                control.hr_hint_cond[ip_adapter_key][-2] = control.hr_hint_cond_backup
                         else:
                             control.hr_hint_cond_backup[context] = control.hr_hint_cond
                             control.hr_hint_cond = control.hr_hint_cond_backup

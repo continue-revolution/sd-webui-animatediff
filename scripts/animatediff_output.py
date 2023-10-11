@@ -3,7 +3,7 @@ from pathlib import Path
 
 import imageio.v3 as imageio
 import numpy as np
-from PIL import Image
+from PIL import Image, PngImagePlugin
 from modules import images, shared
 from modules.processing import Processed, StableDiffusionProcessing
 
@@ -24,15 +24,14 @@ class AnimateDiffOutput:
             # so make a copy instead of a slice (reference), to avoid modifying res
             video_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
-            seq = images.get_next_sequence_number(
-                f"{p.outpath_samples}/AnimateDiff", ""
-            )
+            seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
             filename = f"{seq:05}-{res.seed}"
-            video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}."
+            video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}"
 
             video_list = self._add_reverse(params, video_list)
             video_list = self._interp(p, params, video_list, filename)
             video_paths += self._save(params, video_list, video_path_prefix, res, i)
+
 
         if len(video_paths) > 0:
             if not p.is_api:
@@ -131,8 +130,16 @@ class AnimateDiffOutput:
     ):
         video_paths = []
         video_array = [np.array(v) for v in video_list]
+        if "PNG" in params.format and shared.opts.data.get("animatediff_save_to_custom", False):
+            Path(video_path_prefix).mkdir(exist_ok=True, parents=True)
+            for i, frame in enumerate(video_list):
+                png_filename = f"{video_path_prefix}/{i:05}.png"
+                png_info = PngImagePlugin.PngInfo()
+                png_info.add_text('parameters', res.infotexts[0])
+                imageio.imwrite(png_filename, frame, pnginfo=png_info)
+
         if "GIF" in params.format:
-            video_path_gif = video_path_prefix + "gif"
+            video_path_gif = video_path_prefix + ".gif"
             video_paths.append(video_path_gif)
             if shared.opts.data.get("animatediff_optimize_gif_palette", False):
                 try:
@@ -173,11 +180,19 @@ class AnimateDiffOutput:
             if shared.opts.data.get("animatediff_optimize_gif_gifsicle", False):
                 self._optimize_gif(video_path_gif)
         if "MP4" in params.format:
-            video_path_mp4 = video_path_prefix + "mp4"
+            video_path_mp4 = video_path_prefix + ".mp4"
             video_paths.append(video_path_mp4)
-            imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
+            try:
+                imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
+            except:
+                from launch import run_pip
+                run_pip(
+                    "install imageio[ffmpeg]",
+                    "sd-webui-animatediff save mp4 requirement: imageio[ffmpeg]",
+                )
+                imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
         if "TXT" in params.format and res.images[index].info is not None:
-            video_path_txt = video_path_prefix + "txt"
+            video_path_txt = video_path_prefix + ".txt"
             self._save_txt(params, video_path_txt, res, index)
         return video_paths
 
@@ -196,9 +211,7 @@ class AnimateDiffOutput:
             try:
                 pygifsicle.optimize(video_path)
             except FileNotFoundError:
-                logger.warn(
-                    "gifsicle not found, required for optimized GIFs, try: apt install gifsicle"
-                )
+                logger.warn("gifsicle not found, required for optimized GIFs, try: apt install gifsicle")
 
     def _save_txt(
         self, params: AnimateDiffProcess, video_path: str, res: Processed, i: int
