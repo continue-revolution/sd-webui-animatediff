@@ -133,13 +133,10 @@ class AnimateDiffUiGroup:
                     value=(self.params.model if self.params.model in model_list else None),
                     label="Motion module",
                     type="value",
-                    tooltip="Choose which motion module will be injected into the generation process.",
                     elem_id=f"{elemid_prefix}motion-module",
                 )
                 refresh_model = ToolButton(value="\U0001f504")
-                refresh_model.click(
-                    refresh_models, self.params.model, self.params.model
-                )
+                refresh_model.click(refresh_models, self.params.model, self.params.model)
             with gr.Row():
                 self.params.enable = gr.Checkbox(
                     value=self.params.enable, label="Enable AnimateDiff", 
@@ -150,12 +147,10 @@ class AnimateDiffUiGroup:
                     value=self.params.video_length,
                     label="Number of frames",
                     precision=0,
-                    tooltip="Total length of video in frames.",
                     elem_id=f"{elemid_prefix}video-length",
                 )
                 self.params.fps = gr.Number(
                     value=self.params.fps, label="FPS", precision=0, 
-                    tooltip="How many frames per second the gif will run.", 
                     elem_id=f"{elemid_prefix}fps"
                 )
                 self.params.loop_number = gr.Number(
@@ -163,14 +158,12 @@ class AnimateDiffUiGroup:
                     value=self.params.loop_number,
                     label="Display loop number",
                     precision=0,
-                    tooltip="How many times the animation will loop, a value of 0 will loop forever.",
                     elem_id=f"{elemid_prefix}loop-number",
                 )
             with gr.Row():
                 self.params.closed_loop = gr.Checkbox(
                     value=self.params.closed_loop,
                     label="Closed loop",
-                    tooltip="If enabled, will try to make the last frame the same as the first frame.",
                     elem_id=f"{elemid_prefix}closed-loop",
                 )
                 self.params.batch_size = gr.Slider(
@@ -187,7 +180,6 @@ class AnimateDiffUiGroup:
                     value=self.params.stride,
                     label="Stride",
                     precision=0,
-                    tooltip="Adjusts the spacing between selected frames in the animation. A larger stride creates more variation between frames.",
                     elem_id=f"{elemid_prefix}stride",
                 )
                 self.params.overlap = gr.Number(
@@ -195,7 +187,6 @@ class AnimateDiffUiGroup:
                     value=self.params.overlap,
                     label="Overlap",
                     precision=0,
-                    tooltip="Number of frames to overlap in context.",
                     elem_id=f"{elemid_prefix}overlap",
                 )
             with gr.Row():
@@ -203,7 +194,6 @@ class AnimateDiffUiGroup:
                     choices=["GIF", "MP4", "PNG", "TXT"],
                     label="Save",
                     type="value",
-                    tooltip="Which formats the animation should be saved in",
                     elem_id=f"{elemid_prefix}save-format",
                     value=self.params.format,
                 )
@@ -211,7 +201,6 @@ class AnimateDiffUiGroup:
                     choices=["Add Reverse Frame", "Remove head", "Remove tail"],
                     label="Reverse",
                     type="index",
-                    tooltip="Reverse the resulting animation, remove the first and/or last frame from duplication.",
                     elem_id=f"{elemid_prefix}reverse",
                     value=self.params.reverse
                 )
@@ -219,13 +208,11 @@ class AnimateDiffUiGroup:
                 self.params.interp = gr.Radio(
                     choices=["Off", "FILM"],
                     label="Frame Interpolation",
-                    tooltip="Interpolate between frames with Deforum's FILM implementation. Requires Deforum extension.",
                     elem_id=f"{elemid_prefix}interp-choice",
                     value=self.params.interp
                 )
                 self.params.interp_x = gr.Number(
                     value=self.params.interp_x, label="Interp X", precision=0, 
-                    tooltip="Replace each input frame with X interpolated output frames.", 
                     elem_id=f"{elemid_prefix}interp-x"
                 )
             self.params.video_source = gr.Video(
@@ -253,7 +240,6 @@ class AnimateDiffUiGroup:
             self.params.video_path = gr.Textbox(
                 value=self.params.video_path,
                 label="Video path",
-                tooltip="Paste path to video file.",
                 elem_id=f"{elemid_prefix}video-path"
             )
             if is_img2img:
@@ -264,7 +250,6 @@ class AnimateDiffUiGroup:
                         value=self.params.latent_power,
                         step=0.1,
                         label="Latent power",
-                        tooltip="Controls the exponent used in the initial alpha calculation. Higher values will result in a more drastic initial change in the animation.",
                         elem_id=f"{elemid_prefix}latent-power",
                     )
                     self.params.latent_scale = gr.Slider(
@@ -272,7 +257,6 @@ class AnimateDiffUiGroup:
                         maximum=128,
                         value=self.params.latent_scale,
                         label="Latent scale",
-                        tooltip="Determines the scale of the initial alpha values. A larger scale will result in smaller initial alpha values, leading to a more subtle initial change in the animation.",
                         elem_id=f"{elemid_prefix}latent-scale"
                     )
                     self.params.latent_power_last = gr.Slider(
@@ -281,7 +265,6 @@ class AnimateDiffUiGroup:
                         value=self.params.latent_power_last,
                         step=0.1,
                         label="Optional latent power for last frame",
-                        tooltip="Controls the exponent used in the last alpha calculation. Higher values will result in a more drastic change towards the end of the animation if a last frame is specified.",
                         elem_id=f"{elemid_prefix}latent-power-last",
                     )
                     self.params.latent_scale_last = gr.Slider(
@@ -289,11 +272,10 @@ class AnimateDiffUiGroup:
                         maximum=128,
                         value=self.params.latent_scale_last,
                         label="Optional latent scale for last frame",
-                        tooltip="Determines the scale of the last alpha values. A larger scale will result in smaller last alpha values, leading to a more subtle change towards the end of the animation if a last frame is specified.",
                         elem_id=f"{elemid_prefix}latent-scale-last"
                     )
                 self.params.last_frame = gr.Image(
-                    label="[Experiment] Optional last frame. Leave it blank if you do not need one.",
+                    label="Optional last frame. Leave it blank if you do not need one.",
                     type="pil",
                 )
             with gr.Row():
