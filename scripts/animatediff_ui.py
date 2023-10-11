@@ -1,6 +1,9 @@
 import os
 
+import cv2
 import gradio as gr
+
+from modules import shared
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
 
@@ -11,11 +14,13 @@ class ToolButton(gr.Button, gr.components.FormComponent):
     def __init__(self, **kwargs):
         super().__init__(variant="tool", **kwargs)
 
+
     def get_block_name(self):
         return "button"
 
 
 class AnimateDiffProcess:
+
     def __init__(
         self,
         model="mm_sd_v15_v2.ckpt",
@@ -60,11 +65,13 @@ class AnimateDiffProcess:
         self.latent_power_last = latent_power_last
         self.latent_scale_last = latent_scale_last
 
+
     def get_list(self, is_img2img: bool):
         list_var = list(vars(self).values())
         if not is_img2img:
             list_var = list_var[:-5]
         return list_var
+
 
     def _check(self):
         assert (
@@ -74,6 +81,7 @@ class AnimateDiffProcess:
             self.format
         ), "At least one saving format should be selected."
 
+
     def set_p(self, p):
         self._check()
         if self.video_length < self.batch_size:
@@ -82,9 +90,12 @@ class AnimateDiffProcess:
             p.batch_size = self.video_length
         if self.video_length == 0:
             self.video_length = p.batch_size
+            self.video_default = True
+        else:
+            self.video_default = False
         if self.overlap == -1:
             self.overlap = self.batch_size // 4
-        if "PNG" not in self.format:
+        if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", False):
             p.do_not_save_samples = True
 
 
@@ -94,6 +105,7 @@ class AnimateDiffUiGroup:
 
     def __init__(self):
         self.params = AnimateDiffProcess()
+
 
     def render(self, is_img2img: bool, model_dir: str):
         if not os.path.isdir(model_dir):
@@ -220,6 +232,24 @@ class AnimateDiffUiGroup:
                 value=self.params.video_source,
                 label="Video source",
             )
+            def update_fps(video_source):
+                if video_source is not None and video_source != '':
+                    cap = cv2.VideoCapture(video_source)
+                    fps = int(cap.get(cv2.CAP_PROP_FPS))
+                    cap.release()
+                    return fps
+                else:
+                    return int(self.params.fps.value)
+            self.params.video_source.change(update_fps, inputs=self.params.video_source, outputs=self.params.fps)
+            def update_frames(video_source):
+                if video_source is not None and video_source != '':
+                    cap = cv2.VideoCapture(video_source)
+                    frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                    cap.release()
+                    return frames
+                else:
+                    return int(self.params.video_length.value)
+            self.params.video_source.change(update_frames, inputs=self.params.video_source, outputs=self.params.video_length)
             self.params.video_path = gr.Textbox(
                 value=self.params.video_path,
                 label="Video path",
@@ -275,8 +305,9 @@ class AnimateDiffUiGroup:
                 remove.click(fn=motion_module.remove)
         return self.register_unit(is_img2img)
 
+
     def register_unit(self, is_img2img: bool):
-        unit = gr.State()
+        unit = gr.State(value=AnimateDiffProcess)
         (
             AnimateDiffUiGroup.img2img_submit_button
             if is_img2img
@@ -288,6 +319,7 @@ class AnimateDiffUiGroup:
             queue=False,
         )
         return unit
+
 
     @staticmethod
     def on_after_component(component, **_kwargs):

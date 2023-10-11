@@ -13,11 +13,12 @@ from modules.processing import (StableDiffusionProcessing,
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
+from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 
 
 class AnimateDiffControl:
 
-    def __init__(self, p: StableDiffusionProcessing):
+    def __init__(self, p: StableDiffusionProcessing, prompt_scheduler: AnimateDiffPromptSchedule):
         self.original_processing_process_images_hijack = None
         self.original_controlnet_main_entry = None
         self.original_postprocess_batch = None
@@ -26,15 +27,16 @@ class AnimateDiffControl:
             self.cn_script = find_cn_script(p.scripts)
         except:
             self.cn_script = None
+        self.prompt_scheduler = prompt_scheduler
 
 
     def hack_batchhijack(self, params: AnimateDiffProcess):
         cn_script = self.cn_script
+        prompt_scheduler = self.prompt_scheduler
 
         def get_input_frames():
             if params.video_source is not None and params.video_source != '':
                 cap = cv2.VideoCapture(params.video_source)
-                params.fps = int(cap.get(cv2.CAP_PROP_FPS))
                 frame_count = 0
                 tmp_frame_dir = Path(f'{data_path}/tmp/animatediff-frames/')
                 tmp_frame_dir.mkdir(parents=True, exist_ok=True)
@@ -53,57 +55,56 @@ class AnimateDiffControl:
         from scripts import external_code
         from scripts.batch_hijack import InputMode, BatchHijack, instance
         def hacked_processing_process_images_hijack(self, p, *args, **kwargs):
-            if self.is_batch:
+            if self.is_batch: # AnimateDiff does not support this.
                 # we are in img2img batch tab, do a single batch iteration
                 return self.process_images_cn_batch(p, *args, **kwargs)
 
             units = external_code.get_all_units_in_processing(p)
             units = [unit for unit in units if getattr(unit, 'enabled', False)]
 
-            if len(units) == 0:
-                return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
+            if len(units) > 0:
+                global_input_frames = get_input_frames()
+                for idx, unit in enumerate(units):
+                    # if no input given for this unit, use global input
+                    if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
+                        if not (isinstance(unit.batch_images, str) and unit.batch_images != ''):
+                            assert global_input_frames != '', 'No input images found for ControlNet module'
+                            unit.batch_images = global_input_frames
+                    elif unit.image is None:
+                        try:
+                            cn_script.choose_input_image(p, unit, idx)
+                        except:
+                            assert global_input_frames != '', 'No input images found for ControlNet module'
+                            unit.batch_images = global_input_frames
+                            unit.input_mode = InputMode.BATCH
 
-            global_input_frames = get_input_frames()
-            for idx, unit in enumerate(units):
-                # if no input given for this unit, use global input
-                if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
-                    if not (isinstance(unit.batch_images, str) and unit.batch_images != ''):
-                        assert global_input_frames != '', 'No input images found for ControlNet module'
-                        unit.batch_images = global_input_frames
-                elif unit.image is None:
-                    try:
-                        cn_script.choose_input_image(p, unit, idx)
-                    except:
-                        assert global_input_frames != '', 'No input images found for ControlNet module'
-                        unit.batch_images = global_input_frames
-                        unit.input_mode = InputMode.BATCH
-                
-                if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
-                    if 'inpaint' in unit.module:
-                        images = shared.listfiles(f'{unit.batch_images}/image')
-                        masks = shared.listfiles(f'{unit.batch_images}/mask')
-                        assert len(images) == len(masks), 'Inpainting image mask count mismatch'
-                        unit.batch_images = [{'image': images[i], 'mask': masks[i]} for i in range(len(images))]
-                    else:
-                        unit.batch_images = shared.listfiles(unit.batch_images)
+                    if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
+                        if 'inpaint' in unit.module:
+                            images = shared.listfiles(f'{unit.batch_images}/image')
+                            masks = shared.listfiles(f'{unit.batch_images}/mask')
+                            assert len(images) == len(masks), 'Inpainting image mask count mismatch'
+                            unit.batch_images = [{'image': images[i], 'mask': masks[i]} for i in range(len(images))]
+                        else:
+                            unit.batch_images = shared.listfiles(unit.batch_images)
 
-            unit_batch_list = [len(unit.batch_images) for unit in units
-                               if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH]
-            if len(unit_batch_list) == 0:
-                return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
+                unit_batch_list = [len(unit.batch_images) for unit in units
+                                if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH]
 
-            video_length = min(unit_batch_list)
-            # ensure that params.video_length <= video_length and params.batch_size <= video_length
-            if params.video_length > video_length:
-                params.video_length = video_length
-            if params.batch_size > video_length:
-                params.batch_size = video_length
-            # if params.video_length == 0: # TODO: support inf length
-            #     params.video_length = video_length
-            for unit in units:
-                if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
-                    unit.batch_images = unit.batch_images[:params.video_length]
+                if len(unit_batch_list) > 0:
+                    video_length = min(unit_batch_list)
+                    # ensure that params.video_length <= video_length and params.batch_size <= video_length
+                    if params.video_length > video_length:
+                        params.video_length = video_length
+                    if params.batch_size > video_length:
+                        params.batch_size = video_length
+                    if params.video_default:
+                        params.video_length = video_length
+                        p.batch_size = video_length
+                    for unit in units:
+                        if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
+                            unit.batch_images = unit.batch_images[:params.video_length]
 
+            prompt_scheduler.parse_prompt(p)
             return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
         
         self.original_processing_process_images_hijack = BatchHijack.processing_process_images_hijack
@@ -412,6 +413,7 @@ class AnimateDiffControl:
                                 hr_controls_ipadapter['image_embeds'].append(hr_control['image_embeds'])
                         else:
                             hr_controls_ipadapter = None
+                            hr_controls = None
                     else:
                         controls.append(control)
                         if hr_control is not None:
@@ -565,15 +567,16 @@ class AnimateDiffControl:
                         dtype=torch.float32,
                         start=param.start_guidance_percent,
                         end=param.stop_guidance_percent
-                    )
-                if param.control_model_type == ControlModelType.Controlllite:
-                    param.control_model.hook(
-                        model=unet,
-                        cond=param.hint_cond,
-                        weight=param.weight,
-                        start=param.start_guidance_percent,
-                        end=param.stop_guidance_percent
-                    )
+                    ) 
+                # Do not support controlllite for sdxl
+                # if param.control_model_type == ControlModelType.Controlllite:
+                #     param.control_model.hook(
+                #         model=unet,
+                #         cond=param.hint_cond,
+                #         weight=param.weight,
+                #         start=param.start_guidance_percent,
+                #         end=param.stop_guidance_percent
+                #     )
 
             self.detected_map = detected_maps
             self.post_processors = post_processors
