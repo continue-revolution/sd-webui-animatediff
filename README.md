@@ -159,7 +159,7 @@ Note that I did not modify random tensor generation when producing v1.3.0 sample
 
 
 ## Sponsor
-You can sponsor me via WeChat, AliPay or PayPal. You can also support me via [patreon](https://www.patreon.com/conrevo) or [ko-fi](https://ko-fi.com/conrevo).
+You can sponsor me via WeChat, AliPay or PayPal. You can also support me via [patreon](https://www.patreon.com/conrevo), [ko-fi](https://ko-fi.com/conrevo) or [afdian](https://afdian.net/a/conrevo).
 
 | WeChat | AliPay | PayPal |
 | --- | --- | --- |
