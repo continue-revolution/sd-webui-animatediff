@@ -30,7 +30,7 @@ class AnimateDiffOutput:
 
             video_list = self._add_reverse(params, video_list)
             video_list = self._interp(p, params, video_list, filename)
-            video_paths += self._save(params, video_list, video_path_prefix, res, i)
+            video_paths += self._save(p, params, video_list, video_path_prefix, res, i)
 
 
         if len(video_paths) > 0:
@@ -122,6 +122,7 @@ class AnimateDiffOutput:
 
     def _save(
         self,
+        p: StableDiffusionProcessing,
         params: AnimateDiffProcess,
         video_list: list,
         video_path_prefix: str,
@@ -193,7 +194,7 @@ class AnimateDiffOutput:
                 imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
         if "TXT" in params.format and res.images[index].info is not None:
             video_path_txt = video_path_prefix + ".txt"
-            self._save_txt(params, video_path_txt, res, index)
+            self._save_txt(p, params, video_path_txt, res, index)
         return video_paths
 
     def _optimize_gif(self, video_path: str):
@@ -214,7 +215,12 @@ class AnimateDiffOutput:
                 logger.warn("gifsicle not found, required for optimized GIFs, try: apt install gifsicle")
 
     def _save_txt(
-        self, params: AnimateDiffProcess, video_path: str, res: Processed, i: int
+        self,
+        p: StableDiffusionProcessing,
+        params: AnimateDiffProcess,
+        video_path: str,
+        res: Processed,
+        i: int
     ):
         res.images[i].info["motion_module"] = params.model
         res.images[i].info["video_length"] = params.video_length
