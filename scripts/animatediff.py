@@ -63,6 +63,30 @@ class AnimateDiffScript(scripts.Script):
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img):
             AnimateDiffI2VLatent().randomize(p, params)
 
+    def process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
+        if not params.enable:
+            return
+        # add AnimateDiff params to infotext
+        p.extra_generation_params["AD_model"] = params.model
+        p.extra_generation_params["AD_enable"] = params.enable
+        p.extra_generation_params["AD_video_length"] = params.video_length
+        p.extra_generation_params["AD_fps"] = params.fps
+        p.extra_generation_params["AD_loop_number"] = params.loop_number
+        p.extra_generation_params["AD_closed_loop"] = params.closed_loop
+        p.extra_generation_params["AD_batch_size"] = params.batch_size
+        p.extra_generation_params["AD_stride"] = params.stride
+        p.extra_generation_params["AD_overlap"] = params.overlap
+        p.extra_generation_params["AD_format"] = params.format
+        p.extra_generation_params["AD_interp"] = params.interp
+        p.extra_generation_params["AD_interp_x"] = params.interp_x
+        p.extra_generation_params["AD_reverse"] = params.reverse
+        p.extra_generation_params["AD_video_source"] = params.video_source
+        if params.video_path: p.extra_generation_params["AD_video_path"] = params.video_path
+        p.extra_generation_params["AD_latent_power"] = params.latent_power
+        p.extra_generation_params["AD_latent_scale"] = params.latent_scale
+        p.extra_generation_params["AD_last_frame"] = params.last_frame
+        p.extra_generation_params["AD_latent_power_last"] = params.latent_power_last
+        p.extra_generation_params["AD_latent_scale_last"] = params.latent_scale_last
 
     def postprocess(
         self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess
