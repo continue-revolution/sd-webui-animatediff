@@ -131,6 +131,8 @@ class AnimateDiffOutput:
     ):
         video_paths = []
         video_array = [np.array(v) for v in video_list]
+        infotext = res.infotext(p, res.index_of_first_image)
+        use_infotext = shared.opts.enable_pnginfo and infotext is not None
         if "PNG" in params.format and shared.opts.data.get("animatediff_save_to_custom", False):
             Path(video_path_prefix).mkdir(exist_ok=True, parents=True)
             for i, frame in enumerate(video_list):
