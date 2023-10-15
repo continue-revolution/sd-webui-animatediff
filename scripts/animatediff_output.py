@@ -174,25 +174,26 @@ class AnimateDiffOutput:
                     )
                 )
                 # imageio[pyav].imwrite doesn't support comment parameter
-                try:
-                    import exiftool
-                except ImportError:
-                    from launch import run_pip
-                    run_pip(
-                        "install PyExifTool",
-                        "sd-webui-animatediff GIF palette optimization requirement: PyExifTool",
-                    )
-                    import exiftool
-                finally:
+                if use_infotext:
                     try:
-                        exif_tool = exiftool.ExifTool()
-                        with exif_tool:
-                            escaped_infotext = infotext.replace('\n', r'\n')
-                            exif_tool.execute(f"-Comment={escaped_infotext}", video_path_gif)
-                    except FileNotFoundError:
-                        logger.warn(
-                            "exiftool not found, required for infotext with optimized GIF palette, try: apt install libimage-exiftool-perl or https://exiftool.org/"
+                        import exiftool
+                    except ImportError:
+                        from launch import run_pip
+                        run_pip(
+                            "install PyExifTool",
+                            "sd-webui-animatediff GIF palette optimization requirement: PyExifTool",
                         )
+                        import exiftool
+                    finally:
+                        try:
+                            exif_tool = exiftool.ExifTool()
+                            with exif_tool:
+                                escaped_infotext = infotext.replace('\n', r'\n')
+                                exif_tool.execute(f"-Comment={escaped_infotext}", video_path_gif)
+                        except FileNotFoundError:
+                            logger.warn(
+                                "exiftool not found, required for infotext with optimized GIF palette, try: apt install libimage-exiftool-perl or https://exiftool.org/"
+                            )
             else:
                 imageio.imwrite(
                     video_path_gif,
