@@ -226,12 +226,9 @@ class AnimateDiffOutput:
         res: Processed,
         i: int
     ):
-        res.images[i].info["motion_module"] = params.model
-        res.images[i].info["video_length"] = params.video_length
-        res.images[i].info["fps"] = params.fps
-        res.images[i].info["loop_number"] = params.loop_number
+        infotext = res.infotext(p, res.index_of_first_image)
         with open(video_path, "w", encoding="utf8") as file:
-            file.write(f"{res.images[i].info}\n")
+            file.write(f"{infotext}\n")
 
     def _encode_video_to_b64(self, paths):
         videos = []
