@@ -177,8 +177,10 @@ class AnimateDiffOutput:
                 imageio.imwrite(
                     video_path_gif,
                     video_array,
+                    plugin='pillow',
                     duration=(1000 / params.fps),
                     loop=params.loop_number,
+                    comment=(infotext if use_infotext else "")
                 )
             if shared.opts.data.get("animatediff_optimize_gif_gifsicle", False):
                 self._optimize_gif(video_path_gif)
