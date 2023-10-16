@@ -28,7 +28,7 @@ class AnimateDiffProcess:
         video_length=0,
         fps=8,
         loop_number=0,
-        closed_loop='reduce',
+        closed_loop='R-P',
         batch_size=16,
         stride=1,
         overlap=-1,
@@ -162,7 +162,7 @@ class AnimateDiffUiGroup:
                 )
             with gr.Row():
                 self.params.closed_loop = gr.Radio(
-                    choices=["no", "reduce", "aggressive"],
+                    choices=["N", "R-P", "R+P", "A"],
                     value=self.params.closed_loop,
                     label="Closed loop",
                     elem_id=f"{elemid_prefix}closed-loop",

@@ -61,11 +61,13 @@ class AnimateDiffPromptSchedule:
             p.prompt = prompt_list * p.n_iter
 
 
-    def single_cond(
-        self, center_frame, video_length: int, cond: torch.Tensor):
-
-        key_prev = list(self.prompt_map.keys())[0]
-        key_next = list(self.prompt_map.keys())[-1]
+    def single_cond(self, center_frame, video_length: int, cond: torch.Tensor, closed_loop = False):
+        if closed_loop:
+            key_prev = list(self.prompt_map.keys())[-1]
+            key_next = list(self.prompt_map.keys())[0]
+        else:
+            key_prev = list(self.prompt_map.keys())[0]
+            key_next = list(self.prompt_map.keys())[-1]
 
         for p in self.prompt_map.keys():
             if p > center_frame:
@@ -79,7 +81,7 @@ class AnimateDiffPromptSchedule:
         dist_next = key_next - center_frame
         if dist_next < 0:
             dist_next += video_length
-
+        print(f"center_frame: {center_frame}, key_prev: {key_prev}, key_next: {key_next}")
         if key_prev == key_next or dist_prev + dist_next == 0:
             return cond[key_prev]
 
@@ -88,12 +90,12 @@ class AnimateDiffPromptSchedule:
         return AnimateDiffPromptSchedule.slerp(cond[key_prev], cond[key_next], rate)
     
 
-    def multi_cond(self, cond: torch.Tensor):
+    def multi_cond(self, cond: torch.Tensor, closed_loop = False):
         if self.prompt_map is None:
             return cond
         cond_list = []
         for i in range(cond.shape[0]):
-            cond_list.append(self.single_cond(i, cond.shape[0], cond))
+            cond_list.append(self.single_cond(i, cond.shape[0], cond, closed_loop))
         return torch.stack(cond_list).to(cond.dtype).to(cond.device)
 
 

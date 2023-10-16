@@ -50,13 +50,13 @@ class AnimateDiffInfV2V:
         batch_size: int = 16,
         stride: int = 1,
         overlap: int = 4,
-        loop_setting: str = 'reduce',
+        loop_setting: str = 'R-P',
     ):
         if video_length <= batch_size:
             yield list(range(batch_size))
             return
 
-        closed_loop = (loop_setting == 'aggressive')
+        closed_loop = (loop_setting == 'A')
         stride = min(stride, int(np.ceil(np.log2(video_length / batch_size))) + 1)
 
         for context_step in 1 << np.arange(stride):
@@ -67,7 +67,7 @@ class AnimateDiffInfV2V:
                 video_length + pad + (0 if closed_loop else -overlap),
                 (batch_size * context_step - overlap),
             ):
-                if loop_setting == 'no' and context_step == 1:
+                if loop_setting == 'N' and context_step == 1:
                     current_context = [e % video_length for e in range(j, j + batch_size * context_step, context_step)]
                     first_context = [e % video_length for e in range(0, batch_size * context_step, context_step)]
                     last_context = [e % video_length for e in range(video_length - batch_size * context_step, video_length, context_step)]
@@ -261,7 +261,8 @@ class AnimateDiffInfV2V:
                     self.padded_cond_uncond = True
 
             if tensor.shape[1] == uncond.shape[1] or skip_uncond:
-                tensor = prompt_scheduler.multi_cond(tensor) # hook
+                prompt_closed_loop = (params.video_length > params.batch_size) and (params.closed_loop in ['R+P', 'A']) # hook
+                tensor = prompt_scheduler.multi_cond(tensor, prompt_closed_loop) # hook
                 if is_edit_model:
                     cond_in = catenate_conds([tensor, uncond, uncond])
                 elif skip_uncond:
