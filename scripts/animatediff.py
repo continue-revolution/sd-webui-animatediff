@@ -14,6 +14,7 @@ from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
+from scripts.animatediff_infotext import update_infotext
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
@@ -54,6 +55,7 @@ class AnimateDiffScript(scripts.Script):
             self.cfg_hacker.hack(params)
             self.cn_hacker = AnimateDiffControl(p, self.prompt_scheduler)
             self.cn_hacker.hack(params)
+            update_infotext(p, params)
 
 
     def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
@@ -65,6 +67,7 @@ class AnimateDiffScript(scripts.Script):
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
+            self.prompt_scheduler.set_infotext(res)
             self.cn_hacker.restore()
             self.cfg_hacker.restore()
             self.lora_hacker.restore()

@@ -14,6 +14,7 @@ from modules.processing import (StableDiffusionProcessing,
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
+from scripts.animatediff_infotext import update_infotext
 
 
 class AnimateDiffControl:
@@ -54,7 +55,7 @@ class AnimateDiffControl:
 
         from scripts import external_code
         from scripts.batch_hijack import InputMode, BatchHijack, instance
-        def hacked_processing_process_images_hijack(self, p, *args, **kwargs):
+        def hacked_processing_process_images_hijack(self, p: StableDiffusionProcessing, *args, **kwargs):
             if self.is_batch: # AnimateDiff does not support this.
                 # we are in img2img batch tab, do a single batch iteration
                 return self.process_images_cn_batch(p, *args, **kwargs)
@@ -105,6 +106,7 @@ class AnimateDiffControl:
                             unit.batch_images = unit.batch_images[:params.video_length]
 
             prompt_scheduler.parse_prompt(p)
+            update_infotext(p, params)
             return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
         
         self.original_processing_process_images_hijack = BatchHijack.processing_process_images_hijack

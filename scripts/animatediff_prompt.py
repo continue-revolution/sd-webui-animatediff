@@ -1,17 +1,25 @@
-from typing import List
-
 import re
 import torch
 
-from modules.processing import StableDiffusionProcessing
+from modules.processing import StableDiffusionProcessing, Processed
 
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_infotext import write_params_txt
 
 
 class AnimateDiffPromptSchedule:
 
     def __init__(self):
         self.prompt_map = None
+        self.original_prompt = None
+
+
+    def set_infotext(self, res: Processed):
+        if self.prompt_map is not None:
+            parts = res.info.split('\nNegative prompt: ', 1)
+            if len(parts) > 1:
+                res.info = f"{self.original_prompt}\nNegative prompt: {parts[1]}"
+                write_params_txt(res.info)
 
 
     def parse_prompt(self, p: StableDiffusionProcessing):
@@ -58,6 +66,7 @@ class AnimateDiffPromptSchedule:
                 self.prompt_map[frame] = current_prompt
             prompt_list += [current_prompt for _ in range(last_frame, p.batch_size)]
             assert len(prompt_list) == p.batch_size, f"prompt_list length {len(prompt_list)} != batch_size {p.batch_size}"
+            self.original_prompt = p.prompt
             p.prompt = prompt_list * p.n_iter
 
 
@@ -81,7 +90,7 @@ class AnimateDiffPromptSchedule:
         dist_next = key_next - center_frame
         if dist_next < 0:
             dist_next += video_length
-        print(f"center_frame: {center_frame}, key_prev: {key_prev}, key_next: {key_next}")
+
         if key_prev == key_next or dist_prev + dist_next == 0:
             return cond[key_prev]
 

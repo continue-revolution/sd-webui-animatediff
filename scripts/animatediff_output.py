@@ -130,6 +130,8 @@ class AnimateDiffOutput:
     ):
         video_paths = []
         video_array = [np.array(v) for v in video_list]
+        infotext = res.info
+        use_infotext = shared.opts.enable_pnginfo and infotext is not None
         if "PNG" in params.format and shared.opts.data.get("animatediff_save_to_custom", False):
             Path(video_path_prefix).mkdir(exist_ok=True, parents=True)
             for i, frame in enumerate(video_list):
@@ -170,12 +172,35 @@ class AnimateDiffOutput:
                         ]
                     )
                 )
+                # imageio[pyav].imwrite doesn't support comment parameter
+                if use_infotext:
+                    try:
+                        import exiftool
+                    except ImportError:
+                        from launch import run_pip
+                        run_pip(
+                            "install PyExifTool",
+                            "sd-webui-animatediff GIF palette optimization requirement: PyExifTool",
+                        )
+                        import exiftool
+                    finally:
+                        try:
+                            exif_tool = exiftool.ExifTool()
+                            with exif_tool:
+                                escaped_infotext = infotext.replace('\n', r'\n')
+                                exif_tool.execute(f"-Comment={escaped_infotext}", video_path_gif)
+                        except FileNotFoundError:
+                            logger.warn(
+                                "exiftool not found, required for infotext with optimized GIF palette, try: apt install libimage-exiftool-perl or https://exiftool.org/"
+                            )
             else:
                 imageio.imwrite(
                     video_path_gif,
                     video_array,
+                    plugin='pillow',
                     duration=(1000 / params.fps),
                     loop=params.loop_number,
+                    comment=(infotext if use_infotext else "")
                 )
             if shared.opts.data.get("animatediff_optimize_gif_gifsicle", False):
                 self._optimize_gif(video_path_gif)
@@ -193,7 +218,7 @@ class AnimateDiffOutput:
                 imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
         if "TXT" in params.format and res.images[index].info is not None:
             video_path_txt = video_path_prefix + ".txt"
-            self._save_txt(params, video_path_txt, res, index)
+            self._save_txt(video_path_txt, infotext)
         return video_paths
 
     def _optimize_gif(self, video_path: str):
@@ -214,14 +239,12 @@ class AnimateDiffOutput:
                 logger.warn("gifsicle not found, required for optimized GIFs, try: apt install gifsicle")
 
     def _save_txt(
-        self, params: AnimateDiffProcess, video_path: str, res: Processed, i: int
+        self,
+        video_path: str,
+        info: str,
     ):
-        res.images[i].info["motion_module"] = params.model
-        res.images[i].info["video_length"] = params.video_length
-        res.images[i].info["fps"] = params.fps
-        res.images[i].info["loop_number"] = params.loop_number
         with open(video_path, "w", encoding="utf8") as file:
-            file.write(f"{res.images[i].info}\n")
+            file.write(f"{info}\n")
 
     def _encode_video_to_b64(self, paths):
         videos = []
