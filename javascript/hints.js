@@ -3,7 +3,7 @@ if (titles) { // TODO: This is a conflict feature. If some other extension also 
     titles["Number of frames"]      = "Total length of video in frames.";
     titles["FPS"]                   = "How many frames per second generated GIF will be.";
     titles["Display loop number"]   = "How many times the animation will loop when displayed, a value of 0 will loop forever.";
-    titles["Closed loop"]           = "If enabled, will try to make the last frame the same as the first frame.";
+    // titles["Closed loop"]           = "If enabled, will try to make the last frame the same as the first frame.";
     // titles["Context batch size"]    = "TODO";
     // titles["Stride"]                = "TODO";
     // titles["Overlap"]               = "TODO";
