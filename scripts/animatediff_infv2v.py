@@ -50,22 +50,46 @@ class AnimateDiffInfV2V:
         batch_size: int = 16,
         stride: int = 1,
         overlap: int = 4,
-        closed_loop: bool = True,
+        loop_setting: str = 'reduce',
     ):
         if video_length <= batch_size:
             yield list(range(batch_size))
             return
 
+        closed_loop = (loop_setting == 'aggressive')
         stride = min(stride, int(np.ceil(np.log2(video_length / batch_size))) + 1)
 
         for context_step in 1 << np.arange(stride):
             pad = int(round(video_length * AnimateDiffInfV2V.ordered_halving(step)))
+            both_close_loop = False
             for j in range(
                 int(AnimateDiffInfV2V.ordered_halving(step) * context_step) + pad,
                 video_length + pad + (0 if closed_loop else -overlap),
                 (batch_size * context_step - overlap),
             ):
-                yield [e % video_length for e in range(j, j + batch_size * context_step, context_step)]
+                if loop_setting == 'no' and context_step == 1:
+                    current_context = [e % video_length for e in range(j, j + batch_size * context_step, context_step)]
+                    first_context = [e % video_length for e in range(0, batch_size * context_step, context_step)]
+                    last_context = [e % video_length for e in range(video_length - batch_size * context_step, video_length, context_step)]
+                    def get_unsorted_index(lst):
+                        for i in range(1, len(lst)):
+                            if lst[i] < lst[i-1]:
+                                return i
+                        return None
+                    unsorted_index = get_unsorted_index(current_context)
+                    if unsorted_index is None:
+                        yield current_context
+                    elif both_close_loop: # last and this context are close loop
+                        both_close_loop = False
+                        yield first_context
+                    elif unsorted_index < batch_size - overlap: # only this context is close loop
+                        yield last_context
+                        yield first_context
+                    else: # this and next context are close loop
+                        both_close_loop = True
+                        yield last_context
+                else:
+                    yield [e % video_length for e in range(j, j + batch_size * context_step, context_step)]
 
 
     def hack(self, params: AnimateDiffProcess):
