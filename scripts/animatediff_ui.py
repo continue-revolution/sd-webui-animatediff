@@ -4,6 +4,7 @@ import cv2
 import gradio as gr
 
 from modules import shared
+from modules.processing import StableDiffusionProcessing
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
 
@@ -28,7 +29,7 @@ class AnimateDiffProcess:
         video_length=0,
         fps=8,
         loop_number=0,
-        closed_loop=False,
+        closed_loop='R-P',
         batch_size=16,
         stride=1,
         overlap=-1,
@@ -73,6 +74,20 @@ class AnimateDiffProcess:
         return list_var
 
 
+    def get_dict(self, is_img2img: bool):
+        dict_var = vars(self)
+        dict_var["mm_hash"] = motion_module.mm.mm_hash[:8]
+        dict_var.pop("video_source", None)
+        dict_var.pop("video_path", None)
+        dict_var.pop("last_frame", None)
+        if not is_img2img:
+            dict_var.pop("latent_power", None)
+            dict_var.pop("latent_scale", None)
+            dict_var.pop("latent_power_last", None)
+            dict_var.pop("latent_scale_last", None)
+        return dict_var
+
+
     def _check(self):
         assert (
             self.video_length >= 0 and self.fps > 0
@@ -82,7 +97,7 @@ class AnimateDiffProcess:
         ), "At least one saving format should be selected."
 
 
-    def set_p(self, p):
+    def set_p(self, p: StableDiffusionProcessing):
         self._check()
         if self.video_length < self.batch_size:
             p.batch_size = self.batch_size
@@ -161,7 +176,8 @@ class AnimateDiffUiGroup:
                     elem_id=f"{elemid_prefix}loop-number",
                 )
             with gr.Row():
-                self.params.closed_loop = gr.Checkbox(
+                self.params.closed_loop = gr.Radio(
+                    choices=["N", "R-P", "R+P", "A"],
                     value=self.params.closed_loop,
                     label="Closed loop",
                     elem_id=f"{elemid_prefix}closed-loop",
