@@ -3,7 +3,7 @@ from typing import List
 import re
 import torch
 
-from modules.processing import StableDiffusionProcessing
+from modules.processing import StableDiffusionProcessing, Processed
 
 from scripts.animatediff_logger import logger_animatediff as logger
 
@@ -12,6 +12,11 @@ class AnimateDiffPromptSchedule:
 
     def __init__(self):
         self.prompt_map = None
+
+
+    def set_infotext(self, res: Processed):
+        if self.prompt_map is not None:
+            pass
 
 
     def parse_prompt(self, p: StableDiffusionProcessing):
