@@ -56,9 +56,7 @@ class AnimateDiffScript(scripts.Script):
             self.cn_hacker.hack(params)
 
 
-    def before_process_batch(
-        self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs
-    ):
+    def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
         if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img):
             AnimateDiffI2VLatent().randomize(p, params)
@@ -73,9 +71,7 @@ class AnimateDiffScript(scripts.Script):
             if not callable(v) and not k.startswith('__') and v != ''
             })
 
-    def postprocess(
-        self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess
-    ):
+    def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
             self.cn_hacker.restore()
