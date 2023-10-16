@@ -62,7 +62,7 @@ You might also be interested in another extension I created: [Segment Anything f
 1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`. You may choose to save frames for each generation into separate directories in `Settings/AnimateDiff`.
 
 ### API
-Just like how you use ControlNet. Here is a **stale** sample. You will get a list of generated frames. You will have to view GIF in your file system, as mentioned at [WebUI](#webui) item 4. For most up-to-date parameters, please read [here](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_ui.py#L26).
+Just like how you use ControlNet. Here is a **stale** sample. (TODO: Update API Sample.) You will get a list of generated frames. You will have to view GIF in your file system, as mentioned at [WebUI](#webui) item 4. For most up-to-date parameters, please read [here](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_ui.py#L26).
 ```
 'alwayson_scripts': {
   'AnimateDiff': {
@@ -211,7 +211,9 @@ We are currently developing approach to support batch size on WebUI in the near 
 | ![00094-1401397431](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/d8d2b860-c781-4dd0-8c0a-0eb26970130b) | ![00095-3197605735](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/aed2243f-5494-4fe3-a10a-96c57f6f2906) | ![00093-2722547708](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c32e9aaf-54f2-4f40-879b-e800c7c7848c) |
 
 ### Prompt Travel
-TODO 
+![00201-2296305953](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/881f317c-f1d2-4635-b84b-b4c4881650f6)
+
+The prompt is similar to [above](#prompt-travel).
 
 ### ControlNet V2V
 TODO
