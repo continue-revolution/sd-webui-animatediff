@@ -1,17 +1,25 @@
-from typing import List
-
 import re
 import torch
 
-from modules.processing import StableDiffusionProcessing
+from modules.processing import StableDiffusionProcessing, Processed
 
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_infotext import write_params_txt
 
 
 class AnimateDiffPromptSchedule:
 
     def __init__(self):
         self.prompt_map = None
+        self.original_prompt = None
+
+
+    def set_infotext(self, res: Processed):
+        if self.prompt_map is not None:
+            parts = res.info.split('\nNegative prompt: ', 1)
+            if len(parts) > 1:
+                res.info = f"{self.original_prompt}\nNegative prompt: {parts[1]}"
+                write_params_txt(res.info)
 
 
     def parse_prompt(self, p: StableDiffusionProcessing):
@@ -58,14 +66,17 @@ class AnimateDiffPromptSchedule:
                 self.prompt_map[frame] = current_prompt
             prompt_list += [current_prompt for _ in range(last_frame, p.batch_size)]
             assert len(prompt_list) == p.batch_size, f"prompt_list length {len(prompt_list)} != batch_size {p.batch_size}"
+            self.original_prompt = p.prompt
             p.prompt = prompt_list * p.n_iter
 
 
-    def single_cond(
-        self, center_frame, video_length: int, cond: torch.Tensor):
-
-        key_prev = list(self.prompt_map.keys())[0]
-        key_next = list(self.prompt_map.keys())[-1]
+    def single_cond(self, center_frame, video_length: int, cond: torch.Tensor, closed_loop = False):
+        if closed_loop:
+            key_prev = list(self.prompt_map.keys())[-1]
+            key_next = list(self.prompt_map.keys())[0]
+        else:
+            key_prev = list(self.prompt_map.keys())[0]
+            key_next = list(self.prompt_map.keys())[-1]
 
         for p in self.prompt_map.keys():
             if p > center_frame:
@@ -88,12 +99,12 @@ class AnimateDiffPromptSchedule:
         return AnimateDiffPromptSchedule.slerp(cond[key_prev], cond[key_next], rate)
     
 
-    def multi_cond(self, cond: torch.Tensor):
+    def multi_cond(self, cond: torch.Tensor, closed_loop = False):
         if self.prompt_map is None:
             return cond
         cond_list = []
         for i in range(cond.shape[0]):
-            cond_list.append(self.single_cond(i, cond.shape[0], cond))
+            cond_list.append(self.single_cond(i, cond.shape[0], cond, closed_loop))
         return torch.stack(cond_list).to(cond.dtype).to(cond.device)
 
 
