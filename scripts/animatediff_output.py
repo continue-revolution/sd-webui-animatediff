@@ -30,7 +30,7 @@ class AnimateDiffOutput:
 
             video_list = self._add_reverse(params, video_list)
             video_list = self._interp(p, params, video_list, filename)
-            video_paths += self._save(p, params, video_list, video_path_prefix, res, i)
+            video_paths += self._save(params, video_list, video_path_prefix, res, i)
 
 
         if len(video_paths) > 0:
@@ -122,7 +122,6 @@ class AnimateDiffOutput:
 
     def _save(
         self,
-        p: StableDiffusionProcessing,
         params: AnimateDiffProcess,
         video_list: list,
         video_path_prefix: str,
@@ -131,7 +130,7 @@ class AnimateDiffOutput:
     ):
         video_paths = []
         video_array = [np.array(v) for v in video_list]
-        infotext = res.infotext(p, res.index_of_first_image)
+        infotext = res.info
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
         if "PNG" in params.format and shared.opts.data.get("animatediff_save_to_custom", False):
             Path(video_path_prefix).mkdir(exist_ok=True, parents=True)
@@ -219,7 +218,7 @@ class AnimateDiffOutput:
                 imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
         if "TXT" in params.format and res.images[index].info is not None:
             video_path_txt = video_path_prefix + ".txt"
-            self._save_txt(p, params, video_path_txt, res, index)
+            self._save_txt(video_path_txt, infotext)
         return video_paths
 
     def _optimize_gif(self, video_path: str):
@@ -241,15 +240,11 @@ class AnimateDiffOutput:
 
     def _save_txt(
         self,
-        p: StableDiffusionProcessing,
-        params: AnimateDiffProcess,
         video_path: str,
-        res: Processed,
-        i: int
+        info: str,
     ):
-        infotext = res.infotext(p, res.index_of_first_image)
         with open(video_path, "w", encoding="utf8") as file:
-            file.write(f"{infotext}\n")
+            file.write(f"{info}\n")
 
     def _encode_video_to_b64(self, paths):
         videos = []
