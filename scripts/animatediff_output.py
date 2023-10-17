@@ -4,6 +4,8 @@ from pathlib import Path
 import imageio.v3 as imageio
 import numpy as np
 from PIL import Image, PngImagePlugin
+import PIL.features
+import piexif
 from modules import images, shared
 from modules.processing import Processed, StableDiffusionProcessing
 
@@ -219,6 +221,25 @@ class AnimateDiffOutput:
         if "TXT" in params.format and res.images[index].info is not None:
             video_path_txt = video_path_prefix + ".txt"
             self._save_txt(video_path_txt, infotext)
+        if "WEBP" in params.format:
+            if PIL.features.check('webp_anim'):            
+                video_path_webp = video_path_prefix + ".webp"
+                video_paths.append(video_path_webp)
+                if use_infotext:
+                    exif_bytes = piexif.dump({
+                        "Exif":{
+                            piexif.ExifIFD.UserComment:piexif.helper.UserComment.dump(infotext, encoding="unicode")
+                        }})
+                lossless = shared.opts.data.get("animatediff_webp_lossless", False)
+                quality = shared.opts.data.get("animatediff_webp_quality", 80)
+                logger.info(f"Saving {video_path_webp} with lossless={lossless} and quality={quality}")
+                imageio.imwrite(video_path_webp, video_array, plugin='pillow',
+                    duration=int(1 / params.fps * 1000), loop=params.loop_number,
+                    lossless=lossless, quality=quality, exif=exif_bytes
+                )
+                # see additional Pillow WebP options at https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp
+            else:
+                logger.warn("WebP animation in Pillow requires system WebP library v0.5.0 or later")
         return video_paths
 
     def _optimize_gif(self, video_path: str):
