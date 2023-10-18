@@ -154,7 +154,7 @@ smile
 
 
 ## ControlNet V2V
-Each ControlNet will find control images according to this priority:
+You need to go to txt2img and submit source video or path to frames. Each ControlNet will find control images according to this priority:
 1. ControlNet `Single Image` tab or `Batch` tab. Simply upload a control image or a directory of control frames is enough.
 1. AnimateDiff `Video Source`. If you upload a video through `Video Source`, it will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel.
 1. AnimateDiff `Video Path`. If you upload a video through `Video Path`, it will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel.
@@ -162,6 +162,8 @@ Each ControlNet will find control images according to this priority:
 `Number of frames` will be capped to the minimum number of images among all **folders** you provide. Each control image in each folder will be applied to one single frame. If you upload one single image for a ControlNet unit, that image will control **ALL** frames.
 
 For people who want to inpaint videos: enter a folder which contains two sub-folders `image` and `mask` on ControlNet inpainting unit. These two sub-folders should contain the same number of images. This extension will match them according to the same sequence. Using my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) extension can make your life much easier.
+
+AnimateDiff in img2img batch will be available in [v1.10.0](https://github.com/continue-revolution/sd-webui-animatediff/pull/224).
 
 
 ## Motion Module Model Zoo
