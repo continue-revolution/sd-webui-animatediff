@@ -188,7 +188,7 @@ class AnimateDiffOutput:
                             exif_tool = exiftool.ExifTool()
                             with exif_tool:
                                 escaped_infotext = infotext.replace('\n', r'\n')
-                                exif_tool.execute(f"-Comment={escaped_infotext}", video_path_gif)
+                                exif_tool.execute("-overwrite_original", f"-Comment={escaped_infotext}", video_path_gif)
                         except FileNotFoundError:
                             logger.warn(
                                 "exiftool not found, required for infotext with optimized GIF palette, try: apt install libimage-exiftool-perl or https://exiftool.org/"
