@@ -106,6 +106,28 @@ def on_ui_settings():
         )
     )
     shared.opts.add_option(
+        "animatediff_webp_quality",
+        shared.OptionInfo(
+            80,
+            "WebP Quality (if lossless=True, increases compression and CPU usage)",
+            gr.Slider,
+            {
+                "minimum": 1,
+                "maximum": 100,
+                "step": 1},
+            section=section
+        )
+    )
+    shared.opts.add_option(
+        "animatediff_webp_lossless",
+        shared.OptionInfo(
+            False,
+            "Save WebP in lossless format (highest quality, largest file size)",
+            gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
         "animatediff_save_to_custom",
         shared.OptionInfo(
             False,

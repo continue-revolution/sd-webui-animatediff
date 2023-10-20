@@ -94,7 +94,7 @@ class AnimateDiffProcess:
         assert (
             self.video_length >= 0 and self.fps > 0
         ), "Video length and FPS should be positive."
-        assert not set(["GIF", "MP4", "PNG"]).isdisjoint(
+        assert not set(["GIF", "MP4", "PNG", "WEBP"]).isdisjoint(
             self.format
         ), "At least one saving format should be selected."
 
@@ -209,7 +209,7 @@ class AnimateDiffUiGroup:
                 )
             with gr.Row():
                 self.params.format = gr.CheckboxGroup(
-                    choices=["GIF", "MP4", "PNG", "TXT"],
+                    choices=["GIF", "MP4", "WEBP", "PNG", "TXT"],
                     label="Save format",
                     type="value",
                     elem_id=f"{elemid_prefix}save-format",

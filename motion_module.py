@@ -583,4 +583,3 @@ class VersatileAttention(CrossAttention):
             hidden_states = rearrange(hidden_states, "(b d) f c -> (b f) d c", d=d)
 
         return hidden_states
-
