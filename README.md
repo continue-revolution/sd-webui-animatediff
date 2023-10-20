@@ -16,7 +16,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - [Motion LoRA](#motion-lora)
 - [Prompt Travel](#prompt-travel)
 - [ControlNet V2V](#controlnet-v2v)
-- [Motion Module Model Zoo](#motion-module-model-zoo)
+- [Model Zoo](#model-zoo)
 - [VRAM](#vram)
 - [Batch Size](#batch-size)
 - [FAQ](#faq)
@@ -41,7 +41,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/09/19`: [v1.5.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.1): Support xformers, sdp, sub-quadratic attention optimization - [VRAM](#vram) usage decrease to 5.60GB with default setting.
 - `2023/09/22`: [v1.5.2](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.5.2): Option to disable xformers at `Settings/AnimateDiff` [due to a bug in xformers](https://github.com/facebookresearch/xformers/issues/845), [API support](#api), option to enable GIF paletter optimization at `Settings/AnimateDiff`, gifsicle optimization move to `Settings/AnimateDiff`.
 - `2023/09/25`: [v1.6.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.6.0): [Motion LoRA](https://github.com/guoyww/AnimateDiff#features) supported. See [Motion Lora](#motion-lora) for more information.
-- `2023/09/27`: [v1.7.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.7.0): [ControlNet](https://github.com/Mikubill/sd-webui-controlnet) supported. See [ControlNet V2V](#controlnet-v2v) for more information. [Safetensors](#motion-module-model-zoo) for some motion modules are also available now.
+- `2023/09/27`: [v1.7.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.7.0): [ControlNet](https://github.com/Mikubill/sd-webui-controlnet) supported. See [ControlNet V2V](#controlnet-v2v) for more information. [Safetensors](#model-zoo) for some motion modules are also available now.
 - `2023/09/29`: [v1.8.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.8.0): Infinite generation supported. See [WebUI Parameters](#webui-parameters) for more information.
 - `2023/10/01`: [v1.8.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.8.1): Now you can uncheck `Batch cond/uncond` in `Settings/Optimization` if you want. This will reduce your [VRAM](#vram) (5.31GB -> 4.21GB for SDP) but take longer time.
 - `2023/10/08`: [v1.9.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.0): Prompt travel supported. You must have ControlNet installed (you do not need to enable ControlNet) to try it. See [Prompt Travel](#prompt-travel) for how to trigger this feature.
@@ -50,10 +50,11 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/10/16`: [v1.9.2](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.2): Add context generator to completely remove any closed loop, prompt travel support closed loop, infotext fully supported including prompt travel, README refactor
 - `2023/10/??`: [v1.9,3](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.3): Support webp output format. See [#233](https://github.com/continue-revolution/sd-webui-animatediff/pull/233) for more information.
 
+For future update plan, please query [here](https://github.com/continue-revolution/sd-webui-animatediff/pull/224).
 
 ## How to Use
 1. Update your WebUI to v1.6.0 and ControlNet to v1.1.410, then install this extension via link. I do not plan to support older version.
-1. Download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save model weights, please go to `Settings/AnimateDiff`. See [model zoo](#motion-module-model-zoo) for a list of available motion modules.
+1. Download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save model weights, please go to `Settings/AnimateDiff`. See [model zoo](#model-zoo) for a list of available motion modules.
 1. Enable `Pad prompt/negative prompt to be same length` in `Settings/Optimization` and click `Apply settings`. You must do this to prevent generating two separate unrelated GIFs. Checking `Batch cond/uncond` is optional, which can improve speed but increase VRAM usage.
 
 ### WebUI
@@ -156,7 +157,7 @@ smile
 
 
 ## ControlNet V2V
-Each ControlNet will find control images according to this priority:
+You need to go to txt2img and submit source video or path to frames. Each ControlNet will find control images according to this priority:
 1. ControlNet `Single Image` tab or `Batch` tab. Simply upload a control image or a directory of control frames is enough.
 1. AnimateDiff `Video Source`. If you upload a video through `Video Source`, it will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel.
 1. AnimateDiff `Video Path`. If you upload a video through `Video Path`, it will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel.
@@ -165,8 +166,10 @@ Each ControlNet will find control images according to this priority:
 
 For people who want to inpaint videos: enter a folder which contains two sub-folders `image` and `mask` on ControlNet inpainting unit. These two sub-folders should contain the same number of images. This extension will match them according to the same sequence. Using my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) extension can make your life much easier.
 
+AnimateDiff in img2img batch will be available in [v1.10.0](https://github.com/continue-revolution/sd-webui-animatediff/pull/224).
 
-## Motion Module Model Zoo
+
+## Model Zoo
 - `mm_sd_v14.ckpt` & `mm_sd_v15.ckpt` & `mm_sd_v15_v2.ckpt` by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff) | [CivitAI](https://civitai.com/models/108836) | [Baidu NetDisk](https://pan.baidu.com/s/18ZpcSM6poBqxWNHtnyMcxg?pwd=et8y)
 - `mm_sd_v14.safetensors` & `mm_sd_v15.safetensors` & `mm_sd_v15_v2.safetensors` by [@neph1](https://github.com/neph1): [HuggingFace](https://huggingface.co/guoyww/animatediff/tree/refs%2Fpr%2F3)
 - `mm-Stabilized_high.pth` & `mm-Stabbilized_mid.pth` by [@manshoety](https://huggingface.co/manshoety): [HuggingFace](https://huggingface.co/manshoety/AD_Stabilized_Motion/tree/main)
