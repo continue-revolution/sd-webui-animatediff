@@ -75,16 +75,18 @@ class AnimateDiffProcess:
 
 
     def get_dict(self, is_img2img: bool):
-        dict_var = vars(self)
+        dict_var = vars(self).copy()
         dict_var["mm_hash"] = motion_module.mm.mm_hash[:8]
-        dict_var.pop("video_source", None)
-        dict_var.pop("video_path", None)
-        dict_var.pop("last_frame", None)
+        dict_var.pop("enable")
+        dict_var.pop("format")
+        dict_var.pop("video_source")
+        dict_var.pop("video_path")
+        dict_var.pop("last_frame")
         if not is_img2img:
-            dict_var.pop("latent_power", None)
-            dict_var.pop("latent_scale", None)
-            dict_var.pop("latent_power_last", None)
-            dict_var.pop("latent_scale_last", None)
+            dict_var.pop("latent_power")
+            dict_var.pop("latent_scale")
+            dict_var.pop("latent_power_last")
+            dict_var.pop("latent_scale_last")
         return dict_var
 
 
@@ -92,7 +94,7 @@ class AnimateDiffProcess:
         assert (
             self.video_length >= 0 and self.fps > 0
         ), "Video length and FPS should be positive."
-        assert not set(["GIF", "MP4", "PNG"]).isdisjoint(
+        assert not set(["GIF", "MP4", "PNG", "WEBP"]).isdisjoint(
             self.format
         ), "At least one saving format should be selected."
 
@@ -207,7 +209,7 @@ class AnimateDiffUiGroup:
                 )
             with gr.Row():
                 self.params.format = gr.CheckboxGroup(
-                    choices=["GIF", "MP4", "PNG", "TXT"],
+                    choices=["GIF", "MP4", "WEBP", "PNG", "TXT"],
                     label="Save format",
                     type="value",
                     elem_id=f"{elemid_prefix}save-format",
