@@ -4,6 +4,7 @@ import gradio as gr
 from modules import script_callbacks, scripts, shared
 from modules.processing import (Processed, StableDiffusionProcessing,
                                 StableDiffusionProcessingImg2Img)
+from modules.scripts import PostprocessBatchListArgs
 
 from scripts.animatediff_cn import AnimateDiffControl
 from scripts.animatediff_infv2v import AnimateDiffInfV2V
@@ -64,10 +65,16 @@ class AnimateDiffScript(scripts.Script):
             AnimateDiffI2VLatent().randomize(p, params)
 
 
+    def postprocess_batch_list(self, p: StableDiffusionProcessing, pp: PostprocessBatchListArgs, params: AnimateDiffProcess, **kwargs):
+        if isinstance(params, dict): params = AnimateDiffProcess(**params)
+        if params.enable:
+            self.prompt_scheduler.save_infotext_img(p)
+
+
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
-            self.prompt_scheduler.set_infotext(res)
+            self.prompt_scheduler.save_infotext_txt(res)
             self.cn_hacker.restore()
             self.cfg_hacker.restore()
             self.lora_hacker.restore()
