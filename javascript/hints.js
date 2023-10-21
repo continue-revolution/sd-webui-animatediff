@@ -8,7 +8,6 @@ if (titles) { // TODO: This is a conflict feature. If some other extension also 
     // titles["Stride"]                = "TODO";
     // titles["Overlap"]               = "TODO";
     titles["Save format"]                  = "In which formats the animation should be saved.";
-    titles["Reverse"]               = "Reverse the resulting animation, remove the first and/or last frame from duplication.";
     titles["Frame Interpolation"]   = "Interpolate between frames with Deforum's FILM implementation. Requires Deforum extension.";
     titles["Interp X"]              = "Replace each input frame with X interpolated output frames.";
     // titles["Video source"]          = "TODO";

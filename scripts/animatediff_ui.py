@@ -36,7 +36,6 @@ class AnimateDiffProcess:
         format=["GIF", "PNG"],
         interp='Off',
         interp_x=10,
-        reverse=[],
         video_source=None,
         video_path='',
         latent_power=1,
@@ -57,7 +56,6 @@ class AnimateDiffProcess:
         self.format = format
         self.interp = interp
         self.interp_x = interp_x
-        self.reverse = reverse
         self.video_source = video_source
         self.video_path = video_path
         self.latent_power = latent_power
@@ -75,19 +73,27 @@ class AnimateDiffProcess:
 
 
     def get_dict(self, is_img2img: bool):
-        dict_var = vars(self).copy()
-        dict_var["mm_hash"] = motion_module.mm.mm_hash[:8]
-        dict_var.pop("enable")
-        dict_var.pop("format")
-        dict_var.pop("video_source")
-        dict_var.pop("video_path")
-        dict_var.pop("last_frame")
-        if not is_img2img:
-            dict_var.pop("latent_power")
-            dict_var.pop("latent_scale")
-            dict_var.pop("latent_power_last")
-            dict_var.pop("latent_scale_last")
-        return dict_var
+        infotext = {
+            "mm_name": self.model,
+            "mm_hash": motion_module.mm.mm_hash[:8],
+            "video_length": self.video_length,
+            "fps": self.fps,
+            "loop_number": self.loop_number,
+            "closed_loop": self.closed_loop,
+            "batch_size": self.batch_size,
+            "stride": self.stride,
+            "overlap": self.overlap,
+            "interp": self.interp,
+            "interp_x": self.interp_x,
+        }
+        if is_img2img:
+            infotext.update({
+                "latent_power": self.latent_power,
+                "latent_scale": self.latent_scale,
+                "latent_power_last": self.latent_power_last,
+                "latent_scale_last": self.latent_scale_last,
+            })
+        return infotext
 
 
     def _check(self):
@@ -214,13 +220,6 @@ class AnimateDiffUiGroup:
                     type="value",
                     elem_id=f"{elemid_prefix}save-format",
                     value=self.params.format,
-                )
-                self.params.reverse = gr.CheckboxGroup(
-                    choices=["Add Reverse Frame", "Remove head", "Remove tail"],
-                    label="Reverse",
-                    type="index",
-                    elem_id=f"{elemid_prefix}reverse",
-                    value=self.params.reverse
                 )
             with gr.Row():
                 self.params.interp = gr.Radio(

@@ -34,20 +34,15 @@ class AnimateDiffOutput:
             video_list = self._interp(p, params, video_list, filename)
             video_paths += self._save(params, video_list, video_path_prefix, res, i)
 
-
         if len(video_paths) > 0:
-            if not p.is_api:
-                res.images = video_paths
-            else:
-                # res.images = self._encode_video_to_b64(video_paths)
-                res.images = video_list
+            res.images = video_list if p.is_api else video_paths
 
     def _add_reverse(self, params: AnimateDiffProcess, video_list: list):
-        if 0 in params.reverse:
+        if params.video_length <= params.batch_size and params.closed_loop in ['A']:
             video_list_reverse = video_list[::-1]
-            if 1 in params.reverse:
+            if len(video_list_reverse) > 0:
                 video_list_reverse.pop(0)
-            if 2 in params.reverse:
+            if len(video_list_reverse) > 0:
                 video_list_reverse.pop(-1)
             return video_list + video_list_reverse
         return video_list
