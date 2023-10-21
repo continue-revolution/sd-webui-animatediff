@@ -76,14 +76,14 @@ Just like how you use ControlNet. Here is a sample. Due to the limitation of Web
     'video_length': 16,     # Number of frames
     'fps': 8,               # FPS
     'loop_number': 0,       # Display loop number
-        'closed_loop': 'R+P',   # Closed loop, 'N' | 'R-P' | 'R+P' | 'A'
-        'batch_size': 16,       # Context batch size
-        'stride': 1,            # Stride 
-        'overlap': -1,          # Overlap
-        'interp': 'Off',        # Frame interpolation, 'Off' | 'FILM'
-        'interl_x': 10          # Interp X
-        'video_source': 'path/to/video.mp4',  # Video source
-        'video_path': 'path/to/frames',       # Video path
+    'closed_loop': 'R+P',   # Closed loop, 'N' | 'R-P' | 'R+P' | 'A'
+    'batch_size': 16,       # Context batch size
+    'stride': 1,            # Stride 
+    'overlap': -1,          # Overlap
+    'interp': 'Off',        # Frame interpolation, 'Off' | 'FILM'
+    'interl_x': 10          # Interp X
+    'video_source': 'path/to/video.mp4',  # Video source
+    'video_path': 'path/to/frames',       # Video path
     'latent_power': 1,      # Latent power
     'latent_scale': 32,     # Latent scale
     'last_frame': None,     # Optional last frame
