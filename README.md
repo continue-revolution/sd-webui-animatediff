@@ -125,9 +125,9 @@ Just like how you use ControlNet. Here is a sample. Due to the limitation of Web
     1. Due to the limitation of the infinite context generator, this parameter is effective only when `Number of frames` > `Context batch size`, including when ControlNet is enabled and the source video frame number > `Context batch size` and `Number of frames` is 0.
     1. "Absolutely no closed loop" is only possible when `Stride` is 1.
     1. For each 1 <= $2^i$ <= `Stride`, the infinite context generator will try to make frames $2^i$ apart temporal consistent. For example, if `Stride` is 4 and `Number of frames` is 8, it will make the following frames temporal consistent:
-        - `Stride` == 1: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-        - `Stride` == 2: [0, 2, 4, 6, 8], [1, 3, 5, 7]
-        - `Stride` == 4: [0, 4, 8], [1, 5], [2, 6], [3, 7]
+        - `Stride` == 1: [0, 1, 2, 3, 4, 5, 6, 7]
+        - `Stride` == 2: [0, 2, 4, 6], [1, 3, 5, 7]
+        - `Stride` == 4: [0, 4], [1, 5], [2, 6], [3, 7]
 1. **Overlap** — Number of frames to overlap in context. If overlap is -1 (default): your overlap will be `Context batch size` // 4.
     1. Due to the limitation of the infinite context generator, this parameter is effective only when `Number of frames` > `Context batch size`, including when ControlNet is enabled and the source video frame number > `Context batch size` and `Number of frames` is 0.
 1. **Frame Interpolation** — Interpolate between frames with Deforum's FILM implementation. Requires Deforum extension. [#128](https://github.com/continue-revolution/sd-webui-animatediff/pull/128)
