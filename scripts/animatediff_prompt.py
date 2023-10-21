@@ -14,7 +14,12 @@ class AnimateDiffPromptSchedule:
         self.original_prompt = None
 
 
-    def set_infotext(self, res: Processed):
+    def save_infotext_img(self, p: StableDiffusionProcessing):
+        if self.prompt_map is not None:
+            p.prompts = [self.original_prompt for _ in range(p.batch_size)]
+
+
+    def save_infotext_txt(self, res: Processed):
         if self.prompt_map is not None:
             parts = res.info.split('\nNegative prompt: ', 1)
             if len(parts) > 1:
