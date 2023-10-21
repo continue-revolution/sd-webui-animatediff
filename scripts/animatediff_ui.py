@@ -76,7 +76,6 @@ class AnimateDiffProcess:
         infotext = {
             "enable": self.enable,
             "model": self.model,
-            "mm_hash": motion_module.mm.mm_hash[:8],
             "video_length": self.video_length,
             "fps": self.fps,
             "loop_number": self.loop_number,
@@ -87,6 +86,8 @@ class AnimateDiffProcess:
             "interp": self.interp,
             "interp_x": self.interp_x,
         }
+        if motion_module.mm is not None and motion_module.mm.mm_hash is not None:
+            infotext['mm_hash'] = motion_module.mm.mm_hash[:8]
         if is_img2img:
             infotext.update({
                 "latent_power": self.latent_power,
