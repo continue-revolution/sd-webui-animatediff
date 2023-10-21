@@ -151,15 +151,24 @@ class AnimateDiffUiGroup:
                         selected = None
                     return gr.Dropdown.update(choices=new_model_list, value=selected)
 
-                self.params.model = gr.Dropdown(
-                    choices=model_list,
-                    value=(self.params.model if self.params.model in model_list else None),
-                    label="Motion module",
+                with gr.Row():
+                    self.params.model = gr.Dropdown(
+                        choices=model_list,
+                        value=(self.params.model if self.params.model in model_list else None),
+                        label="Motion module",
+                        type="value",
+                        elem_id=f"{elemid_prefix}motion-module",
+                    )
+                    refresh_model = ToolButton(value="\U0001f504")
+                    refresh_model.click(refresh_models, self.params.model, self.params.model)
+
+                self.params.format = gr.CheckboxGroup(
+                    choices=["GIF", "MP4", "WEBP", "PNG", "TXT"],
+                    label="Save format",
                     type="value",
-                    elem_id=f"{elemid_prefix}motion-module",
+                    elem_id=f"{elemid_prefix}save-format",
+                    value=self.params.format,
                 )
-                refresh_model = ToolButton(value="\U0001f504")
-                refresh_model.click(refresh_models, self.params.model, self.params.model)
             with gr.Row():
                 self.params.enable = gr.Checkbox(
                     value=self.params.enable, label="Enable AnimateDiff", 
@@ -212,14 +221,6 @@ class AnimateDiffUiGroup:
                     label="Overlap",
                     precision=0,
                     elem_id=f"{elemid_prefix}overlap",
-                )
-            with gr.Row():
-                self.params.format = gr.CheckboxGroup(
-                    choices=["GIF", "MP4", "WEBP", "PNG", "TXT"],
-                    label="Save format",
-                    type="value",
-                    elem_id=f"{elemid_prefix}save-format",
-                    value=self.params.format,
                 )
             with gr.Row():
                 self.params.interp = gr.Radio(
