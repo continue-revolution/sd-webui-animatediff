@@ -76,7 +76,7 @@ class AnimateDiffProcess:
         infotext = {
             "enable": self.enable,
             "model": self.model,
-            "mm_hash": motion_module.mm.mm_hash[:8],
+            "mm_hash": motion_module.mm.mm_hash[:8] if motion_module.mm is not None else None,
             "video_length": self.video_length,
             "fps": self.fps,
             "loop_number": self.loop_number,

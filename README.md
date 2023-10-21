@@ -57,6 +57,7 @@ For future update plan, please query [here](https://github.com/continue-revoluti
 1. Update your WebUI to v1.6.0 and ControlNet to v1.1.410, then install this extension via link. I do not plan to support older version.
 1. Download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save model weights, please go to `Settings/AnimateDiff`. See [model zoo](#model-zoo) for a list of available motion modules.
 1. Enable `Pad prompt/negative prompt to be same length` in `Settings/Optimization` and click `Apply settings`. You must do this to prevent generating two separate unrelated GIFs. Checking `Batch cond/uncond` is optional, which can improve speed but increase VRAM usage.
+1. DO NOT disable hash calculation, otherwise AnimateDiff will have trouble figuring out when you switch motion module.
 
 ### WebUI
 1. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
