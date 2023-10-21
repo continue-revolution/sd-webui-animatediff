@@ -136,6 +136,7 @@ class AnimateDiffUiGroup:
         elemid_prefix = "img2img-ad-" if is_img2img else "txt2img-ad-"
         model_list = [f for f in os.listdir(model_dir) if f != ".gitkeep"]
         with gr.Accordion("AnimateDiff", open=False):
+            gr.Markdown(value="Please click [this link](https://github.com/continue-revolution/sd-webui-animatediff#webui-parameters) to read the documentation of each parameter.")
             with gr.Row():
 
                 def refresh_models(*inputs):
