@@ -74,7 +74,8 @@ class AnimateDiffProcess:
 
     def get_dict(self, is_img2img: bool):
         infotext = {
-            "mm_name": self.model,
+            "enable": self.enable,
+            "model": self.model,
             "mm_hash": motion_module.mm.mm_hash[:8],
             "video_length": self.video_length,
             "fps": self.fps,
@@ -93,7 +94,8 @@ class AnimateDiffProcess:
                 "latent_power_last": self.latent_power_last,
                 "latent_scale_last": self.latent_scale_last,
             })
-        return infotext
+        infotext_str = ', '.join(f"{k}: {v}" for k, v in infotext.items())
+        return infotext_str
 
 
     def _check(self):
