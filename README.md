@@ -82,7 +82,7 @@ Just like how you use ControlNet. Here is a sample. Due to the limitation of Web
       'stride': 1,            # Stride 
       'overlap': -1,          # Overlap
       'interp': 'Off',        # Frame interpolation, 'Off' | 'FILM'
-      'interl_x': 10          # Interp X
+      'interp_x': 10          # Interp X
       'video_source': 'path/to/video.mp4',  # Video source
       'video_path': 'path/to/frames',       # Video path
       'latent_power': 1,      # Latent power
