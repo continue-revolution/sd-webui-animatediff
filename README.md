@@ -49,7 +49,7 @@ You might also be interested in another extension I created: [Segment Anything f
  (see `Settings/AnimateDiff` for detail), move hints to js, install imageio\[ffmpeg\] automatically when MP4 save fails.
 - `2023/10/16`: [v1.9.2](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.2): Add context generator to completely remove any closed loop, prompt travel support closed loop, infotext fully supported including prompt travel, README refactor
 - `2023/10/19`: [v1.9.3](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.3): Support webp output format. See [#233](https://github.com/continue-revolution/sd-webui-animatediff/pull/233) for more information.
-- `2023/10/??`: [v1.10.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.10.0): TODO
+- `2023/10/??`: [v1.10.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.10.0): ?
 
 For future update plan, please query [here](https://github.com/continue-revolution/sd-webui-animatediff/pull/224).
 
@@ -65,24 +65,30 @@ For future update plan, please query [here](https://github.com/continue-revoluti
 1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`. You may choose to save frames for each generation into separate directories in `Settings/AnimateDiff`.
 
 ### API
-Just like how you use ControlNet. Here is a **stale** sample. (TODO: Update API Sample.) You will get a list of generated frames. You will have to view GIF in your file system, as mentioned at [WebUI](#webui) item 4. For most up-to-date parameters, please read [here](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_ui.py#L26).
+Just like how you use ControlNet. Here is a sample. Due to the limitation of WebUI, you will not be able to get a video, but only a list of generated frames. You will have to view GIF in your file system, as mentioned at [WebUI](#webui) item 4. For most up-to-date parameters, please read [here](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_ui.py#L26).
 ```
 'alwayson_scripts': {
   'AnimateDiff': {
   	'args': [{
-  		  'enable': True,         # enable AnimateDiff
-  		  'video_length': 16,     # video frame number, 0-24 for v1 and 0-32 for v2
-  		  'format': ['GIF', 'PNG'],        # 'GIF' | 'MP4' | 'PNG' | 'TXT'
-  		  'loop_number': 0,       # 0 = infinite loop
-  		  'fps': 8,               # frames per second
-  		  'model': 'mm_sd_v15_v2.ckpt',   # motion module name
-  		  'reverse': [],          # 0 | 1 | 2 - 0: Add Reverse Frame, 1: Remove head, 2: Remove tail
-        # parameters below are for img2gif only.
-  		  'latent_power': 1,
-  		  'latent_scale': 32,
-  		  'last_frame': None,
-  		  'latent_power_last': 1,
-  		  'latent_scale_last': 32
+  		  'model': 'mm_sd_v15_v2.ckpt',   # Motion module
+  		  'format': ['GIF'],      # Save format, 'GIF' | 'MP4' | 'PNG' | 'WEBP' | 'TXT'
+  		  'enable': True,         # Enable AnimateDiff
+  		  'video_length': 16,     # Number of frames
+  		  'fps': 8,               # FPS
+  		  'loop_number': 0,       # Display loop number
+          'closed_loop': 'R+P',   # Closed loop, 'N' | 'R-P' | 'R+P' | 'A'
+          'batch_size': 16,       # Context batch size
+          'stride': 1,            # Stride 
+          'overlap': -1,          # Overlap
+          'interp': 'Off',        # Frame interpolation, 'Off' | 'FILM'
+          'interl_x': 10          # Interp X
+          'video_source': 'path/to/video.mp4',  # Video source
+          'video_path': 'path/to/frames',       # Video path
+  		  'latent_power': 1,      # Latent power
+  		  'latent_scale': 32,     # Latent scale
+  		  'last_frame': None,     # Optional last frame
+  		  'latent_power_last': 1, # Optional latent power for last frame
+  		  'latent_scale_last': 32 # Optional latent scale for last frame
   	  }
   	]
   }
