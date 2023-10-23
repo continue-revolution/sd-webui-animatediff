@@ -27,7 +27,7 @@ class AnimateDiffOutput:
             video_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
             seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
-            filename = f"{seq:05}-{res.seed}"
+            filename = f"{seq:05}-{res.all_seeds[(i-1)]}"
             video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}"
 
             video_list = self._add_reverse(params, video_list)
