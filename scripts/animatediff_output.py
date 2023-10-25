@@ -27,7 +27,7 @@ class AnimateDiffOutput:
             video_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
             seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
-            filename = f"{seq:05}-{res.seed}"
+            filename = f"{seq:05}-{res.all_seeds[(i-res.index_of_first_image)]}"
             video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}"
 
             video_list = self._add_reverse(params, video_list)
@@ -127,7 +127,7 @@ class AnimateDiffOutput:
     ):
         video_paths = []
         video_array = [np.array(v) for v in video_list]
-        infotext = res.info
+        infotext = res.infotexts[index]
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
         if "PNG" in params.format and shared.opts.data.get("animatediff_save_to_custom", False):
             Path(video_path_prefix).mkdir(exist_ok=True, parents=True)
