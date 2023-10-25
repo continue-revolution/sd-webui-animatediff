@@ -220,6 +220,7 @@ class AnimateDiffOutput:
             if PIL.features.check('webp_anim'):            
                 video_path_webp = video_path_prefix + ".webp"
                 video_paths.append(video_path_webp)
+                exif_bytes = b''
                 if use_infotext:
                     exif_bytes = piexif.dump({
                         "Exif":{
