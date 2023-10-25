@@ -130,15 +130,16 @@ class AnimateDiffControl:
         processing.process_images_inner = instance.processing_process_images_hijack
 
         def hacked_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack this when i2i-batch with batch mask
-            # TODO: hack this!
             self.image_cfg_scale: float = self.image_cfg_scale if shared.sd_model.cond_stage_key == "edit" else None
 
             self.sampler = sd_samplers.create_sampler(self.sampler_name, self.sd_model)
-            crop_region = None
+            crop_regions = []
+            paste_to = []
+            masks_for_overlay = []
 
-            image_mask = self.image_mask
+            image_masks = self.image_mask
 
-            if image_mask is not None:
+            for idx, image_mask in enumerate(image_masks):
                 # image_mask is passed in as RGBA by Gradio to support alpha masks,
                 # but we still want to support binary masks.
                 image_mask = create_binary_mask(image_mask)
@@ -159,31 +160,36 @@ class AnimateDiffControl:
                     image_mask = Image.fromarray(np_mask)
 
                 if self.inpaint_full_res:
-                    self.mask_for_overlay = image_mask
+                    masks_for_overlay.append(image_mask)
                     mask = image_mask.convert('L')
                     crop_region = masking.get_crop_region(np.array(mask), self.inpaint_full_res_padding)
                     crop_region = masking.expand_crop_region(crop_region, self.width, self.height, mask.width, mask.height)
+                    crop_regions.append(crop_region)
                     x1, y1, x2, y2 = crop_region
 
                     mask = mask.crop(crop_region)
                     image_mask = images.resize_image(2, mask, self.width, self.height)
-                    self.paste_to = (x1, y1, x2-x1, y2-y1)
+                    paste_to.append((x1, y1, x2-x1, y2-y1))
                 else:
                     image_mask = images.resize_image(self.resize_mode, image_mask, self.width, self.height)
                     np_mask = np.array(image_mask)
                     np_mask = np.clip((np_mask.astype(np.float32)) * 2, 0, 255).astype(np.uint8)
-                    self.mask_for_overlay = Image.fromarray(np_mask)
+                    masks_for_overlay.append(Image.fromarray(np_mask))
 
-                self.overlay_images = []
+                image_masks[idx] = image_mask
 
-            latent_mask = self.latent_mask if self.latent_mask is not None else image_mask
+            self.mask_for_overlay = masks_for_overlay[0] # only for saving purpose
+            if paste_to:
+                self.paste_to = paste_to[0]
+                self._animatediff_paste_to_full = paste_to
 
+            self.overlay_images = []
             add_color_corrections = opts.img2img_color_correction and self.color_corrections is None
             if add_color_corrections:
                 self.color_corrections = []
             imgs = []
-            for img in self.init_images:
-
+            for idx, img in enumerate(self.init_images):
+                latent_mask = (self.latent_mask[idx] if isinstance(self.latent_mask, list) else self.latent_mask) if self.latent_mask is not None else image_masks[idx]
                 # Save init image
                 if opts.save_init_img:
                     self.init_img_hash = hashlib.md5(img.tobytes()).hexdigest()
@@ -191,21 +197,21 @@ class AnimateDiffControl:
 
                 image = images.flatten(img, opts.img2img_background_color)
 
-                if crop_region is None and self.resize_mode != 3:
+                if not crop_regions and self.resize_mode != 3:
                     image = images.resize_image(self.resize_mode, image, self.width, self.height)
 
-                if image_mask is not None:
+                if image_masks:
                     image_masked = Image.new('RGBa', (image.width, image.height))
-                    image_masked.paste(image.convert("RGBA").convert("RGBa"), mask=ImageOps.invert(self.mask_for_overlay.convert('L')))
+                    image_masked.paste(image.convert("RGBA").convert("RGBa"), mask=ImageOps.invert(masks_for_overlay[idx].convert('L')))
 
                     self.overlay_images.append(image_masked.convert('RGBA'))
 
                 # crop_region is not None if we are doing inpaint full res
-                if crop_region is not None:
-                    image = image.crop(crop_region)
+                if crop_regions:
+                    image = image.crop(crop_regions[idx])
                     image = images.resize_image(2, image, self.width, self.height)
 
-                if image_mask is not None:
+                if image_masks:
                     if self.inpainting_fill != 1:
                         image = masking.fill(image, latent_mask)
 
@@ -243,13 +249,23 @@ class AnimateDiffControl:
             if self.resize_mode == 3:
                 self.init_latent = torch.nn.functional.interpolate(self.init_latent, size=(self.height // opt_f, self.width // opt_f), mode="bilinear")
 
-            if image_mask is not None:
-                init_mask = latent_mask
-                latmask = init_mask.convert('RGB').resize((self.init_latent.shape[3], self.init_latent.shape[2]))
-                latmask = np.moveaxis(np.array(latmask, dtype=np.float32), 2, 0) / 255
-                latmask = latmask[0]
-                latmask = np.around(latmask)
-                latmask = np.tile(latmask[None], (4, 1, 1))
+            if image_masks is not None:
+                def process_letmask(init_mask):
+                    # init_mask = latent_mask
+                    latmask = init_mask.convert('RGB').resize((self.init_latent.shape[3], self.init_latent.shape[2]))
+                    latmask = np.moveaxis(np.array(latmask, dtype=np.float32), 2, 0) / 255
+                    latmask = latmask[0]
+                    latmask = np.around(latmask)
+                    return np.tile(latmask[None], (4, 1, 1))
+
+                if self.latent_mask is not None and not isinstance(self.latent_mask, list):
+                    latmask = process_letmask(self.latent_mask)
+                elif self.latent_mask is not None:
+                    if isinstance(self.latent_mask, list):
+                        latmask = [process_letmask(x) for x in self.latent_mask]
+                    else:
+                        latmask = [process_letmask(x) for x in image_masks]
+                    latmask = np.stack(latmask, axis=0)
 
                 self.mask = torch.asarray(1.0 - latmask).to(shared.device).type(self.sd_model.dtype)
                 self.nmask = torch.asarray(latmask).to(shared.device).type(self.sd_model.dtype)
@@ -260,7 +276,7 @@ class AnimateDiffControl:
                 elif self.inpainting_fill == 3:
                     self.init_latent = self.init_latent * self.mask
 
-            self.image_conditioning = self.img2img_image_conditioning(image * 2 - 1, self.init_latent, image_mask)
+            self.image_conditioning = self.img2img_image_conditioning(image * 2 - 1, self.init_latent, image_masks) # let's ignore this image_masks which is related to inpaint model with different arch
 
         def hacked_img2img_process_batch_hijack(
                 self, p: StableDiffusionProcessingImg2Img, input_dir: str, output_dir: str, inpaint_mask_dir: str,
@@ -496,7 +512,7 @@ class AnimateDiffControl:
                 if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
                     input_images = []
                     for img in unit.batch_images:
-                        unit.image = img # TODO: SAM extension should use new API
+                        unit.image = img
                         input_image, _ = cn_script.choose_input_image(p, unit, idx)
                         input_images.append(input_image)
                 else:
@@ -510,6 +526,8 @@ class AnimateDiffControl:
 
                 for idx, input_image in enumerate(input_images):
                     a1111_mask_image : Optional[Image.Image] = getattr(p, "image_mask", None)
+                    if a1111_mask_image and isinstance(a1111_mask_image, list):
+                        a1111_mask_image = a1111_mask_image[idx]
                     if 'inpaint' in unit.module and not image_has_mask(input_image) and a1111_mask_image is not None:
                         a1111_mask = np.array(prepare_mask(a1111_mask_image, p))
                         if a1111_mask.ndim == 2:

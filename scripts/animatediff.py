@@ -4,7 +4,7 @@ import gradio as gr
 from modules import script_callbacks, scripts, shared
 from modules.processing import (Processed, StableDiffusionProcessing,
                                 StableDiffusionProcessingImg2Img)
-from modules.scripts import PostprocessBatchListArgs
+from modules.scripts import PostprocessBatchListArgs, PostprocessImageArgs
 
 from scripts.animatediff_cn import AnimateDiffControl
 from scripts.animatediff_infv2v import AnimateDiffInfV2V
@@ -69,6 +69,12 @@ class AnimateDiffScript(scripts.Script):
         if isinstance(params, dict): params = AnimateDiffProcess(**params)
         if params.enable:
             self.prompt_scheduler.save_infotext_img(p)
+
+
+    def postprocess_image(self, p: StableDiffusionProcessing, pp: PostprocessImageArgs, params: AnimateDiffProcess, *args):
+        if isinstance(params, dict): params = AnimateDiffProcess(**params)
+        if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and hasattr(p, '_animatediff_paste_to_full'):
+            p.paste_to = p._animatediff_paste_to_full[p.batch_index]
 
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
