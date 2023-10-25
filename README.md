@@ -215,10 +215,6 @@ We are currently developing approach to support batch size on WebUI in the near 
 
 
 ## FAQ
-1.  Q: Can I use SDXL to generate GIFs?
-
-    A: You will have to wait for someone to train SDXL-specific motion modules which will have a different model architecture. This extension essentially inject multiple motion modules into SD1.5 UNet. It does not work for other variations of SD, such as SD2.1 and SDXL.
-
 1.  Q: Will ADetailer be supported?
 
     A: I'm not planning to support ADetailer. However, I plan to refactor my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) to achieve similar effects.
@@ -253,9 +249,9 @@ TODO
 I thank researchers from [Shanghai AI Lab](https://www.shlab.org.cn/), especially [@guoyww](https://github.com/guoyww) for creating AnimateDiff. I also thank [@neggles](https://github.com/neggles) and [@s9roll7](https://github.com/s9roll7) for creating and improving [AnimateDiff CLI Prompt Travel](https://github.com/s9roll7/animatediff-cli-prompt-travel). This extension could not be made possible without these creative works.
 
 I also thank community developers, especially
-- [@talesofai](https://github.com/talesofai) who developed i2v in [this forked repo](https://github.com/talesofai/AnimateDiff)
 - [@zappityzap](https://github.com/zappityzap) who developed the majority of the [output features](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_output.py)
 - [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance of this extension
+- [@talesofai](https://github.com/talesofai) who developed i2v in [this forked repo](https://github.com/talesofai/AnimateDiff)
 - [@rkfg](https://github.com/rkfg) for developing GIF palette optimization
 
 and many others who have contributed to this extension.
