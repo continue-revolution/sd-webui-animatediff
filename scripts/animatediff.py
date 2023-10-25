@@ -15,6 +15,7 @@ from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
+from scripts.animatediff_i2ibatch import animatediff_i2ibatch
 from scripts.animatediff_infotext import update_infotext
 
 script_dir = scripts.basedir()
@@ -61,7 +62,7 @@ class AnimateDiffScript(scripts.Script):
 
     def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
         if isinstance(params, dict): params = AnimateDiffProcess(**params)
-        if params.enable and isinstance(p, StableDiffusionProcessingImg2Img):
+        if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and not hasattr(p, '_animatediff_i2i_batch'):
             AnimateDiffI2VLatent().randomize(p, params)
 
 
