@@ -7,6 +7,7 @@ from modules import shared
 from modules.processing import StableDiffusionProcessing
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
+from scripts.animatediff_i2ibatch import animatediff_i2ibatch
 
 
 class ToolButton(gr.Button, gr.components.FormComponent):
@@ -67,7 +68,9 @@ class AnimateDiffProcess:
 
     def get_list(self, is_img2img: bool):
         list_var = list(vars(self).values())
-        if not is_img2img:
+        if is_img2img:
+            animatediff_i2ibatch.hack()
+        else:
             list_var = list_var[:-5]
         return list_var
 
@@ -301,9 +304,7 @@ class AnimateDiffUiGroup:
                     type="pil",
                 )
             with gr.Row():
-                unload = gr.Button(
-                    value="Move motion module to CPU (default if lowvram)"
-                )
+                unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
                 remove = gr.Button(value="Remove motion module from any memory")
                 unload.click(fn=motion_module.unload)
                 remove.click(fn=motion_module.remove)
