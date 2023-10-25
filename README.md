@@ -83,7 +83,7 @@ Just like how you use ControlNet. Here is a sample. Due to the limitation of Web
       'stride': 1,            # Stride 
       'overlap': -1,          # Overlap
       'interp': 'Off',        # Frame interpolation, 'Off' | 'FILM'
-      'interl_x': 10          # Interp X
+      'interp_x': 10          # Interp X
       'video_source': 'path/to/video.mp4',  # Video source
       'video_path': 'path/to/frames',       # Video path
       'latent_power': 1,      # Latent power
@@ -100,6 +100,8 @@ Just like how you use ControlNet. Here is a sample. Due to the limitation of Web
 
 ## WebUI Parameters
 1. **Save format** — Format of the output. Choose at least one of "GIF"|"MP4"|"WEBP"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF. Infotext is also accessible via `stable-diffusion-webui/params.txt` and outputs in all formats.
+    1. You can optimize GIF with `gifsicle` (`apt install gifsicle` required, read [#91](https://github.com/continue-revolution/sd-webui-animatediff/pull/91) for more information) and/or `palette` (read [#104](https://github.com/continue-revolution/sd-webui-animatediff/pull/104) for more information). Go to `Settings/AnimateDiff` to enable them.
+    1. You can set quality and lossless for WEBP via `Settings/AnimateDiff`. Read [#233](https://github.com/continue-revolution/sd-webui-animatediff/pull/233) for more information.
 1. **Number of frames** — Choose whatever number you like. 
 
     If you enter 0 (default):
@@ -124,13 +126,11 @@ Just like how you use ControlNet. Here is a sample. Due to the limitation of Web
     1. Due to the limitation of the infinite context generator, this parameter is effective only when `Number of frames` > `Context batch size`, including when ControlNet is enabled and the source video frame number > `Context batch size` and `Number of frames` is 0.
     1. "Absolutely no closed loop" is only possible when `Stride` is 1.
     1. For each 1 <= $2^i$ <= `Stride`, the infinite context generator will try to make frames $2^i$ apart temporal consistent. For example, if `Stride` is 4 and `Number of frames` is 8, it will make the following frames temporal consistent:
-        - `Stride` == 1: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-        - `Stride` == 2: [0, 2, 4, 6, 8], [1, 3, 5, 7], [0, 4, 8]
-        - `Stride` == 4: [1, 5], [2, 6], [3, 7]
+        - `Stride` == 1: [0, 1, 2, 3, 4, 5, 6, 7]
+        - `Stride` == 2: [0, 2, 4, 6], [1, 3, 5, 7]
+        - `Stride` == 4: [0, 4], [1, 5], [2, 6], [3, 7]
 1. **Overlap** — Number of frames to overlap in context. If overlap is -1 (default): your overlap will be `Context batch size` // 4.
     1. Due to the limitation of the infinite context generator, this parameter is effective only when `Number of frames` > `Context batch size`, including when ControlNet is enabled and the source video frame number > `Context batch size` and `Number of frames` is 0.
-    1. You can optimize GIF with `gifsicle` (`apt install gifsicle` required, read [#91](https://github.com/continue-revolution/sd-webui-animatediff/pull/91) for more information) and/or `palette` (read [#104](https://github.com/continue-revolution/sd-webui-animatediff/pull/104) for more information). Go to `Settings/AnimateDiff` to enable them.
-    2. You can set quality and lossless for WEBP via `Settings/AnimateDiff`. Read [#233](https://github.com/continue-revolution/sd-webui-animatediff/pull/233) for more information.
 1. **Frame Interpolation** — Interpolate between frames with Deforum's FILM implementation. Requires Deforum extension. [#128](https://github.com/continue-revolution/sd-webui-animatediff/pull/128)
 1. **Interp X** — Replace each input frame with X interpolated output frames. [#128](https://github.com/continue-revolution/sd-webui-animatediff/pull/128).
 1. **Video source** — [Optional] Video source file for [ControlNet V2V](#controlnet-v2v). You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel. You can of course submit one control image via `Single Image` tab or an input directory via `Batch` tab, which will override this video source input and work as usual.
