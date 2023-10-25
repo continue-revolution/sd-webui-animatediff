@@ -306,10 +306,8 @@ class AnimateDiffUiGroup:
             with gr.Row():
                 unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
                 remove = gr.Button(value="Remove motion module from any memory")
-                restore_i2ibatch = gr.Button(value="Restore img2img batch")
                 unload.click(fn=motion_module.unload)
                 remove.click(fn=motion_module.remove)
-                restore_i2ibatch.click(fn=animatediff_i2ibatch.restore)
         return self.register_unit(is_img2img)
 
 

@@ -15,7 +15,6 @@ from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
-from scripts.animatediff_i2ibatch import animatediff_i2ibatch
 from scripts.animatediff_infotext import update_infotext
 
 script_dir = scripts.basedir()

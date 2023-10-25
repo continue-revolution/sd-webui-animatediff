@@ -23,12 +23,10 @@ from scripts.animatediff_logger import logger_animatediff as logger
 
 class AnimateDiffI2IBatch:
 
-    def __init__(self):
-        self.original_img2img_process_batch_hijack = None
-
-
     def hack(self):
         logger.info("Hacking i2i-batch.")
+        original_img2img_process_batch = img2img.process_batch
+
         def hacked_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack this when i2i-batch with batch mask
             self.image_cfg_scale: float = self.image_cfg_scale if shared.sd_model.cond_stage_key == "edit" else None
 
@@ -179,9 +177,15 @@ class AnimateDiffI2IBatch:
             self.image_conditioning = self.img2img_image_conditioning(image * 2 - 1, self.init_latent, image_masks) # let's ignore this image_masks which is related to inpaint model with different arch
 
         def hacked_img2img_process_batch_hijack(
-                self, p: StableDiffusionProcessingImg2Img, input_dir: str, output_dir: str, inpaint_mask_dir: str,
+                p: StableDiffusionProcessingImg2Img, input_dir: str, output_dir: str, inpaint_mask_dir: str,
                 args, to_scale=False, scale_by=1.0, use_png_info=False, png_info_props=None, png_info_dir=None):
-            p._animatediff_i2i_batch = 1 # i2i-batch mode, ordinary
+            if p.scripts:
+                for script in p.scripts.alwayson_scripts:
+                    if script.title().lower() == "animatediff":
+                        p._animatediff_i2i_batch = 1 # i2i-batch mode, ordinary
+
+            if not hasattr(p, '_animatediff_i2i_batch'):
+                return original_img2img_process_batch(p, input_dir, output_dir, inpaint_mask_dir, args, to_scale, scale_by, use_png_info, png_info_props, png_info_dir)
             output_dir = output_dir.strip()
             processing.fix_seed(p)
 
@@ -277,19 +281,7 @@ class AnimateDiffI2IBatch:
             else:
                 logger.warn("Warning: you are using an unsupported external script. AnimateDiff may not work properly.")
 
-        from scripts.batch_hijack import BatchHijack, instance
-        self.original_img2img_process_batch_hijack = BatchHijack.img2img_process_batch_hijack
-        BatchHijack.img2img_process_batch_hijack = hacked_img2img_process_batch_hijack
-        img2img.process_batch = instance.img2img_process_batch_hijack
-
-
-    def restore(self):
-        logger.info("Restoring i2i-batch.")
-        from scripts.batch_hijack import BatchHijack, instance
-        if self.original_img2img_process_batch_hijack is not None:
-            BatchHijack.img2img_process_batch_hijack = self.original_img2img_process_batch_hijack
-            self.original_img2img_process_batch_hijack = None
-            img2img.process_batch = instance.img2img_process_batch_hijack
+        img2img.process_batch = hacked_img2img_process_batch_hijack
 
 
     def cap_init_image(self, p: StableDiffusionProcessingImg2Img, params):
