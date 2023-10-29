@@ -95,11 +95,6 @@ class AnimateDiffMM:
         self._set_ddim_alpha(sd_model)
         self._set_layer_mapping(sd_model)
         logger.info(f"Injection finished.")
-        # print sd_model
-        with open('/home/conrevo/SD/stable-diffusion-webui/extensions/sd-webui-animatediff/model/sd_model.txt', 'w') as f:
-            # redirect stdout
-            print(sd_model, file=f)
-            
 
 
     def restore(self, sd_model):
