@@ -1,10 +1,8 @@
 import gc
-import json
 import os
 
 import torch
 from einops import rearrange
-from ldm.modules.diffusionmodules.util import GroupNorm32
 from modules import hashes, shared, sd_models
 from modules.devices import cpu, device, torch_gc
 
@@ -59,7 +57,11 @@ class AnimateDiffMM:
             logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet middle block.")
             unet.middle_block.insert(-1, self.mm.mid_block.motion_modules[0])
         else:
-            logger.info(f"Hacking GroupNorm32 forward function.")
+            logger.info(f"Hacking {sd_ver} GroupNorm32 forward function.")
+            if self.mm.is_sdxl:
+                from sgm.modules.diffusionmodules.util import GroupNorm32
+            else:
+                from ldm.modules.diffusionmodules.util import GroupNorm32
             self.gn32_original_forward = GroupNorm32.forward
             gn32_original_forward = self.gn32_original_forward
 
@@ -117,7 +119,11 @@ class AnimateDiffMM:
             logger.info(f"Removing motion module from {sd_ver} UNet middle block.")
             unet.middle_block.pop(-2)
         else:
-            logger.info(f"Restoring GroupNorm32 forward function.")
+            logger.info(f"Restoring {sd_ver} GroupNorm32 forward function.")
+            if self.mm.is_sdxl:
+                from sgm.modules.diffusionmodules.util import GroupNorm32
+            else:
+                from ldm.modules.diffusionmodules.util import GroupNorm32
             GroupNorm32.forward = self.gn32_original_forward
             self.gn32_original_forward = None
         logger.info(f"Removal finished.")
