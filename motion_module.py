@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 import torch
@@ -11,6 +12,12 @@ from einops import rearrange, repeat
 import math
 
 
+class MotionModuleType(Enum):
+    AnimateDiffV1 = "AnimateDiff V1, Yuwei GUo, Shanghai AI Lab"
+    AnimateDiffV2 = "AnimateDiff V2, Yuwei Guo, Shanghai AI Lab"
+    HotShotXL = "HotShot-XL, John Mullan, Natural Synthetics Inc"
+
+
 def zero_module(module):
     # Zero out the parameters of a module and return it.
     for p in module.parameters():
@@ -19,37 +26,38 @@ def zero_module(module):
 
 
 class MotionWrapper(nn.Module):
-    def __init__(self, mm_hash: str, using_v2: bool):
+    def __init__(self, mm_name: str, mm_hash: str, mm_type: MotionModuleType):
         super().__init__()
-        if using_v2:
-            max_len = 32
-        else:
-            max_len = 24
+        is_v2 = mm_type == MotionModuleType.AnimateDiffV2
+        is_sdxl = mm_type == MotionModuleType.HotShotXL
+        max_len = 32 if is_v2 else 24
+        in_channels = (320, 640, 1280) if is_sdxl else (320, 640, 1280, 1280)
         self.down_blocks = nn.ModuleList([])
         self.up_blocks = nn.ModuleList([])
-        for c in (320, 640, 1280, 1280):
-            self.down_blocks.append(MotionModule(c, max_len=max_len))
-        for c in (1280, 1280, 640, 320):
-            self.up_blocks.append(MotionModule(c, is_up=True, max_len=max_len))
-        if using_v2:
-            self.mid_block = MotionModule(1280, max_len=max_len, is_mid=using_v2)
+        for c in in_channels:
+            self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len, is_sdxl=is_sdxl))
+            self.up_blocks.insert(0,MotionModule(c, num_mm=3, max_len=max_len, is_sdxl=is_sdxl))
+        if is_v2:
+            self.mid_block = MotionModule(1280, num_mm=1, max_len=max_len)
+        self.mm_name = mm_name
+        self.mm_type = mm_type
         self.mm_hash = mm_hash
-        self.using_v2 = using_v2
 
 
 class MotionModule(nn.Module):
-    def __init__(self, in_channels, is_up=False, is_mid=False, max_len=24):
+    def __init__(self, in_channels, num_mm, max_len, is_sdxl=False):
         super().__init__()
-        if is_mid:
-            self.motion_modules = nn.ModuleList([get_motion_module(in_channels, max_len)])
+        motion_modules = nn.ModuleList([get_motion_module(in_channels, max_len) for _ in range(num_mm)])
+        if is_sdxl:
+            self.temporal_attentions = motion_modules
         else:
-            self.motion_modules = nn.ModuleList([get_motion_module(in_channels, max_len), get_motion_module(in_channels, max_len)])
-            if is_up:
-                self.motion_modules.append(get_motion_module(in_channels, max_len))
+            self.motion_modules = motion_modules
 
 
-def get_motion_module(in_channels, max_len):
-    return VanillaTemporalModule(in_channels=in_channels, temporal_position_encoding_max_len=max_len)
+
+def get_motion_module(in_channels, max_len, is_sdxl=False):
+    vtm = VanillaTemporalModule(in_channels=in_channels, temporal_position_encoding_max_len=max_len)
+    return vtm.temporal_transformer if is_sdxl else vtm
 
 
 class VanillaTemporalModule(nn.Module):
