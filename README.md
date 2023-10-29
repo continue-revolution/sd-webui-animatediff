@@ -52,7 +52,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/10/19`: [v1.9.3](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.3): Support webp output format. See [#233](https://github.com/continue-revolution/sd-webui-animatediff/pull/233) for more information.
 - `2023/10/21`: [v1.9.4](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.4): Save prompt travel to output images, `Reverse` merged to `Closed loop` (See [WebUI Parameters](#webui-parameters)), remove `TimestepEmbedSequential` hijack, remove `hints.js`, better explanation of several context-related parameters.
 - `2023/10/25`: [v1.10.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.10.0): Support img2img batch. You need ControlNet installed to make it work properly (you do not need to enable ControlNet). See [ControlNet V2V](#controlnet-v2v) for more information.
-- `2023/10/29`: [v1.11.0](ttps://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.0): Support [HotShot-XL](https://github.com/hotshotco/Hotshot-XL) for SDXL. See [HotShot-XL](#hotshot-xl) for more information.
+- `2023/10/29`: [v1.11.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.0): Support [HotShot-XL](https://github.com/hotshotco/Hotshot-XL) for SDXL. See [HotShot-XL](#hotshot-xl) for more information.
 
 For future update plan, please query [here](https://github.com/continue-revolution/sd-webui-animatediff/pull/224).
 
@@ -205,7 +205,7 @@ Technically all features available for AnimateDiff are also available for HotSho
 
 The difference between this extension and the official [HotShot-XL extension](https://github.com/hotshotco/Hotshot-XL-Automatic1111) is that - you can completely get rid of diffusers if you use this one.
 
-For VRAM usage, please read [VRAM](#vram).
+For download link, please read [Model Zoo](#model-zoo). For VRAM usage, please read [VRAM](#vram).
 
 
 ## Model Zoo
