@@ -17,9 +17,7 @@ class AnimateDiffMM:
     def __init__(self):
         self.mm: MotionWrapper = None
         self.script_dir = None
-        self.prev_beta = None
         self.prev_alpha_cumprod = None
-        self.prev_alpha_cumprod_prev = None
         self.gn32_original_forward = None
 
 
@@ -134,24 +132,14 @@ class AnimateDiffMM:
         betas = torch.linspace(
             beta_start,
             beta_end,
-            sd_model.num_idx if sd_model.is_sdxl else sd_model.num_timesteps,
+            1000 if sd_model.is_sdxl else sd_model.num_timesteps, # TODO: I'm not sure which parameter to use here for SDXL
             dtype=torch.float32,
             device=device,
         )
         alphas = 1.0 - betas
         alphas_cumprod = torch.cumprod(alphas, dim=0)
-        alphas_cumprod_prev = torch.cat(
-            (
-                torch.tensor([1.0], dtype=torch.float32, device=device),
-                alphas_cumprod[:-1],
-            )
-        )
-        self.prev_beta = sd_model.betas
         self.prev_alpha_cumprod = sd_model.alphas_cumprod
-        self.prev_alpha_cumprod_prev = sd_model.alphas_cumprod_prev
-        sd_model.betas = betas
         sd_model.alphas_cumprod = alphas_cumprod
-        sd_model.alphas_cumprod_prev = alphas_cumprod_prev
     
 
     def _set_layer_mapping(self, sd_model):
@@ -162,12 +150,8 @@ class AnimateDiffMM:
 
     def _restore_ddim_alpha(self, sd_model):
         logger.info(f"Restoring DDIM alpha.")
-        sd_model.betas = self.prev_beta
         sd_model.alphas_cumprod = self.prev_alpha_cumprod
-        sd_model.alphas_cumprod_prev = self.prev_alpha_cumprod_prev
-        self.prev_beta = None
         self.prev_alpha_cumprod = None
-        self.prev_alpha_cumprod_prev = None
 
 
     def unload(self):
