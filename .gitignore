@@ -1,4 +1,4 @@
 __pycache__
-model/*.ckpt
-model/*.pth
+model/*.*
+model/*.*
 TODO.md
