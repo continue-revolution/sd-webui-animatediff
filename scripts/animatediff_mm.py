@@ -138,7 +138,8 @@ class AnimateDiffMM:
         betas = torch.linspace(
             beta_start,
             beta_end,
-            1000 if sd_model.is_sdxl else sd_model.num_timesteps, # TODO: I'm not sure which parameter to use here for SDXL
+            # TODO: I'm not sure which parameter to use here for SDXL
+            1000 if sd_model.is_sdxl else sd_model.num_timesteps,
             dtype=torch.float32,
             device=device,
         )

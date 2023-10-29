@@ -136,10 +136,10 @@ class AnimateDiffControl:
 
         def hacked_main_entry(self, p: StableDiffusionProcessing):
             from scripts import external_code, global_state, hook
-            # from scripts.controlnet_lora import bind_control_lora # do not support control lora for sdxl
+            from scripts.controlnet_lora import bind_control_lora
             from scripts.adapter import Adapter, Adapter_light, StyleAdapter
             from scripts.batch_hijack import InputMode
-            # from scripts.controlnet_lllite import PlugableControlLLLite, clear_all_lllite # do not support controlllite for sdxl
+            from scripts.controlnet_lllite import PlugableControlLLLite, clear_all_lllite
             from scripts.controlmodel_ipadapter import (PlugableIPAdapter,
                                                         clear_all_ip_adapter)
             from scripts.hook import ControlModelType, ControlParams, UnetHook
@@ -196,14 +196,14 @@ class AnimateDiffControl:
             unet = sd_ldm.model.diffusion_model
             self.noise_modifier = None
 
-            # setattr(p, 'controlnet_control_loras', []) # do not support control lora for sdxl
+            setattr(p, 'controlnet_control_loras', [])
 
             if self.latest_network is not None:
                 # always restore (~0.05s)
                 self.latest_network.restore()
 
             # always clear (~0.05s)
-            # clear_all_lllite() # do not support controlllite for sdxl
+            clear_all_lllite()
             clear_all_ip_adapter()
 
             self.enabled_units = cn_script.get_enabled_units(p)
@@ -242,10 +242,10 @@ class AnimateDiffControl:
                     model_net = cn_script.load_control_model(p, unet, unit.model)
                     model_net.reset()
 
-                    # if getattr(model_net, 'is_control_lora', False): # do not support control lora for sdxl
-                    #     control_lora = model_net.control_model
-                    #     bind_control_lora(unet, control_lora)
-                    #     p.controlnet_control_loras.append(control_lora)
+                    if getattr(model_net, 'is_control_lora', False):
+                        control_lora = model_net.control_model
+                        bind_control_lora(unet, control_lora)
+                        p.controlnet_control_loras.append(control_lora)
 
                 if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
                     input_images = []
@@ -352,8 +352,8 @@ class AnimateDiffControl:
                     control_model_type = ControlModelType.T2I_StyleAdapter
                 elif isinstance(model_net, PlugableIPAdapter):
                     control_model_type = ControlModelType.IPAdapter
-                # elif isinstance(model_net, PlugableControlLLLite): # do not support controlllite for sdxl
-                #     control_model_type = ControlModelType.Controlllite
+                elif isinstance(model_net, PlugableControlLLLite):
+                    control_model_type = ControlModelType.Controlllite
 
                 if control_model_type is ControlModelType.ControlNet:
                     global_average_pooling = model_net.control_model.global_average_pooling
@@ -577,15 +577,14 @@ class AnimateDiffControl:
                         start=param.start_guidance_percent,
                         end=param.stop_guidance_percent
                     ) 
-                # Do not support controlllite for sdxl
-                # if param.control_model_type == ControlModelType.Controlllite:
-                #     param.control_model.hook(
-                #         model=unet,
-                #         cond=param.hint_cond,
-                #         weight=param.weight,
-                #         start=param.start_guidance_percent,
-                #         end=param.stop_guidance_percent
-                #     )
+                if param.control_model_type == ControlModelType.Controlllite:
+                    param.control_model.hook(
+                        model=unet,
+                        cond=param.hint_cond,
+                        weight=param.weight,
+                        start=param.start_guidance_percent,
+                        end=param.stop_guidance_percent
+                    )
 
             self.detected_map = detected_maps
             self.post_processors = post_processors
