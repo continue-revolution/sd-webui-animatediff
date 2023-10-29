@@ -182,7 +182,11 @@ class AnimateDiffI2IBatch:
             if p.scripts:
                 for script in p.scripts.alwayson_scripts:
                     if script.title().lower() == "animatediff":
-                        p._animatediff_i2i_batch = 1 # i2i-batch mode, ordinary
+                        ad_arg = p.script_args[script.args_from]
+                        ad_enabled = ad_arg.get('enable', False) if isinstance(ad_arg, dict) else getattr(ad_arg, 'enable', False)
+                        print(f"[i2i batch] animatediff enabled: {ad_enabled}")
+                        if ad_enabled:
+                            p._animatediff_i2i_batch = 1 # i2i-batch mode, ordinary
 
             if not hasattr(p, '_animatediff_i2i_batch'):
                 return original_img2img_process_batch(p, input_dir, output_dir, inpaint_mask_dir, args, to_scale, scale_by, use_png_info, png_info_props, png_info_dir)
