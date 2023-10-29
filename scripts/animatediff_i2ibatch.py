@@ -184,7 +184,6 @@ class AnimateDiffI2IBatch:
                     if script.title().lower() == "animatediff":
                         ad_arg = p.script_args[script.args_from]
                         ad_enabled = ad_arg.get('enable', False) if isinstance(ad_arg, dict) else getattr(ad_arg, 'enable', False)
-                        print(f"[i2i batch] animatediff enabled: {ad_enabled}")
                         if ad_enabled:
                             p._animatediff_i2i_batch = 1 # i2i-batch mode, ordinary
 
