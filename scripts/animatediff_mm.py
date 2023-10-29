@@ -50,8 +50,8 @@ class AnimateDiffMM:
         inject_sdxl = sd_model.is_sdxl or self.mm.is_sdxl
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         if sd_model.is_sdxl != self.mm.is_sdxl:
-            logger.warn(f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."
-                        f"The injection and inference will go on but the result might be sub-optimal.")
+            logger.warn(f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}. "
+                        f"You will see an error afterwards. Even if the injection and inference seem to go on, you will get bad results.")
 
         if self.mm.is_v2:
             logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet middle block.")

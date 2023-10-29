@@ -97,20 +97,33 @@ class AnimateDiffPromptSchedule:
             dist_next += video_length
 
         if key_prev == key_next or dist_prev + dist_next == 0:
-            return cond[key_prev]
+            return cond[key_prev] if isinstance(cond, torch.Tensor) else {k: v[key_prev] for k, v in cond.items()}
 
         rate = dist_prev / (dist_prev + dist_next)
-
-        return AnimateDiffPromptSchedule.slerp(cond[key_prev], cond[key_next], rate)
+        if isinstance(cond, torch.Tensor):
+            return AnimateDiffPromptSchedule.slerp(cond[key_prev], cond[key_next], rate)
+        else: # isinstance(cond, dict)
+            return {
+                k: AnimateDiffPromptSchedule.slerp(v[key_prev], v[key_next], rate)
+                for k, v in cond.items()
+            }
     
 
     def multi_cond(self, cond: torch.Tensor, closed_loop = False):
         if self.prompt_map is None:
             return cond
-        cond_list = []
+        cond_list = [] if isinstance(cond, torch.Tensor) else {k: [] for k in cond.keys()}
         for i in range(cond.shape[0]):
-            cond_list.append(self.single_cond(i, cond.shape[0], cond, closed_loop))
-        return torch.stack(cond_list).to(cond.dtype).to(cond.device)
+            single_cond = self.single_cond(i, cond.shape[0], cond, closed_loop)
+            if isinstance(cond, torch.Tensor):
+                cond_list.append(single_cond)
+            else:
+                for k, v in single_cond.items():
+                    cond_list[k].append(v)
+        if isinstance(cond, torch.Tensor):
+            return torch.stack(cond_list).to(cond.dtype).to(cond.device)
+        else:
+            return {k: torch.stack(v).to(cond[k].dtype).to(cond[k].device) for k, v in cond_list.items()}
 
 
     @staticmethod
