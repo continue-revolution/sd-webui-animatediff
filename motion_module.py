@@ -265,7 +265,7 @@ class PositionalEncoding(nn.Module):
         self.is_sdxl = is_sdxl
 
     def forward(self, x):
-        x = x + self.positional_encoding[:, :x.size(1)] if self.is_sdxl else self.pe[:, :x.size(1)]
+        x = x + (self.positional_encoding[:, :x.size(1)] if self.is_sdxl else self.pe[:, :x.size(1)])
         return self.dropout(x)
 
 
