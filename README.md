@@ -141,7 +141,7 @@ Just like how you use ControlNet. Here is a sample. Due to the limitation of Web
     - For people who want to inpaint videos: enter a folder which contains two sub-folders `image` and `mask` on ControlNet inpainting unit. These two sub-folders should contain the same number of images. This extension will match them according to the same sequence. Using my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) extension can make your life much easier.
 
 Please read
-- [Img2GIF](#img2gif) for extra parameters on img2gif panel. For how to use Motion LoRA, please read 
+- [Img2GIF](#img2gif) for extra parameters on img2gif panel.
 - [Motion LoRA](#motion-lora) for how to use Motion LoRA.
 - [Prompt Travel](#prompt-travel) for how to trigger prompt travel.
 - [ControlNet V2V](#controlnet-v2v) for how to use ControlNet V2V.
