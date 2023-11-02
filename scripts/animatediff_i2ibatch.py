@@ -158,7 +158,7 @@ class AnimateDiffI2IBatch:
 
                 if self.latent_mask is not None and not isinstance(self.latent_mask, list):
                     latmask = process_letmask(self.latent_mask)
-                elif self.latent_mask is not None:
+                else:
                     if isinstance(self.latent_mask, list):
                         latmask = [process_letmask(x) for x in self.latent_mask]
                     else:
