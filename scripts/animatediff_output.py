@@ -18,24 +18,28 @@ class AnimateDiffOutput:
         self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess
     ):
         video_paths = []
+        video_list = []
         logger.info("Merging images into GIF.")
         Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
         step = params.video_length if params.video_length > params.batch_size else params.batch_size
         for i in range(res.index_of_first_image, len(res.images), step):
             # frame interpolation replaces video_list with interpolated frames
             # so make a copy instead of a slice (reference), to avoid modifying res
-            video_list = [image.copy() for image in res.images[i : i + params.video_length]]
+            image_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
             seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
             filename = f"{seq:05}-{res.all_seeds[(i-res.index_of_first_image)]}"
             video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}"
 
-            video_list = self._add_reverse(params, video_list)
-            video_list = self._interp(p, params, video_list, filename)
-            video_paths += self._save(params, video_list, video_path_prefix, res, i)
+            image_list = self._add_reverse(params, image_list)
+            image_list = self._interp(p, params, image_list, filename)
+            is_api_and_animated = p.is_api and ("GIF" in params.format or "WEBP" in params.format)
+            if is_api_and_animated:
+                video_list += self._returnAnimatedImage(params, image_list, res, i)
+            else:
+                video_paths += self._save(params, image_list, video_path_prefix, res, i)
 
-        if len(video_paths) > 0:
-            res.images = video_list if p.is_api else video_paths
+        res.images = video_list if is_api_and_animated else video_paths
 
     def _add_reverse(self, params: AnimateDiffProcess, video_list: list):
         if params.video_length <= params.batch_size and params.closed_loop in ['A']:
@@ -117,6 +121,50 @@ class AnimateDiffOutput:
 
         return video_list
 
+    def _returnAnimatedImage(
+        self,
+        params: AnimateDiffProcess,
+        image_list: list,
+        res: Processed,
+        index: int,
+    ):
+        pil_image_list = []
+        image_array = [np.array(v) for v in image_list]
+        infotext = res.infotexts[index]
+        use_infotext = shared.opts.enable_pnginfo and infotext is not None
+        from io import BytesIO
+        import imageio.v2 as imageioV2
+        if "GIF" in params.format:
+            buffer = BytesIO()
+            imageioV2.mimwrite(
+                buffer, 
+                image_array, 
+                format='GIF', 
+                duration=(1000 / params.fps), 
+                loop=params.loop_number,
+                comment=(infotext if use_infotext else "")
+            )
+            pil_image_list.append(Image.open(buffer))
+        if "WEBP" in params.format:
+            buffer = BytesIO()
+            if PIL.features.check('webp_anim'):          
+                exif_bytes = b''
+                if use_infotext:
+                    exif_bytes = piexif.dump({
+                        "Exif":{
+                            piexif.ExifIFD.UserComment:piexif.helper.UserComment.dump(infotext, encoding="unicode")
+                        }})
+                lossless = shared.opts.data.get("animatediff_webp_lossless", False)
+                quality = shared.opts.data.get("animatediff_webp_quality", 80)
+                imageioV2.mimwrite(buffer, image_array, format='WEBP', plugin='pillow',
+                    duration=int(1 / params.fps * 1000), loop=params.loop_number,
+                    lossless=lossless, quality=quality, exif=exif_bytes
+                )
+                pil_image_list.append(Image.open(buffer))
+            else:
+                logger.warn("WebP animation in Pillow requires system WebP library v0.5.0 or later")
+        return pil_image_list
+    
     def _save(
         self,
         params: AnimateDiffProcess,
