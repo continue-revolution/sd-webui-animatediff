@@ -22,6 +22,7 @@ class AnimateDiffOutput:
         logger.info("Merging images into GIF.")
         Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
         step = params.video_length if params.video_length > params.batch_size else params.batch_size
+        is_api_and_animated = p.is_api and ("GIF" in params.format or "WEBP" in params.format)
         for i in range(res.index_of_first_image, len(res.images), step):
             # frame interpolation replaces video_list with interpolated frames
             # so make a copy instead of a slice (reference), to avoid modifying res
@@ -33,7 +34,6 @@ class AnimateDiffOutput:
 
             image_list = self._add_reverse(params, image_list)
             image_list = self._interp(p, params, image_list, filename)
-            is_api_and_animated = p.is_api and ("GIF" in params.format or "WEBP" in params.format)
             if is_api_and_animated:
                 video_list += self._returnAnimatedImage(params, image_list, res, i)
             else:
