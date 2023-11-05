@@ -14,9 +14,10 @@ from scripts.animatediff_ui import AnimateDiffProcess
 
 
 class AnimateDiffOutput:
-    def output(
-        self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess
-    ):
+    api_encode_pil_to_base64_hooked = False
+
+
+    def output(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         video_paths = []
         logger.info("Merging images into GIF.")
         filename_generator = images.FilenameGenerator(p, p.seed, p.prompt, None)
@@ -37,7 +38,19 @@ class AnimateDiffOutput:
             video_paths += self._save(params, frame_list, video_path_prefix, res, i)
 
         if len(video_paths) > 0:
-            res.images = (self._encode_video_to_b64(video_paths) + (frame_list if 'Frame' in params.format else [])) if p.is_api else video_paths
+            if p.is_api:
+                if not AnimateDiffOutput.api_encode_pil_to_base64_hooked:
+                    AnimateDiffOutput.api_encode_pil_to_base64_hooked = True
+                    from modules.api import api
+                    api_encode_pil_to_base64 = api.encode_pil_to_base64
+                    def hooked_encode_pil_to_base64(image):
+                        if isinstance(image, str):
+                            return image
+                        return api_encode_pil_to_base64(image)
+                    api.encode_pil_to_base64 = hooked_encode_pil_to_base64
+                res.images = self._encode_video_to_b64(video_paths) + (frame_list if 'Frame' in params.format else [])
+            else:
+                res.images = video_paths
 
 
     def _add_reverse(self, params: AnimateDiffProcess, frame_list: list):

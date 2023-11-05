@@ -275,7 +275,7 @@ I thank researchers from [Shanghai AI Lab](https://www.shlab.org.cn/), especiall
 
 I also thank community developers, especially
 - [@zappityzap](https://github.com/zappityzap) who developed the majority of the [output features](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_output.py)
-- [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance of this extension
+- [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance
 - [@talesofai](https://github.com/talesofai) who developed i2v in [this forked repo](https://github.com/talesofai/AnimateDiff)
 - [@rkfg](https://github.com/rkfg) for developing GIF palette optimization
 
