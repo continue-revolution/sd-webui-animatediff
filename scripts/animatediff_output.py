@@ -19,16 +19,18 @@ class AnimateDiffOutput:
     ):
         video_paths = []
         logger.info("Merging images into GIF.")
-        Path(f"{p.outpath_samples}/AnimateDiff").mkdir(exist_ok=True, parents=True)
+        filename_generator = images.FilenameGenerator(p, p.seed, p.prompt, None)
+        output_dir = Path(f"{p.outpath_samples}/AnimateDiff/{filename_generator.datetime()}")
+        output_dir.mkdir(parents=True, exist_ok=True)
         step = params.video_length if params.video_length > params.batch_size else params.batch_size
         for i in range(res.index_of_first_image, len(res.images), step):
             # frame interpolation replaces video_list with interpolated frames
             # so make a copy instead of a slice (reference), to avoid modifying res
             frame_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
-            seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
+            seq = images.get_next_sequence_number(output_dir, "")
             filename = f"{seq:05}-{res.all_seeds[(i-res.index_of_first_image)]}"
-            video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}"
+            video_path_prefix = output_dir / filename
 
             frame_list = self._add_reverse(params, frame_list)
             frame_list = self._interp(p, params, frame_list, filename)
@@ -127,7 +129,7 @@ class AnimateDiffOutput:
         self,
         params: AnimateDiffProcess,
         frame_list: list,
-        video_path_prefix: str,
+        video_path_prefix: Path,
         res: Processed,
         index: int,
     ):
@@ -136,15 +138,15 @@ class AnimateDiffOutput:
         infotext = res.infotexts[index]
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
         if "PNG" in params.format and shared.opts.data.get("animatediff_save_to_custom", False):
-            Path(video_path_prefix).mkdir(exist_ok=True, parents=True)
+            video_path_prefix.mkdir(exist_ok=True, parents=True)
             for i, frame in enumerate(frame_list):
-                png_filename = f"{video_path_prefix}/{i:05}.png"
+                png_filename = video_path_prefix/f"{i:05}.png"
                 png_info = PngImagePlugin.PngInfo()
                 png_info.add_text('parameters', res.infotexts[0])
                 imageio.imwrite(png_filename, frame, pnginfo=png_info)
 
         if "GIF" in params.format:
-            video_path_gif = video_path_prefix + ".gif"
+            video_path_gif = str(video_path_prefix) + ".gif"
             video_paths.append(video_path_gif)
             if shared.opts.data.get("animatediff_optimize_gif_palette", False):
                 try:
@@ -209,7 +211,7 @@ class AnimateDiffOutput:
                 self._optimize_gif(video_path_gif)
 
         if "MP4" in params.format:
-            video_path_mp4 = video_path_prefix + ".mp4"
+            video_path_mp4 = str(video_path_prefix) + ".mp4"
             video_paths.append(video_path_mp4)
             try:
                 imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
@@ -222,13 +224,13 @@ class AnimateDiffOutput:
                 imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
 
         if "TXT" in params.format and res.images[index].info is not None:
-            video_path_txt = video_path_prefix + ".txt"
+            video_path_txt = str(video_path_prefix) + ".txt"
             with open(video_path_txt, "w", encoding="utf8") as file:
                 file.write(f"{infotext}\n")
 
         if "WEBP" in params.format:
             if PIL.features.check('webp_anim'):            
-                video_path_webp = video_path_prefix + ".webp"
+                video_path_webp = str(video_path_prefix) + ".webp"
                 video_paths.append(video_path_webp)
                 exif_bytes = b''
                 if use_infotext:
@@ -272,5 +274,5 @@ class AnimateDiffOutput:
         videos = []
         for v_path in paths:
             with open(v_path, "rb") as video_file:
-                videos.append(base64.b64encode(video_file.read()))
+                videos.append(base64.b64encode(video_file.read()).decode("utf-8"))
         return videos
