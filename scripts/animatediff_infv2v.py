@@ -103,19 +103,23 @@ class AnimateDiffInfV2V:
             if cn_script and cn_script.latest_network:
                 from scripts.hook import ControlModelType
                 for control in cn_script.latest_network.control_params:
-                    if control.control_model_type != ControlModelType.IPAdapter:
+                    if control.control_model_type not in [ControlModelType.IPAdapter, ControlModelType.Controlllite]:
                         if control.hint_cond.shape[0] > len(context):
                             control.hint_cond_backup = control.hint_cond
                             control.hint_cond = control.hint_cond[context]
-                        if control.hr_hint_cond is not None and control.hr_hint_cond.shape[0] > len(context):
-                            control.hr_hint_cond_backup = control.hr_hint_cond
-                            control.hr_hint_cond = control.hr_hint_cond[context]
-                    if control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
+                        control.hint_cond = control.hint_cond.to(device=shared.device)
+                        if control.hr_hint_cond:
+                            if control.hr_hint_cond.shape[0] > len(context):
+                                control.hr_hint_cond_backup = control.hr_hint_cond
+                                control.hr_hint_cond = control.hr_hint_cond[context]
+                            control.hr_hint_cond = control.hr_hint_cond.to(device=shared.device)
+                    # IPAdapter and Controlllite are always on CPU.
+                    elif control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
                         control.control_model.image_emb_backup = control.control_model.image_emb
                         control.control_model.image_emb = control.control_model.image_emb[context]
                         control.control_model.uncond_image_emb_backup = control.control_model.uncond_image_emb
                         control.control_model.uncond_image_emb = control.control_model.uncond_image_emb[context]
-                    if control.control_model_type == ControlModelType.Controlllite:
+                    elif control.control_model_type == ControlModelType.Controlllite:
                         for module in control.control_model.modules.values():
                             if module.cond_image.shape[0] > len(context):
                                 module.cond_image_backup = module.cond_image
@@ -126,16 +130,17 @@ class AnimateDiffInfV2V:
             if cn_script and cn_script.latest_network:
                 from scripts.hook import ControlModelType
                 for control in cn_script.latest_network.control_params:
-                    if getattr(control, "hint_cond_backup", None) and control.control_model_type != ControlModelType.IPAdapter:
-                        control.hint_cond_backup[context] = control.hint_cond
-                        control.hint_cond = control.hint_cond_backup
-                    if control.hr_hint_cond and getattr(control, "hr_hint_cond_backup", None) and control.control_model_type != ControlModelType.IPAdapter:
-                        control.hr_hint_cond_backup[context] = control.hr_hint_cond
-                        control.hr_hint_cond = control.hr_hint_cond_backup
-                    if control.control_model_type == ControlModelType.IPAdapter and getattr(control.control_model, "image_emb_backup", None):
+                    if control.control_model_type not in [ControlModelType.IPAdapter, ControlModelType.Controlllite]:
+                        if getattr(control, "hint_cond_backup", None):
+                            control.hint_cond_backup[context] = control.hint_cond.to(device="cpu")
+                            control.hint_cond = control.hint_cond_backup
+                        if control.hr_hint_cond and getattr(control, "hr_hint_cond_backup", None):
+                            control.hr_hint_cond_backup[context] = control.hr_hint_cond.to(device="cpu")
+                            control.hr_hint_cond = control.hr_hint_cond_backup
+                    elif control.control_model_type == ControlModelType.IPAdapter and getattr(control.control_model, "image_emb_backup", None):
                         control.control_model.image_emb = control.control_model.image_emb_backup
                         control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
-                    if control.control_model_type == ControlModelType.Controlllite:
+                    elif control.control_model_type == ControlModelType.Controlllite:
                         for module in control.control_model.modules.values():
                             if module.cond_image.shape[0] > len(context):
                                 module.set_cond_image(module.cond_image_backup)

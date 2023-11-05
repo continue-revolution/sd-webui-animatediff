@@ -412,21 +412,21 @@ class AnimateDiffControl:
 
                     if control_model_type == ControlModelType.IPAdapter:
                         if model_net.is_plus:
-                            controls_ipadapter['hidden_states'].append(control['hidden_states'][-2])
+                            controls_ipadapter['hidden_states'].append(control['hidden_states'][-2].cpu())
                         else:
-                            controls_ipadapter['image_embeds'].append(control['image_embeds'])
+                            controls_ipadapter['image_embeds'].append(control['image_embeds'].cpu())
                         if hr_control is not None:
                             if model_net.is_plus:
-                                hr_controls_ipadapter['hidden_states'].append(hr_control['hidden_states'][-2])
+                                hr_controls_ipadapter['hidden_states'].append(hr_control['hidden_states'][-2].cpu())
                             else:
-                                hr_controls_ipadapter['image_embeds'].append(hr_control['image_embeds'])
+                                hr_controls_ipadapter['image_embeds'].append(hr_control['image_embeds'].cpu())
                         else:
                             hr_controls_ipadapter = None
                             hr_controls = None
                     else:
-                        controls.append(control)
+                        controls.append(control.cpu())
                         if hr_control is not None:
-                            hr_controls.append(hr_control)
+                            hr_controls.append(hr_control.cpu())
                         else:
                             hr_controls = None
                 
