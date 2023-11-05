@@ -24,38 +24,43 @@ class AnimateDiffOutput:
         for i in range(res.index_of_first_image, len(res.images), step):
             # frame interpolation replaces video_list with interpolated frames
             # so make a copy instead of a slice (reference), to avoid modifying res
-            video_list = [image.copy() for image in res.images[i : i + params.video_length]]
+            frame_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
             seq = images.get_next_sequence_number(f"{p.outpath_samples}/AnimateDiff", "")
             filename = f"{seq:05}-{res.all_seeds[(i-res.index_of_first_image)]}"
             video_path_prefix = f"{p.outpath_samples}/AnimateDiff/{filename}"
 
-            video_list = self._add_reverse(params, video_list)
-            video_list = self._interp(p, params, video_list, filename)
-            video_paths += self._save(params, video_list, video_path_prefix, res, i)
+            frame_list = self._add_reverse(params, frame_list)
+            frame_list = self._interp(p, params, frame_list, filename)
+            video_paths += self._save(params, frame_list, video_path_prefix, res, i)
 
         if len(video_paths) > 0:
-            res.images = video_list if p.is_api else video_paths
+            if p.is_api:
+                res.images = frame_list
+            else:
+                res.images = video_paths
 
-    def _add_reverse(self, params: AnimateDiffProcess, video_list: list):
+
+    def _add_reverse(self, params: AnimateDiffProcess, frame_list: list):
         if params.video_length <= params.batch_size and params.closed_loop in ['A']:
-            video_list_reverse = video_list[::-1]
-            if len(video_list_reverse) > 0:
-                video_list_reverse.pop(0)
-            if len(video_list_reverse) > 0:
-                video_list_reverse.pop(-1)
-            return video_list + video_list_reverse
-        return video_list
+            frame_list_reverse = frame_list[::-1]
+            if len(frame_list_reverse) > 0:
+                frame_list_reverse.pop(0)
+            if len(frame_list_reverse) > 0:
+                frame_list_reverse.pop(-1)
+            return frame_list + frame_list_reverse
+        return frame_list
+
 
     def _interp(
         self,
         p: StableDiffusionProcessing,
         params: AnimateDiffProcess,
-        video_list: list,
+        frame_list: list,
         filename: str
     ):
         if params.interp not in ['FILM']:
-            return video_list
+            return frame_list
         
         try:
             from deforum_helpers.frame_interpolation import (
@@ -63,7 +68,7 @@ class AnimateDiffOutput:
             from film_interpolation.film_inference import run_film_interp_infer
         except ImportError:
             logger.error("Deforum not found. Please install: https://github.com/deforum-art/deforum-for-automatic1111-webui.git")
-            return video_list
+            return frame_list
 
         import glob
         import os
@@ -78,13 +83,13 @@ class AnimateDiffOutput:
         film_model_path = os.path.join(film_model_folder, film_model_name)
         check_and_download_film_model('film_net_fp16.pt', film_model_folder)
 
-        film_in_between_frames_count = calculate_frames_to_add(len(video_list), params.interp_x) 
+        film_in_between_frames_count = calculate_frames_to_add(len(frame_list), params.interp_x) 
 
         # save original frames to tmp folder for deforum input
         tmp_folder = f"{p.outpath_samples}/AnimateDiff/tmp"
         input_folder = f"{tmp_folder}/input"
         os.makedirs(input_folder, exist_ok=True)
-        for tmp_seq, frame in enumerate(video_list):
+        for tmp_seq, frame in enumerate(frame_list):
             imageio.imwrite(f"{input_folder}/{tmp_seq:05}.png", frame)
 
         # deforum saves output frames to tmp/{filename}
@@ -99,11 +104,11 @@ class AnimateDiffOutput:
 
         # load deforum output frames and replace video_list
         interp_frame_paths = sorted(glob.glob(os.path.join(save_folder, '*.png')))
-        video_list = []
+        frame_list = []
         for f in interp_frame_paths:
             with Image.open(f) as img:
                 img.load()
-                video_list.append(img)
+                frame_list.append(img)
         
         # if saving PNG, also save interpolated frames
         if "PNG" in params.format:
@@ -115,23 +120,24 @@ class AnimateDiffOutput:
         try: shutil.rmtree(tmp_folder)
         except OSError as e: print(f"Error: {e}")
 
-        return video_list
+        return frame_list
+
 
     def _save(
         self,
         params: AnimateDiffProcess,
-        video_list: list,
+        frame_list: list,
         video_path_prefix: str,
         res: Processed,
         index: int,
     ):
         video_paths = []
-        video_array = [np.array(v) for v in video_list]
+        video_array = [np.array(v) for v in frame_list]
         infotext = res.infotexts[index]
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
         if "PNG" in params.format and shared.opts.data.get("animatediff_save_to_custom", False):
             Path(video_path_prefix).mkdir(exist_ok=True, parents=True)
-            for i, frame in enumerate(video_list):
+            for i, frame in enumerate(frame_list):
                 png_filename = f"{video_path_prefix}/{i:05}.png"
                 png_info = PngImagePlugin.PngInfo()
                 png_info.add_text('parameters', res.infotexts[0])
@@ -157,7 +163,7 @@ class AnimateDiffOutput:
                             "split": ("split", ""),
                             "palgen": ("palettegen", ""),
                             "paluse": ("paletteuse", ""),
-                            "scale": ("scale", f"{video_list[0].width}:{video_list[0].height}")
+                            "scale": ("scale", f"{frame_list[0].width}:{frame_list[0].height}")
                         },
                         [
                             ("video_in", "scale", 0, 0),
@@ -201,6 +207,7 @@ class AnimateDiffOutput:
                 )
             if shared.opts.data.get("animatediff_optimize_gif_gifsicle", False):
                 self._optimize_gif(video_path_gif)
+
         if "MP4" in params.format:
             video_path_mp4 = video_path_prefix + ".mp4"
             video_paths.append(video_path_mp4)
@@ -213,9 +220,12 @@ class AnimateDiffOutput:
                     "sd-webui-animatediff save mp4 requirement: imageio[ffmpeg]",
                 )
                 imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
+
         if "TXT" in params.format and res.images[index].info is not None:
             video_path_txt = video_path_prefix + ".txt"
-            self._save_txt(video_path_txt, infotext)
+            with open(video_path_txt, "w", encoding="utf8") as file:
+                file.write(f"{infotext}\n")
+
         if "WEBP" in params.format:
             if PIL.features.check('webp_anim'):            
                 video_path_webp = video_path_prefix + ".webp"
@@ -236,7 +246,9 @@ class AnimateDiffOutput:
                 # see additional Pillow WebP options at https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp
             else:
                 logger.warn("WebP animation in Pillow requires system WebP library v0.5.0 or later")
+
         return video_paths
+
 
     def _optimize_gif(self, video_path: str):
         try:
@@ -255,18 +267,10 @@ class AnimateDiffOutput:
             except FileNotFoundError:
                 logger.warn("gifsicle not found, required for optimized GIFs, try: apt install gifsicle")
 
-    def _save_txt(
-        self,
-        video_path: str,
-        info: str,
-    ):
-        with open(video_path, "w", encoding="utf8") as file:
-            file.write(f"{info}\n")
 
     def _encode_video_to_b64(self, paths):
         videos = []
         for v_path in paths:
             with open(v_path, "rb") as video_file:
-                encoded_video = base64.b64encode(video_file.read())
-            videos.append(encoded_video.decode("utf-8"))
+                videos.append(base64.b64encode(video_file.read()))
         return videos
