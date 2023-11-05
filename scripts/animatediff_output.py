@@ -1,4 +1,5 @@
 import base64
+import datetime
 from pathlib import Path
 
 import imageio.v3 as imageio
@@ -20,8 +21,8 @@ class AnimateDiffOutput:
     def output(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         video_paths = []
         logger.info("Merging images into GIF.")
-        filename_generator = images.FilenameGenerator(p, p.seed, p.prompt, None)
-        output_dir = Path(f"{p.outpath_samples}/AnimateDiff/{filename_generator.datetime()}")
+        date = datetime.datetime.now().strftime('%Y-%m-%d')
+        output_dir = Path(f"{p.outpath_samples}/AnimateDiff/{date}")
         output_dir.mkdir(parents=True, exist_ok=True)
         step = params.video_length if params.video_length > params.batch_size else params.batch_size
         for i in range(res.index_of_first_image, len(res.images), step):
