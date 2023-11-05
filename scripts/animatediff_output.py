@@ -37,10 +37,7 @@ class AnimateDiffOutput:
             video_paths += self._save(params, frame_list, video_path_prefix, res, i)
 
         if len(video_paths) > 0:
-            if p.is_api:
-                res.images = frame_list
-            else:
-                res.images = video_paths
+            res.images = (self._encode_video_to_b64(video_paths) + (frame_list if 'Frame' in params.format else [])) if p.is_api else video_paths
 
 
     def _add_reverse(self, params: AnimateDiffProcess, frame_list: list):
@@ -112,11 +109,9 @@ class AnimateDiffOutput:
                 img.load()
                 frame_list.append(img)
         
-        # if saving PNG, also save interpolated frames
+        # if saving PNG, enforce saving to custom folder
         if "PNG" in params.format:
-            save_interp_path = f"{p.outpath_samples}/AnimateDiff/interp"
-            os.makedirs(save_interp_path, exist_ok=True)
-            shutil.move(save_folder, save_interp_path)
+            params.force_save_to_custom = True
 
         # remove tmp folder
         try: shutil.rmtree(tmp_folder)
@@ -137,7 +132,7 @@ class AnimateDiffOutput:
         video_array = [np.array(v) for v in frame_list]
         infotext = res.infotexts[index]
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
-        if "PNG" in params.format and shared.opts.data.get("animatediff_save_to_custom", False):
+        if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", False) or getattr(params, "force_save_to_custom", False)):
             video_path_prefix.mkdir(exist_ok=True, parents=True)
             for i, frame in enumerate(frame_list):
                 png_filename = video_path_prefix/f"{i:05}.png"
