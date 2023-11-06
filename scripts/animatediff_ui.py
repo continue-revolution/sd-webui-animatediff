@@ -39,6 +39,7 @@ class AnimateDiffProcess:
         interp_x=10,
         video_source=None,
         video_path='',
+        request_id = '1',
         latent_power=1,
         latent_scale=32,
         last_frame=None,
@@ -59,6 +60,7 @@ class AnimateDiffProcess:
         self.interp_x = interp_x
         self.video_source = video_source
         self.video_path = video_path
+        self.request_id = request_id
         self.latent_power = latent_power
         self.latent_scale = latent_scale
         self.last_frame = last_frame
@@ -88,6 +90,7 @@ class AnimateDiffProcess:
             "overlap": self.overlap,
             "interp": self.interp,
             "interp_x": self.interp_x,
+            "request_id":self.request_id,
         }
         if motion_module.mm is not None and motion_module.mm.mm_hash is not None:
             infotext['mm_hash'] = motion_module.mm.mm_hash[:8]
@@ -239,6 +242,11 @@ class AnimateDiffUiGroup:
                 self.params.interp_x = gr.Number(
                     value=self.params.interp_x, label="Interp X", precision=0, 
                     elem_id=f"{elemid_prefix}interp-x"
+                )
+                self.params.request_id = gr.Textbox(
+                    value=self.params.request_id, 
+                    label="request_id",  
+                    elem_id=f"{elemid_prefix}request_id"
                 )
             self.params.video_source = gr.Video(
                 value=self.params.video_source,
