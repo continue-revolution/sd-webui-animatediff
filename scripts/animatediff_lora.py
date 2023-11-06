@@ -10,20 +10,24 @@ from scripts.animatediff_logger import logger_animatediff as logger
 sys.path.append(f"{extensions_builtin_dir}/Lora")
 
 class AnimateDiffLora:
+    original_load_network = None
 
     def __init__(self, v2: bool):
-        self.original_load_network = None
         self.v2 = v2
 
     def hack(self):
         if not self.v2:
             return
 
-        logger.info("Hacking lora to support motion lora")
+        if AnimateDiffLora.original_load_network is not None:
+            logger.info("AnimateDiff LoRA already hacked")
+            return
+
+        logger.info("Hacking loral to support motion lora")
         import network
         import networks
-        self.original_load_network = networks.load_network
-        original_load_network = self.original_load_network
+        AnimateDiffLora.original_load_network = networks.load_network
+        original_load_network = AnimateDiffLora.original_load_network
 
         def mm_load_network(name, network_on_disk):
 
@@ -70,4 +74,5 @@ class AnimateDiffLora:
         if self.v2:
             logger.info("Restoring hacked lora")
             import networks
-            networks.load_network = self.original_load_network
+            networks.load_network = AnimateDiffLora.original_load_network
+            AnimateDiffLora.original_load_network = None

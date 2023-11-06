@@ -22,12 +22,11 @@ from scripts.animatediff_i2ibatch import animatediff_i2ibatch
 
 
 class AnimateDiffControl:
+    original_processing_process_images_hijack = None
+    original_controlnet_main_entry = None
+    original_postprocess_batch = None
 
     def __init__(self, p: StableDiffusionProcessing, prompt_scheduler: AnimateDiffPromptSchedule):
-        self.original_processing_process_images_hijack = None
-        self.original_img2img_process_batch_hijack = None
-        self.original_controlnet_main_entry = None
-        self.original_postprocess_batch = None
         try:
             from scripts.external_code import find_cn_script
             self.cn_script = find_cn_script(p.scripts)
@@ -118,15 +117,19 @@ class AnimateDiffControl:
             update_infotext(p, params)
             return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
         
-        self.original_processing_process_images_hijack = BatchHijack.processing_process_images_hijack
+        if AnimateDiffControl.original_processing_process_images_hijack is not None:
+            logger.info('BatchHijack already hacked.')
+            return
+
+        AnimateDiffControl.original_processing_process_images_hijack = BatchHijack.processing_process_images_hijack
         BatchHijack.processing_process_images_hijack = hacked_processing_process_images_hijack
         processing.process_images_inner = instance.processing_process_images_hijack
 
 
     def restore_batchhijack(self):
         from scripts.batch_hijack import BatchHijack, instance
-        BatchHijack.processing_process_images_hijack = self.original_processing_process_images_hijack
-        self.original_processing_process_images_hijack = None
+        BatchHijack.processing_process_images_hijack = AnimateDiffControl.original_processing_process_images_hijack
+        AnimateDiffControl.original_processing_process_images_hijack = None
         processing.process_images_inner = instance.processing_process_images_hijack
 
 
@@ -599,17 +602,21 @@ class AnimateDiffControl:
                     images[i] = post_processor(images[i], i)
             return
 
-        self.original_controlnet_main_entry = self.cn_script.controlnet_main_entry
-        self.original_postprocess_batch = self.cn_script.postprocess_batch
+        if AnimateDiffControl.original_controlnet_main_entry is not None:
+            logger.info('ControlNet Main Entry already hacked.')
+            return
+
+        AnimateDiffControl.original_controlnet_main_entry = self.cn_script.controlnet_main_entry
+        AnimateDiffControl.original_postprocess_batch = self.cn_script.postprocess_batch
         self.cn_script.controlnet_main_entry = MethodType(hacked_main_entry, self.cn_script)
         self.cn_script.postprocess_batch = MethodType(hacked_postprocess_batch, self.cn_script)
 
 
     def restore_cn(self):
-        self.cn_script.controlnet_main_entry = self.original_controlnet_main_entry
-        self.original_controlnet_main_entry = None
-        self.cn_script.postprocess_batch = self.original_postprocess_batch
-        self.original_postprocess_batch = None
+        self.cn_script.controlnet_main_entry = AnimateDiffControl.original_controlnet_main_entry
+        AnimateDiffControl.original_controlnet_main_entry = None
+        self.cn_script.postprocess_batch = AnimateDiffControl.original_postprocess_batch
+        AnimateDiffControl.original_postprocess_batch = None
 
 
     def hack(self, params: AnimateDiffProcess):

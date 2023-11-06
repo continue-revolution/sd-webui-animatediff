@@ -16,9 +16,9 @@ from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 
 
 class AnimateDiffInfV2V:
+    cfg_original_forward = None
 
     def __init__(self, p, prompt_scheduler: AnimateDiffPromptSchedule):
-        self.cfg_original_forward = None
         try:
             from scripts.external_code import find_cn_script
             self.cn_script = find_cn_script(p.scripts)
@@ -93,8 +93,12 @@ class AnimateDiffInfV2V:
 
 
     def hack(self, params: AnimateDiffProcess):
+        if AnimateDiffInfV2V.cfg_original_forward is not None:
+            logger.info("CFGDenoiser already hacked")
+            return
+
         logger.info(f"Hacking CFGDenoiser forward function.")
-        self.cfg_original_forward = CFGDenoiser.forward
+        AnimateDiffInfV2V.cfg_original_forward = CFGDenoiser.forward
         cn_script = self.cn_script
         prompt_scheduler = self.prompt_scheduler
 
@@ -310,4 +314,5 @@ class AnimateDiffInfV2V:
 
     def restore(self):
         logger.info(f"Restoring CFGDenoiser forward function.")
-        CFGDenoiser.forward = self.cfg_original_forward
+        CFGDenoiser.forward = AnimateDiffInfV2V.cfg_original_forward
+        AnimateDiffInfV2V.cfg_original_forward = None
