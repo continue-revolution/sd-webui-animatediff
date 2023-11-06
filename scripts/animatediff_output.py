@@ -41,6 +41,7 @@ class AnimateDiffOutput:
         if len(video_paths) > 0:
             if p.is_api:
                 if not AnimateDiffOutput.api_encode_pil_to_base64_hooked:
+                    # TODO: remove this hook when WebUI is updated to v1.7.0
                     AnimateDiffOutput.api_encode_pil_to_base64_hooked = True
                     from modules.api import api
                     api_encode_pil_to_base64 = api.encode_pil_to_base64

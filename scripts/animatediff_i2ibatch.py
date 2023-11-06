@@ -24,6 +24,7 @@ from scripts.animatediff_logger import logger_animatediff as logger
 class AnimateDiffI2IBatch:
 
     def hack(self):
+        # TODO: PR this hack to A1111
         logger.info("Hacking i2i-batch.")
         original_img2img_process_batch = img2img.process_batch
 
