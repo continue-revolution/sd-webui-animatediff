@@ -112,7 +112,7 @@ class AnimateDiffInfV2V:
                             control.hint_cond_backup = control.hint_cond
                             control.hint_cond = control.hint_cond[context]
                         control.hint_cond = control.hint_cond.to(device=shared.device)
-                        if control.hr_hint_cond:
+                        if control.hr_hint_cond is not None:
                             if control.hr_hint_cond.shape[0] > len(context):
                                 control.hr_hint_cond_backup = control.hr_hint_cond
                                 control.hr_hint_cond = control.hr_hint_cond[context]
@@ -135,13 +135,13 @@ class AnimateDiffInfV2V:
                 from scripts.hook import ControlModelType
                 for control in cn_script.latest_network.control_params:
                     if control.control_model_type not in [ControlModelType.IPAdapter, ControlModelType.Controlllite]:
-                        if getattr(control, "hint_cond_backup", None):
+                        if getattr(control, "hint_cond_backup", None) is not None:
                             control.hint_cond_backup[context] = control.hint_cond.to(device="cpu")
                             control.hint_cond = control.hint_cond_backup
-                        if control.hr_hint_cond and getattr(control, "hr_hint_cond_backup", None):
+                        if control.hr_hint_cond is not None and getattr(control, "hr_hint_cond_backup", None) is not None:
                             control.hr_hint_cond_backup[context] = control.hr_hint_cond.to(device="cpu")
                             control.hr_hint_cond = control.hr_hint_cond_backup
-                    elif control.control_model_type == ControlModelType.IPAdapter and getattr(control.control_model, "image_emb_backup", None):
+                    elif control.control_model_type == ControlModelType.IPAdapter and getattr(control.control_model, "image_emb_backup", None) is not None:
                         control.control_model.image_emb = control.control_model.image_emb_backup
                         control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
                     elif control.control_model_type == ControlModelType.Controlllite:
