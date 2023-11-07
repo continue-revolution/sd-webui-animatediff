@@ -53,6 +53,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/10/21`: [v1.9.4](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.4): Save prompt travel to output images, `Reverse` merged to `Closed loop` (See [WebUI Parameters](#webui-parameters)), remove `TimestepEmbedSequential` hijack, remove `hints.js`, better explanation of several context-related parameters.
 - `2023/10/25`: [v1.10.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.10.0): Support img2img batch. You need ControlNet installed to make it work properly (you do not need to enable ControlNet). See [ControlNet V2V](#controlnet-v2v) for more information.
 - `2023/10/29`: [v1.11.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.0): Support [HotShot-XL](https://github.com/hotshotco/Hotshot-XL) for SDXL. See [HotShot-XL](#hotshot-xl) for more information.
+- `2023/11/06`: [v1.11.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.1): optimize VRAM to support any number of control images for ControlNet V2V, patch [encode_pil_to_base64](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/api/api.py#L104-L133) to support api return a video, save frames to `AnimateDIff/yy-mm-dd/`, recover from assertion error without restart.
 
 For future update plan, please query [here](https://github.com/continue-revolution/sd-webui-animatediff/pull/224).
 
@@ -67,16 +68,16 @@ For future update plan, please query [here](https://github.com/continue-revoluti
 1. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
 1. Choose an SD1.5 checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please [change batch number, instead of batch size](#batch-size).
 1. Enable AnimateDiff extension, set up [each parameter](#webui-parameters), then click `Generate`.
-1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{date}`. You may choose to save frames for each generation into separate directories in `Settings/AnimateDiff`.
+1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff/{yy-mm-dd}`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{yy-mm-dd}`. You may choose to save frames for each generation into separate directories in `Settings/AnimateDiff`.
 
 ### API
-Just like how you use ControlNet. Here is a sample. Due to the limitation of WebUI, you will not be able to get a video, but only a list of generated frames. You will have to view GIF in your file system, as mentioned at [WebUI](#webui) item 4. For most up-to-date parameters, please read [here](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_ui.py#L26).
+It is quite similar to the way you use ControlNet. API will return a video in base64 format. In `format`, `PDF` means to save frames to your file system without returning all the frames. If you want your API to return all frames, please add `Frame` to `format` list. For most up-to-date parameters, please read [here](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_ui.py#L26).
 ```
 'alwayson_scripts': {
   'AnimateDiff': {
     'args': [{
       'model': 'mm_sd_v15_v2.ckpt',   # Motion module
-      'format': ['GIF'],      # Save format, 'GIF' | 'MP4' | 'PNG' | 'WEBP' | 'TXT'
+      'format': ['GIF'],      # Save format, 'GIF' | 'MP4' | 'PNG' | 'WEBP' | 'TXT' | 'Frame'
       'enable': True,         # Enable AnimateDiff
       'video_length': 16,     # Number of frames
       'fps': 8,               # FPS
@@ -105,6 +106,7 @@ Just like how you use ControlNet. Here is a sample. Due to the limitation of Web
 1. **Save format** — Format of the output. Choose at least one of "GIF"|"MP4"|"WEBP"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF. Infotext is also accessible via `stable-diffusion-webui/params.txt` and outputs in all formats.
     1. You can optimize GIF with `gifsicle` (`apt install gifsicle` required, read [#91](https://github.com/continue-revolution/sd-webui-animatediff/pull/91) for more information) and/or `palette` (read [#104](https://github.com/continue-revolution/sd-webui-animatediff/pull/104) for more information). Go to `Settings/AnimateDiff` to enable them.
     1. You can set quality and lossless for WEBP via `Settings/AnimateDiff`. Read [#233](https://github.com/continue-revolution/sd-webui-animatediff/pull/233) for more information.
+    1. If you are using API, by adding "PNG" to `format`, you can save all frames to your file system without returning all the frames. If you want your API to return all frames, please add `Frame` to `format` list.
 1. **Number of frames** — Choose whatever number you like. 
 
     If you enter 0 (default):
@@ -238,12 +240,6 @@ Batch number is NOT the same as batch size. In A1111 WebUI, batch number is abov
 We are currently developing approach to support batch size on WebUI in the near future.
 
 
-## FAQ
-1.  Q: Will ADetailer be supported?
-
-    A: I'm not planning to support ADetailer. However, I plan to refactor my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) to achieve similar effects.
-
-
 ## Demo
 
 ### Basic Usage
@@ -274,7 +270,7 @@ I thank researchers from [Shanghai AI Lab](https://www.shlab.org.cn/), especiall
 
 I also thank community developers, especially
 - [@zappityzap](https://github.com/zappityzap) who developed the majority of the [output features](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_output.py)
-- [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance of this extension
+- [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance
 - [@talesofai](https://github.com/talesofai) who developed i2v in [this forked repo](https://github.com/talesofai/AnimateDiff)
 - [@rkfg](https://github.com/rkfg) for developing GIF palette optimization
 

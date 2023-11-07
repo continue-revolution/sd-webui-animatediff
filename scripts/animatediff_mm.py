@@ -11,6 +11,7 @@ from scripts.animatediff_logger import logger_animatediff as logger
 
 
 class AnimateDiffMM:
+    mm_injected = False
 
     def __init__(self):
         self.mm: MotionWrapper = None
@@ -23,11 +24,15 @@ class AnimateDiffMM:
         self.script_dir = script_dir
 
 
+    def get_model_dir(self):
+        model_dir = shared.opts.data.get("animatediff_model_path", os.path.join(self.script_dir, "model"))
+        if not model_dir:
+            model_dir = os.path.join(self.script_dir, "model")
+        return model_dir
+
+
     def _load(self, model_name):
-        model_path = os.path.join(
-            shared.opts.data.get("animatediff_model_path", os.path.join(self.script_dir, "model")),
-            model_name,
-        )
+        model_path = os.path.join(self.get_model_dir(), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
         if self.mm is None or self.mm.mm_name != model_name:
@@ -45,13 +50,15 @@ class AnimateDiffMM:
 
 
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
+        if AnimateDiffMM.mm_injected:
+            logger.info("Motion module already injected. Trying to restore.")
+            self.restore(sd_model)
+
         unet = sd_model.model.diffusion_model
         self._load(model_name)
         inject_sdxl = sd_model.is_sdxl or self.mm.is_sdxl
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
-        if sd_model.is_sdxl != self.mm.is_sdxl:
-            logger.warn(f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}. "
-                        f"You will see an error afterwards. Even if the injection and inference seem to go on, you will get bad results.")
+        assert sd_model.is_sdxl == self.mm.is_sdxl, f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."
 
         if self.mm.is_v2:
             logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet middle block.")
@@ -94,6 +101,7 @@ class AnimateDiffMM:
 
         self._set_ddim_alpha(sd_model)
         self._set_layer_mapping(sd_model)
+        AnimateDiffMM.mm_injected = True
         logger.info(f"Injection finished.")
 
 
@@ -102,11 +110,13 @@ class AnimateDiffMM:
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         self._restore_ddim_alpha(sd_model)
         unet = sd_model.model.diffusion_model
+
         logger.info(f"Removing motion module from {sd_ver} UNet input blocks.")
         for unet_idx in [1, 2, 4, 5, 7, 8, 10, 11]:
             if inject_sdxl and unet_idx >= 9:
                 break
             unet.input_blocks[unet_idx].pop(-1)
+
         logger.info(f"Removing motion module from {sd_ver} UNet output blocks.")
         for unet_idx in range(12):
             if inject_sdxl and unet_idx >= 9:
@@ -115,6 +125,7 @@ class AnimateDiffMM:
                 unet.output_blocks[unet_idx].pop(-2)
             else:
                 unet.output_blocks[unet_idx].pop(-1)
+
         if self.mm.is_v2:
             logger.info(f"Removing motion module from {sd_ver} UNet middle block.")
             unet.middle_block.pop(-2)
@@ -126,6 +137,8 @@ class AnimateDiffMM:
                 from ldm.modules.diffusionmodules.util import GroupNorm32
             GroupNorm32.forward = self.gn32_original_forward
             self.gn32_original_forward = None
+
+        AnimateDiffMM.mm_injected = False
         logger.info(f"Removal finished.")
         if shared.cmd_opts.lowvram:
             self.unload()
@@ -154,6 +167,7 @@ class AnimateDiffMM:
             for name, module in self.mm.named_modules():
                 sd_model.network_layer_mapping[name] = module
                 module.network_layer_name = name
+
 
     def _restore_ddim_alpha(self, sd_model):
         logger.info(f"Restoring DDIM alpha.")
