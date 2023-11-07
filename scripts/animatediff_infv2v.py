@@ -146,7 +146,7 @@ class AnimateDiffInfV2V:
                         control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
                     elif control.control_model_type == ControlModelType.Controlllite:
                         for module in control.control_model.modules.values():
-                            if module.cond_image.shape[0] > len(context):
+                            if getattr(module, "cond_image_backup", None) is not None:
                                 module.set_cond_image(module.cond_image_backup)
 
         def mm_sd_forward(self, x_in, sigma_in, cond_in, image_cond_in, make_condition_dict):

@@ -152,7 +152,7 @@ class AnimateDiffOutput:
             for i, frame in enumerate(frame_list):
                 png_filename = video_path_prefix/f"{i:05}.png"
                 png_info = PngImagePlugin.PngInfo()
-                png_info.add_text('parameters', res.infotexts[0])
+                png_info.add_text('parameters', infotext)
                 imageio.imwrite(png_filename, frame, pnginfo=png_info)
 
         if "GIF" in params.format:

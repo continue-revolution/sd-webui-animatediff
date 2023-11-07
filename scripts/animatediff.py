@@ -39,8 +39,7 @@ class AnimateDiffScript(scripts.Script):
 
 
     def ui(self, is_img2img):
-        model_dir = shared.opts.data.get("animatediff_model_path", os.path.join(script_dir, "model"))
-        return (AnimateDiffUiGroup().render(is_img2img, model_dir),)
+        return (AnimateDiffUiGroup().render(is_img2img, motion_module.get_model_dir()),)
 
 
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
@@ -94,7 +93,7 @@ def on_ui_settings():
     shared.opts.add_option(
         "animatediff_model_path",
         shared.OptionInfo(
-            os.path.join(script_dir, "model"),
+            None,
             "Path to save AnimateDiff motion modules",
             gr.Textbox,
             section=section,
@@ -144,7 +143,7 @@ def on_ui_settings():
         "animatediff_save_to_custom",
         shared.OptionInfo(
             False,
-            "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/ "
+            "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/{date} "
             "instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
             gr.Checkbox,
             section=section
