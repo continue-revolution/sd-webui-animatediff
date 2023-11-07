@@ -1,5 +1,3 @@
-import os
-
 import gradio as gr
 from modules import script_callbacks, scripts, shared
 from modules.processing import (Processed, StableDiffusionProcessing,
@@ -43,7 +41,9 @@ class AnimateDiffScript(scripts.Script):
 
 
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
-        if isinstance(params, dict): params = AnimateDiffProcess(**params)
+        if p.is_api and isinstance(params, dict):
+            self.ad_params = AnimateDiffProcess(**params)
+            params = self.ad_params
         if params.enable:
             logger.info("AnimateDiff process start.")
             params.set_p(p)
@@ -59,25 +59,25 @@ class AnimateDiffScript(scripts.Script):
 
 
     def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
-        if isinstance(params, dict): params = AnimateDiffProcess(**params)
+        if p.is_api and isinstance(params, dict): params = self.ad_params
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and not hasattr(p, '_animatediff_i2i_batch'):
             AnimateDiffI2VLatent().randomize(p, params)
 
 
     def postprocess_batch_list(self, p: StableDiffusionProcessing, pp: PostprocessBatchListArgs, params: AnimateDiffProcess, **kwargs):
-        if isinstance(params, dict): params = AnimateDiffProcess(**params)
+        if p.is_api and isinstance(params, dict): params = self.ad_params
         if params.enable:
             self.prompt_scheduler.save_infotext_img(p)
 
 
     def postprocess_image(self, p: StableDiffusionProcessing, pp: PostprocessImageArgs, params: AnimateDiffProcess, *args):
-        if isinstance(params, dict): params = AnimateDiffProcess(**params)
+        if p.is_api and isinstance(params, dict): params = self.ad_params
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and hasattr(p, '_animatediff_paste_to_full'):
             p.paste_to = p._animatediff_paste_to_full[p.batch_index]
 
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
-        if isinstance(params, dict): params = AnimateDiffProcess(**params)
+        if p.is_api and isinstance(params, dict): params = self.ad_params
         if params.enable:
             self.prompt_scheduler.save_infotext_txt(res)
             self.cn_hacker.restore()
