@@ -72,6 +72,7 @@ jobs:
           if [ ! -f "models/Lora/v2_lora_TiltDown.ckpt" ]; then
             curl -Lo models/Lora/v2_lora_TiltDown.ckpt https://huggingface.co/guoyww/animatediff/resolve/main/v2_lora_TiltDown.ckpt?download=true
           fi
+        working-directory: stable-diffusion-webui
       - name: Start test server
         run: >
           python -m coverage run
