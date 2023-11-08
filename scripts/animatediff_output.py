@@ -31,9 +31,8 @@ class AnimateDiffOutput:
             frame_list = [image.copy() for image in res.images[i : i + params.video_length]]
 
             seq = images.get_next_sequence_number(output_dir, "")
-            filename = f"{seq:05}-{res.all_seeds[(i-res.index_of_first_image)]}"
-            if params.request_id : 
-               filename = filename +f"-{params.request_id}" 
+            filename_suffix = f"-{params.request_id}" if params.request_id else ""
+            filename = f"{seq:05}-{res.all_seeds[(i-res.index_of_first_image)]}{filename_suffix}"
 
             video_path_prefix = output_dir / filename
 
