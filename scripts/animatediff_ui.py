@@ -69,11 +69,11 @@ class AnimateDiffProcess:
 
 
     def get_list(self, is_img2img: bool):
-        list_var = list(vars(self).values())
+        list_var = list(vars(self).values())[:-1]
         if is_img2img:
             animatediff_i2ibatch.hack()
         else:
-            list_var = list_var[:-6]
+            list_var = list_var[:-5]
         return list_var
 
 
