@@ -39,12 +39,12 @@ class AnimateDiffProcess:
         interp_x=10,
         video_source=None,
         video_path='',
-        request_id = '1',
         latent_power=1,
         latent_scale=32,
         last_frame=None,
         latent_power_last=1,
         latent_scale_last=32,
+        request_id = '',
     ):
         self.model = model
         self.enable = enable
@@ -60,12 +60,12 @@ class AnimateDiffProcess:
         self.interp_x = interp_x
         self.video_source = video_source
         self.video_path = video_path
-        self.request_id = request_id
         self.latent_power = latent_power
         self.latent_scale = latent_scale
         self.last_frame = last_frame
         self.latent_power_last = latent_power_last
         self.latent_scale_last = latent_scale_last
+        self.request_id = request_id
 
 
     def get_list(self, is_img2img: bool):
@@ -73,7 +73,7 @@ class AnimateDiffProcess:
         if is_img2img:
             animatediff_i2ibatch.hack()
         else:
-            list_var = list_var[:-5]
+            list_var = list_var[:-6]
         return list_var
 
 
