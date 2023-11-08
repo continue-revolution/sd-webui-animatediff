@@ -32,6 +32,9 @@ class AnimateDiffOutput:
 
             seq = images.get_next_sequence_number(output_dir, "")
             filename = f"{seq:05}-{res.all_seeds[(i-res.index_of_first_image)]}"
+            if params.request_id : 
+               filename = filename +f"-{params.request_id}" 
+
             video_path_prefix = output_dir / filename
 
             frame_list = self._add_reverse(params, frame_list)
