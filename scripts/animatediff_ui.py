@@ -243,11 +243,6 @@ class AnimateDiffUiGroup:
                     value=self.params.interp_x, label="Interp X", precision=0, 
                     elem_id=f"{elemid_prefix}interp-x"
                 )
-                self.params.request_id = gr.Textbox(
-                    value=self.params.request_id, 
-                    label="request_id",  
-                    elem_id=f"{elemid_prefix}request_id"
-                )
             self.params.video_source = gr.Video(
                 value=self.params.video_source,
                 label="Video source",
