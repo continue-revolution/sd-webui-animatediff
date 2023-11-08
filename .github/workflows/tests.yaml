@@ -85,7 +85,7 @@ jobs:
           --skip-torch-cuda-test
           --test-server
           --do-not-download-clip
-          --no-half
+          --no-half-vae
           --disable-opt-split-attention
           --use-cpu all
           --api-server-stop
