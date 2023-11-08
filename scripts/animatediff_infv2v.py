@@ -111,12 +111,12 @@ class AnimateDiffInfV2V:
                         if control.hint_cond.shape[0] > len(context):
                             control.hint_cond_backup = control.hint_cond
                             control.hint_cond = control.hint_cond[context]
-                        control.hint_cond = control.hint_cond.to(device=shared.device)
+                        control.hint_cond = control.hint_cond.to(device=devices.get_device_for("controlnet"))
                         if control.hr_hint_cond is not None:
                             if control.hr_hint_cond.shape[0] > len(context):
                                 control.hr_hint_cond_backup = control.hr_hint_cond
                                 control.hr_hint_cond = control.hr_hint_cond[context]
-                            control.hr_hint_cond = control.hr_hint_cond.to(device=shared.device)
+                            control.hr_hint_cond = control.hr_hint_cond.to(device=devices.get_device_for("controlnet"))
                     # IPAdapter and Controlllite are always on CPU.
                     elif control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
                         control.control_model.image_emb_backup = control.control_model.image_emb

@@ -53,7 +53,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/10/21`: [v1.9.4](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.9.4): Save prompt travel to output images, `Reverse` merged to `Closed loop` (See [WebUI Parameters](#webui-parameters)), remove `TimestepEmbedSequential` hijack, remove `hints.js`, better explanation of several context-related parameters.
 - `2023/10/25`: [v1.10.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.10.0): Support img2img batch. You need ControlNet installed to make it work properly (you do not need to enable ControlNet). See [ControlNet V2V](#controlnet-v2v) for more information.
 - `2023/10/29`: [v1.11.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.0): Support [HotShot-XL](https://github.com/hotshotco/Hotshot-XL) for SDXL. See [HotShot-XL](#hotshot-xl) for more information.
-- `2023/11/06`: [v1.11.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.1): optimize VRAM to support any number of control images for ControlNet V2V, patch [encode_pil_to_base64](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/api/api.py#L104-L133) to support api return a video, save frames to `AnimateDIff/yy-mm-dd/`, recover from assertion error without restart.
+- `2023/11/06`: [v1.11.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.1): optimize VRAM for ControlNet V2V, patch [encode_pil_to_base64](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/api/api.py#L104-L133) for api return a video, save frames to `AnimateDIff/yy-mm-dd/`, recover from assertion error, test case, optional [request id](#api) for API.
 
 For future update plan, please query [here](https://github.com/continue-revolution/sd-webui-animatediff/pull/224).
 
@@ -94,7 +94,8 @@ It is quite similar to the way you use ControlNet. API will return a video in ba
       'latent_scale': 32,     # Latent scale
       'last_frame': None,     # Optional last frame
       'latent_power_last': 1, # Optional latent power for last frame
-      'latent_scale_last': 32 # Optional latent scale for last frame
+      'latent_scale_last': 32,# Optional latent scale for last frame
+      'request_id': ''        # Optional request id. If provided, outputs will have request id as filename suffix
       }
     ]
   }
