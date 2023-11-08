@@ -66,6 +66,9 @@ jobs:
         working-directory: stable-diffusion-webui
       - name: Download LoRA model for testing
         run: |
+          if [ ! -d "models/Lora" ]; then
+            mkdir models/Lora
+          fi
           if [ ! -f "models/Lora/yoimiya.safetensors" ]; then
             curl -Lo models/Lora/yoimiya.safetensors https://civitai.com/api/download/models/48374?type=Model&format=SafeTensor
           fi
