@@ -1,8 +1,7 @@
 name: Run AnimateDiff generation with Motion LoRA & Prompt Travel on CPU
 
 on:
-  - push
-  - pull_request
+  push: {}  # Remove the branch restriction to trigger the workflow for any branch
 
 jobs:
   build:
