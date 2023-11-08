@@ -42,6 +42,7 @@ class AnimateDiffOutput:
             if p.is_api:
                 if not AnimateDiffOutput.api_encode_pil_to_base64_hooked:
                     # TODO: remove this hook when WebUI is updated to v1.7.0
+                    logger.info("Hooking api.encode_pil_to_base64 to encode video to base64")
                     AnimateDiffOutput.api_encode_pil_to_base64_hooked = True
                     from modules.api import api
                     api_encode_pil_to_base64 = api.encode_pil_to_base64
@@ -152,7 +153,7 @@ class AnimateDiffOutput:
             for i, frame in enumerate(frame_list):
                 png_filename = video_path_prefix/f"{i:05}.png"
                 png_info = PngImagePlugin.PngInfo()
-                png_info.add_text('parameters', res.infotexts[0])
+                png_info.add_text('parameters', infotext)
                 imageio.imwrite(png_filename, frame, pnginfo=png_info)
 
         if "GIF" in params.format:

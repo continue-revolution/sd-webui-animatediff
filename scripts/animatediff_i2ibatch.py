@@ -300,5 +300,4 @@ class AnimateDiffI2IBatch:
                 params.batch_size = len(p.init_images)
 
 
-
 animatediff_i2ibatch = AnimateDiffI2IBatch()

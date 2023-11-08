@@ -24,11 +24,15 @@ class AnimateDiffMM:
         self.script_dir = script_dir
 
 
+    def get_model_dir(self):
+        model_dir = shared.opts.data.get("animatediff_model_path", os.path.join(self.script_dir, "model"))
+        if not model_dir:
+            model_dir = os.path.join(self.script_dir, "model")
+        return model_dir
+
+
     def _load(self, model_name):
-        model_path = os.path.join(
-            shared.opts.data.get("animatediff_model_path", os.path.join(self.script_dir, "model")),
-            model_name,
-        )
+        model_path = os.path.join(self.get_model_dir(), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
         if self.mm is None or self.mm.mm_name != model_name:
