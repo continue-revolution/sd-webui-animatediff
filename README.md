@@ -24,6 +24,7 @@ You might also be interested in another extension I created: [Segment Anything f
   - [Basic Usage](#basic-usage)
   - [Motion LoRA](#motion-lora-1)
   - [Prompt Travel](#prompt-travel-1)
+  - [AnimateDiff + SDXL](#animatediff--sdxl)
   - [ControlNet V2V](#controlnet-v2v-1)
 - [Tutorial](#tutorial)
 - [Thanks](#thanks)
