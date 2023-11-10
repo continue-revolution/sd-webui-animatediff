@@ -247,9 +247,9 @@ We are currently developing approach to support batch size on WebUI in the near 
 ## Demo
 
 ### Basic Usage
-| AnimateDiff | Extension | img2img | AnimateDiffXL |
-| --- | --- | --- | --- |
-| ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) |![00013-10788741199826055000](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/43b9cf34-dbd1-4120-b220-ea8cb7882272) | ![00018-727621716](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/d04bb573-c8ca-4ae6-a2d9-81f8012bec3a) | ![00025-1668075705](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/6d32daf9-51c6-490f-a942-db36f84f23cf) |
+| AnimateDiff | Extension | img2img |
+| --- | --- | --- |
+| ![image](https://user-images.githubusercontent.com/63914308/255306527-5105afe8-d497-4ab1-b5c4-37540e9601f8.gif) |![00013-10788741199826055000](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/43b9cf34-dbd1-4120-b220-ea8cb7882272) | ![00018-727621716](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/d04bb573-c8ca-4ae6-a2d9-81f8012bec3a) |
 
 ### Motion LoRA
 | No LoRA | PanDown | PanLeft |
@@ -260,6 +260,10 @@ We are currently developing approach to support batch size on WebUI in the near 
 ![00201-2296305953](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/881f317c-f1d2-4635-b84b-b4c4881650f6)
 
 The prompt is similar to [above](#prompt-travel).
+
+### AnimateDiff + SDXL
+
+![00025-1668075705](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/6d32daf9-51c6-490f-a942-db36f84f23cf)
 
 ### ControlNet V2V
 TODO
