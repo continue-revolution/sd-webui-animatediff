@@ -20,7 +20,6 @@ You might also be interested in another extension I created: [Segment Anything f
 - [Model Zoo](#model-zoo)
 - [VRAM](#vram)
 - [Batch Size](#batch-size)
-- [FAQ](#faq)
 - [Demo](#demo)
   - [Basic Usage](#basic-usage)
   - [Motion LoRA](#motion-lora-1)
@@ -209,7 +208,7 @@ Although AnimateDiffXL & HotShot-XL have identical structure with AnimateDiff-SD
 
 Technically all features available for AnimateDiff + SD1.5 are also available for (AnimateDiff / HotShot) + SDXL. However, I have not tested all of them. I have tested infinite context generation and prompt travel; I have not tested ControlNet. If you find any bug, please report it to me.
 
-For download link, please read [Model Zoo](#model-zoo). For VRAM usage, please read [VRAM](#vram).
+For download link, please read [Model Zoo](#model-zoo). For VRAM usage, please read [VRAM](#vram). For demo, please see [demo](#animatediff--sdxl).
 
 
 ## Model Zoo
@@ -262,7 +261,7 @@ We are currently developing approach to support batch size on WebUI in the near 
 The prompt is similar to [above](#prompt-travel).
 
 ### AnimateDiff + SDXL
-
+You should be able to read infotext to understand how I generated this sample.
 ![00025-1668075705](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/6d32daf9-51c6-490f-a942-db36f84f23cf)
 
 ### ControlNet V2V
