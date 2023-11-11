@@ -265,7 +265,11 @@ class AnimateDiffOutput:
             video_path_webm = str(video_path_prefix) + ".webm"
             video_paths.append(video_path_webm)
             logger.info(f"Saving {video_path_webm}")
-            imageio.imwrite(video_path_webm, video_array, plugin='pyav', codec='vp9', fps=params.fps)
+            with imageio.imopen(video_path_webm, "w", plugin="pyav") as file:
+                if use_infotext:
+                    file.container_metadata["Title"] = infotext
+                    file.container_metadata["Comment"] = infotext
+                file.write(video_array, codec="vp9", fps=params.fps)
 
         return video_paths
 
