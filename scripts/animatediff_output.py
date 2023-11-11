@@ -227,14 +227,18 @@ class AnimateDiffOutput:
             video_path_mp4 = str(video_path_prefix) + ".mp4"
             video_paths.append(video_path_mp4)
             try:
-                imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
-            except:
+                import av
+            except ImportError:
                 from launch import run_pip
                 run_pip(
-                    "install imageio[ffmpeg]",
-                    "sd-webui-animatediff save mp4 requirement: imageio[ffmpeg]",
+                    "install imageio[pyav]",
+                    "sd-webui-animatediff MP4 save requirement: imageio[pyav]",
                 )
-                imageio.imwrite(video_path_mp4, video_array, fps=params.fps, codec="h264")
+            with imageio.imopen(video_path_mp4, 'w', plugin='pyav') as file:
+                if use_infotext:
+                    file.container_metadata["Comment"] = infotext
+                logger.info(f"Saving {video_path_mp4}")
+                file.write(video_array, codec='h264', fps=params.fps)
 
         if "TXT" in params.format and res.images[index].info is not None:
             video_path_txt = str(video_path_prefix) + ".txt"
