@@ -261,6 +261,15 @@ class AnimateDiffOutput:
                 # see additional Pillow WebP options at https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp
             else:
                 logger.warn("WebP animation in Pillow requires system WebP library v0.5.0 or later")
+        if "WEBM" in params.format:
+            video_path_webm = str(video_path_prefix) + ".webm"
+            video_paths.append(video_path_webm)
+            logger.info(f"Saving {video_path_webm}")
+            with imageio.imopen(video_path_webm, "w", plugin="pyav") as file:
+                if use_infotext:
+                    file.container_metadata["Title"] = infotext
+                    file.container_metadata["Comment"] = infotext
+                file.write(video_array, codec="vp9", fps=params.fps)
 
         return video_paths
 
