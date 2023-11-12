@@ -160,6 +160,7 @@ def on_ui_settings():
                          "Do not optimize attention layers"]},
             section=section
         )
+    )
     shared.opts.add_option(
         "animatediff_s3_enable",
         shared.OptionInfo(
