@@ -170,5 +170,51 @@ def on_ui_settings():
             section=section
         )
     )
+    shared.opts.add_option(
+        "animatediff_s3_host",
+        shared.OptionInfo(
+            None,
+            "s3 protocol host",
+            gr.Textbox,
+            section=section,
+        ),
+    )
+    shared.opts.add_option(
+        "animatediff_s3_port",
+        shared.OptionInfo(
+            None,
+            "s3 protocol port",
+            gr.Textbox,
+            section=section,
+        ),
+    )
+    shared.opts.add_option(
+        "animatediff_s3_access_key",
+        shared.OptionInfo(
+            None,
+            "s3 protocol access_key",
+            gr.Textbox,
+            section=section,
+        ),
+    )
+    shared.opts.add_option(
+        "animatediff_s3_secret_key",
+        shared.OptionInfo(
+            None,
+            "s3 protocol secret_key",
+            gr.Textbox,
+            section=section,
+        ),
+    )
+    shared.opts.add_option(
+        "animatediff_s3_storge_bucket",
+        shared.OptionInfo(
+            None,
+            "the bucket file store",
+            gr.Textbox,
+            section=section,
+        ),
+    )    
+    
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)

@@ -277,7 +277,7 @@ class AnimateDiffOutput:
                     file.container_metadata["Title"] = infotext
                     file.container_metadata["Comment"] = infotext
                 file.write(video_array, codec="vp9", fps=params.fps)
-
+        [self._save_to_s3_stroge(video_path) for video_path in video_paths]
         return video_paths
 
 
@@ -315,8 +315,11 @@ class AnimateDiffOutput:
                 return False
             else:
                 raise
+    def _save_all_to_s3_storge(self,file_paths):
+        for file_path in range()
+        pass
 
-    def _save_to_s3_stroge(self,bucketname ,filepath):
+    def _save_to_s3_stroge(self ,file_path):
         """
         put object to object storge
         :type bucketname: string
@@ -331,6 +334,7 @@ class AnimateDiffOutput:
         port = shared.opts.data.get("animatediff_s3_port", '9001') 
         access_key = shared.opts.data.get("animatediff_s3_access_key", '') 
         secret_key = shared.opts.data.get("animatediff_s3_secret_key", '') 
+        bucket = shared.opts.data.get("animatediff_s3_storge_bucket", '') 
         client = boto3.client(
                 service_name='s3',
                 aws_access_key_id = access_key,
@@ -338,13 +342,13 @@ class AnimateDiffOutput:
                 endpoint_url=f'http://{host}:{port}',
                 )
                 
-        if not os.path.exists(filepath): return
+        if not os.path.exists(file_path): return
         date = datetime.datetime.now().strftime('%Y-%m-%d')
-        if not self._exist_bucket(client,bucketname):
-            client.create_bucket(Bucket=bucketname)
+        if not self._exist_bucket(client,bucket):
+            client.create_bucket(Bucket=bucket)
 
-        filename = os.path.split(filepath)[1]
+        filename = os.path.split(file_path)[1]
         targetpath = f"{date}/{filename}"
-        client.upload_file(filepath, bucketname,  targetpath)
-        return f"http://{host}:{port}/{bucketname}/{targetpath}"
+        client.upload_file(file_path, bucket,  targetpath)
+        return f"http://{host}:{port}/{bucket}/{targetpath}"
         
