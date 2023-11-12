@@ -56,16 +56,16 @@ class AnimateDiffMM:
 
         unet = sd_model.model.diffusion_model
         self._load(model_name)
-        inject_sdxl = sd_model.is_sdxl or self.mm.is_sdxl
+        inject_sdxl = sd_model.is_sdxl or self.mm.is_xl
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
-        assert sd_model.is_sdxl == self.mm.is_sdxl, f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."
+        assert sd_model.is_sdxl == self.mm.is_xl, f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."
 
         if self.mm.is_v2:
             logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet middle block.")
             unet.middle_block.insert(-1, self.mm.mid_block.motion_modules[0])
-        else:
+        elif not self.mm.is_adxl:
             logger.info(f"Hacking {sd_ver} GroupNorm32 forward function.")
-            if self.mm.is_sdxl:
+            if self.mm.is_hotshot:
                 from sgm.modules.diffusionmodules.util import GroupNorm32
             else:
                 from ldm.modules.diffusionmodules.util import GroupNorm32
@@ -85,7 +85,7 @@ class AnimateDiffMM:
             if inject_sdxl and mm_idx >= 6:
                 break
             mm_idx0, mm_idx1 = mm_idx // 2, mm_idx % 2
-            mm_inject = getattr(self.mm.down_blocks[mm_idx0], "temporal_attentions" if self.mm.is_sdxl else "motion_modules")[mm_idx1]
+            mm_inject = getattr(self.mm.down_blocks[mm_idx0], "temporal_attentions" if self.mm.is_hotshot else "motion_modules")[mm_idx1]
             unet.input_blocks[unet_idx].append(mm_inject)
 
         logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet output blocks.")
@@ -93,8 +93,8 @@ class AnimateDiffMM:
             if inject_sdxl and unet_idx >= 9:
                 break
             mm_idx0, mm_idx1 = unet_idx // 3, unet_idx % 3
-            mm_inject = getattr(self.mm.up_blocks[mm_idx0], "temporal_attentions" if self.mm.is_sdxl else "motion_modules")[mm_idx1]
-            if unet_idx % 3 == 2 and unet_idx != (8 if self.mm.is_sdxl else 11):
+            mm_inject = getattr(self.mm.up_blocks[mm_idx0], "temporal_attentions" if self.mm.is_hotshot else "motion_modules")[mm_idx1]
+            if unet_idx % 3 == 2 and unet_idx != (8 if self.mm.is_xl else 11):
                 unet.output_blocks[unet_idx].insert(-1, mm_inject)
             else:
                 unet.output_blocks[unet_idx].append(mm_inject)
@@ -106,7 +106,7 @@ class AnimateDiffMM:
 
 
     def restore(self, sd_model):
-        inject_sdxl = sd_model.is_sdxl or self.mm.is_sdxl
+        inject_sdxl = sd_model.is_sdxl or self.mm.is_xl
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         self._restore_ddim_alpha(sd_model)
         unet = sd_model.model.diffusion_model
@@ -121,7 +121,7 @@ class AnimateDiffMM:
         for unet_idx in range(12):
             if inject_sdxl and unet_idx >= 9:
                 break
-            if unet_idx % 3 == 2 and unet_idx != (8 if self.mm.is_sdxl else 11):
+            if unet_idx % 3 == 2 and unet_idx != (8 if self.mm.is_xl else 11):
                 unet.output_blocks[unet_idx].pop(-2)
             else:
                 unet.output_blocks[unet_idx].pop(-1)
@@ -129,9 +129,9 @@ class AnimateDiffMM:
         if self.mm.is_v2:
             logger.info(f"Removing motion module from {sd_ver} UNet middle block.")
             unet.middle_block.pop(-2)
-        else:
+        elif not self.mm.is_adxl:
             logger.info(f"Restoring {sd_ver} GroupNorm32 forward function.")
-            if self.mm.is_sdxl:
+            if self.mm.is_hotshot:
                 from sgm.modules.diffusionmodules.util import GroupNorm32
             else:
                 from ldm.modules.diffusionmodules.util import GroupNorm32
@@ -147,15 +147,17 @@ class AnimateDiffMM:
     def _set_ddim_alpha(self, sd_model):
         logger.info(f"Setting DDIM alpha.")
         beta_start = 0.00085
-        beta_end = 0.012
-        betas = torch.linspace(
-            beta_start,
-            beta_end,
-            # TODO: I'm not sure which parameter to use here for SDXL
-            1000 if sd_model.is_sdxl else sd_model.num_timesteps,
-            dtype=torch.float32,
-            device=device,
-        )
+        beta_end = 0.020 if self.mm.is_adxl else 0.012
+        if self.mm.is_adxl:
+            betas = torch.linspace(beta_start**0.5, beta_end**0.5, 1000, dtype=torch.float32, device=device) ** 2
+        else:
+            betas = torch.linspace(
+                beta_start,
+                beta_end,
+                1000 if sd_model.is_sdxl else sd_model.num_timesteps,
+                dtype=torch.float32,
+                device=device,
+            )
         alphas = 1.0 - betas
         alphas_cumprod = torch.cumprod(alphas, dim=0)
         self.prev_alpha_cumprod = sd_model.alphas_cumprod

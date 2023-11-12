@@ -22,11 +22,17 @@ from scripts.animatediff_logger import logger_animatediff as logger
 
 
 class AnimateDiffI2IBatch:
+    original_img2img_process_batch = None
 
     def hack(self):
         # TODO: PR this hack to A1111
+        if AnimateDiffI2IBatch.original_img2img_process_batch is not None:
+            logger.info("Hacking i2i-batch is already done.")
+            return
+
         logger.info("Hacking i2i-batch.")
-        original_img2img_process_batch = img2img.process_batch
+        AnimateDiffI2IBatch.original_img2img_process_batch = img2img.process_batch
+        original_img2img_process_batch = AnimateDiffI2IBatch.original_img2img_process_batch
 
         def hacked_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack this when i2i-batch with batch mask
             self.image_cfg_scale: float = self.image_cfg_scale if shared.sd_model.cond_stage_key == "edit" else None
@@ -281,7 +287,7 @@ class AnimateDiffI2IBatch:
                         p.override_settings['samples_filename_pattern'] = f'{image_path.stem}-[generation_number]'
                     else:
                         p.override_settings['samples_filename_pattern'] = f'{image_path.stem}'
-                process_images(p)
+                return process_images(p)
             else:
                 logger.warn("Warning: you are using an unsupported external script. AnimateDiff may not work properly.")
 
