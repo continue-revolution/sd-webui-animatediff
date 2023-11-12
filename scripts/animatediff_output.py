@@ -12,6 +12,9 @@ from modules.processing import Processed, StableDiffusionProcessing
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
+import boto3
+from botocore.exceptions import ClientError
+import os
 
 
 class AnimateDiffOutput:
@@ -289,3 +292,43 @@ class AnimateDiffOutput:
             with open(v_path, "rb") as video_file:
                 videos.append(base64.b64encode(video_file.read()).decode("utf-8"))
         return videos
+
+    def _exist_bucket(self,s3_client,bucketname):
+        try:
+            s3_client.head_bucket(Bucket=bucketname)
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return False
+            else:
+                raise
+
+    def _save_to_s3_stroge(self,bucketname ,filepath):
+        """
+        put object to object storge
+        :type bucketname: string
+        :param bucketname: will save to this 'bucket' , access_key and secret_key must have permissions to save 
+        :type file  : file 
+        :param file : the local file 
+        """        
+        host = shared.opts.s3_host
+        port = shared.opts.s3_port
+        access_key = shared.opts.access_key
+        secret_key = shared.opts.secret_key 
+        client = boto3.client(
+                service_name='s3',
+                aws_access_key_id = access_key,
+                aws_secret_access_key = secret_key,
+                endpoint_url=f'http://{host}:{port}',
+                )
+                
+        if not os.path.exists(filepath): return
+        date = datetime.datetime.now().strftime('%Y-%m-%d')
+        if not self._exist_bucket(client,bucketname):
+            client.create_bucket(Bucket=bucketname)
+
+        filename = os.path.split(filepath)[1]
+        targetpath = f"{date}/{filename}"
+        client.upload_file(filepath, bucketname,  targetpath)
+        return f"http://{host}:{port}/{bucketname}/{targetpath}"
+        
