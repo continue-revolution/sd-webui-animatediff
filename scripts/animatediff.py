@@ -56,6 +56,7 @@ class AnimateDiffScript(scripts.Script):
             self.cn_hacker = AnimateDiffControl(p, self.prompt_scheduler)
             self.cn_hacker.hack(params)
             update_infotext(p, params)
+        # TODO: do unload if not enabled but did not unload before
 
 
     def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):

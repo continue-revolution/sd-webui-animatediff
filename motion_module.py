@@ -270,7 +270,7 @@ class PositionalEncoding(nn.Module):
         self.is_hotshot = is_hotshot
 
     def forward(self, x):
-        x = x + (self.positional_encoding[:, :x.size(1)] if self.is_hotshot else self.pe[:, :x.size(1)])
+        x = (x + (self.positional_encoding[:, :x.size(1)] if self.is_hotshot else self.pe[:, :x.size(1)])).type(x.dtype)
         return self.dropout(x)
 
 
