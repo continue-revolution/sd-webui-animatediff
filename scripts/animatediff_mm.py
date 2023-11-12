@@ -3,7 +3,7 @@ import os
 
 import torch
 from einops import rearrange
-from modules import hashes, shared, sd_models
+from modules import hashes, shared, sd_models, devices
 from modules.devices import cpu, device, torch_gc
 
 from motion_module import MotionWrapper, MotionModuleType
@@ -47,12 +47,8 @@ class AnimateDiffMM:
         self.mm.to(device).eval()
         if not shared.cmd_opts.no_half:
             self.mm.half()
-            try:
-                from modules.devices import fp8
-                if fp8:
-                    self.mm.to(torch.float8_e4m3fn)
-            except: # no fp8
-                pass
+            if getattr(devices, "fp8", False):
+                self.mm.to(torch.float8_e4m3fn)
 
 
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
