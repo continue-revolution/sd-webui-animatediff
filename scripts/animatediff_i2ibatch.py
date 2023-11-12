@@ -287,7 +287,7 @@ class AnimateDiffI2IBatch:
                         p.override_settings['samples_filename_pattern'] = f'{image_path.stem}-[generation_number]'
                     else:
                         p.override_settings['samples_filename_pattern'] = f'{image_path.stem}'
-                process_images(p)
+                return process_images(p)
             else:
                 logger.warn("Warning: you are using an unsupported external script. AnimateDiff may not work properly.")
 
