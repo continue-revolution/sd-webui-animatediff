@@ -160,8 +160,14 @@ def on_ui_settings():
                          "Do not optimize attention layers"]},
             section=section
         )
+    shared.opts.add_option(
+        "animatediff_s3_enable",
+        shared.OptionInfo(
+            False,
+            "enable to Store file in object storage that supports the s3 protocol",
+            gr.Checkbox,
+            section=section
+        )
     )
-
-
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)

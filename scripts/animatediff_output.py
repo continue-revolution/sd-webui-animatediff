@@ -324,10 +324,13 @@ class AnimateDiffOutput:
         :type file  : file 
         :param file : the local file 
         """        
-        host = shared.opts.s3_host
-        port = shared.opts.s3_port
-        access_key = shared.opts.access_key
-        secret_key = shared.opts.secret_key 
+        s3_enable =shared.opts.data.get("animatediff_s3_enable", False) 
+        if not s3_enable:
+            return ""
+        host = shared.opts.data.get("animatediff_s3_host", '127.0.0.1')
+        port = shared.opts.data.get("animatediff_s3_port", '9001') 
+        access_key = shared.opts.data.get("animatediff_s3_access_key", '') 
+        secret_key = shared.opts.data.get("animatediff_s3_secret_key", '') 
         client = boto3.client(
                 service_name='s3',
                 aws_access_key_id = access_key,
