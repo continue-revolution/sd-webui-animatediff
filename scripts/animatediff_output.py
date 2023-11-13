@@ -315,9 +315,6 @@ class AnimateDiffOutput:
                 return False
             else:
                 raise
-    def _save_all_to_s3_storge(self,file_paths):
-        for file_path in range()
-        pass
 
     def _save_to_s3_stroge(self ,file_path):
         """
