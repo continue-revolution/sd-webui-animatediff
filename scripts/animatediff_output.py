@@ -325,7 +325,6 @@ class AnimateDiffOutput:
         :param file : the local file 
         """        
         s3_enable =shared.opts.data.get("animatediff_s3_enable", False) 
-        logger.info(f"s3_config : {s3_enable}")
         if not s3_enable:
             return ""
         host = shared.opts.data.get("animatediff_s3_host", '127.0.0.1')
@@ -333,7 +332,6 @@ class AnimateDiffOutput:
         access_key = shared.opts.data.get("animatediff_s3_access_key", '') 
         secret_key = shared.opts.data.get("animatediff_s3_secret_key", '') 
         bucket = shared.opts.data.get("animatediff_s3_storge_bucket", '') 
-        logger.info(f"s3_config : s3_enable : {s3_enable} ,s3_host :{host} ,prot :{port},access_key {access_key},secret_key {secret_key},bucket {bucket}")
         client = boto3.client(
                 service_name='s3',
                 aws_access_key_id = access_key,
@@ -349,5 +347,6 @@ class AnimateDiffOutput:
         filename = os.path.split(file_path)[1]
         targetpath = f"{date}/{filename}"
         client.upload_file(file_path, bucket,  targetpath)
+        logger.info(f"{filename} saved to {bucket}")
         return f"http://{host}:{port}/{bucket}/{targetpath}"
         
