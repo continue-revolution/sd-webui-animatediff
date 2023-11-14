@@ -168,7 +168,7 @@ class TemporalTransformer3DModel(nn.Module):
         batch, channel, height, weight = hidden_states.shape
         residual = hidden_states
 
-        hidden_states = self.norm(hidden_states)
+        hidden_states = self.norm(hidden_states).type(hidden_states.dtype)
         inner_dim = hidden_states.shape[1]
         hidden_states = hidden_states.permute(0, 2, 3, 1).reshape(batch, height * weight, inner_dim)
         hidden_states = self.proj_in(hidden_states)
@@ -238,14 +238,14 @@ class TemporalTransformerBlock(nn.Module):
 
     def forward(self, hidden_states, encoder_hidden_states=None, attention_mask=None, video_length=None):
         for attention_block, norm in zip(self.attention_blocks, self.norms):
-            norm_hidden_states = norm(hidden_states)
+            norm_hidden_states = norm(hidden_states).type(hidden_states.dtype)
             hidden_states = attention_block(
                 norm_hidden_states,
                 encoder_hidden_states=encoder_hidden_states if attention_block.is_cross_attention else None,
                 video_length=video_length,
             ) + hidden_states
             
-        hidden_states = self.ff(self.ff_norm(hidden_states)) + hidden_states
+        hidden_states = self.ff(self.ff_norm(hidden_states).type(hidden_states.dtype)) + hidden_states
         
         output = hidden_states  
         return output
@@ -270,7 +270,7 @@ class PositionalEncoding(nn.Module):
         self.is_hotshot = is_hotshot
 
     def forward(self, x):
-        x = (x + (self.positional_encoding[:, :x.size(1)] if self.is_hotshot else self.pe[:, :x.size(1)])).type(x.dtype)
+        x = x + (self.positional_encoding[:, :x.size(1)] if self.is_hotshot else self.pe[:, :x.size(1)])
         return self.dropout(x)
 
 
@@ -362,7 +362,7 @@ class CrossAttention(nn.Module):
         encoder_hidden_states = encoder_hidden_states
 
         if self.group_norm is not None:
-            hidden_states = self.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
+            hidden_states = self.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2).type(hidden_states.dtype)
 
         query = self.to_q(hidden_states)
         dim = query.shape[-1]
@@ -566,7 +566,7 @@ class VersatileAttention(CrossAttention):
         encoder_hidden_states = encoder_hidden_states
 
         if self.group_norm is not None:
-            hidden_states = self.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
+            hidden_states = self.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2).dtype(hidden_states.dtype)
 
         query = self.to_q(hidden_states)
         dim = query.shape[-1]
