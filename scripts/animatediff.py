@@ -210,7 +210,7 @@ def on_ui_settings():
         "animatediff_s3_storge_bucket",
         shared.OptionInfo(
             None,
-            "the bucket file store",
+            "bucket for file storage",
             gr.Textbox,
             section=section,
         ),
