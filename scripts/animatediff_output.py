@@ -347,6 +347,6 @@ class AnimateDiffOutput:
         filename = os.path.split(file_path)[1]
         targetpath = f"{date}/{filename}"
         client.upload_file(file_path, bucket,  targetpath)
-        logger.info(f"{filename} saved to {bucket}")
+        logger.info(f"{file_path} saved to s3 in bucket: {bucket}")
         return f"http://{host}:{port}/{bucket}/{targetpath}"
         
