@@ -2,11 +2,11 @@
 # TODO: remove this file when LCM is merged to A1111
 import torch
 
-import k_diffusion.sampling
 from k_diffusion import utils, sampling
 from k_diffusion.external import DiscreteEpsDDPMDenoiser
 from k_diffusion.sampling import default_noise_sampler, trange
 
+from modules import shared, sd_samplers_cfg_denoiser, sd_samplers_kdiffusion
 from scripts.animatediff_logger import logger_animatediff as logger
 
 
@@ -24,7 +24,7 @@ class LCMCompVisDenoiser(DiscreteEpsDDPMDenoiser):
         self.skip_steps = timesteps // original_timesteps
 
 
-        alphas_cumprod_valid = torch.zeros((original_timesteps), dtype=torch.float32)
+        alphas_cumprod_valid = torch.zeros((original_timesteps), dtype=torch.float32, device=model.device)
         for x in range(original_timesteps):
             alphas_cumprod_valid[original_timesteps - 1 - x] = alphas_cumprod[timesteps - 1 - x * self.skip_steps]
 
@@ -101,9 +101,25 @@ def sample_lcm(model, x, sigmas, extra_args=None, callback=None, disable=None, n
     return x
 
 
+class CFGDenoiserLCM(sd_samplers_cfg_denoiser.CFGDenoiser):
+    @property
+    def inner_model(self):
+        if self.model_wrap is None:
+            denoiser = LCMCompVisDenoiser
+            self.model_wrap = denoiser(shared.sd_model)
+
+        return self.model_wrap
+
+
+class LCMSampler(sd_samplers_kdiffusion.KDiffusionSampler):
+    def __init__(self, funcname, sd_model, options=None):
+        super().__init__(funcname, sd_model, options)
+        self.model_wrap_cfg = CFGDenoiserLCM(self)
+        self.model_wrap = self.model_wrap_cfg.inner_model
+
+
 class AnimateDiffLCM:
     lcm_ui_injected = False
-    original_kdiff_inner_model = None
 
 
     @staticmethod
@@ -113,49 +129,13 @@ class AnimateDiffLCM:
             return
 
         logger.info(f"Injecting LCM to UI.")
-        from modules import sd_samplers_kdiffusion, sd_samplers_timesteps, sd_samplers_common, sd_samplers
-        from modules.sd_samplers_kdiffusion import KDiffusionSampler
-        sd_samplers_kdiffusion.samplers_k_diffusion.append(('LCM', sample_lcm, ['k_lcm'], {}))
-        sd_samplers_kdiffusion.samplers_data_k_diffusion = [
-            sd_samplers_common.SamplerData(label, lambda model, funcname=funcname: KDiffusionSampler(funcname, model), aliases, options)
-            for label, funcname, aliases, options in sd_samplers_kdiffusion.samplers_k_diffusion
-            if callable(funcname) or hasattr(k_diffusion.sampling, funcname)
+        from modules import sd_samplers, sd_samplers_common
+        samplers_lcm = [('LCM', sample_lcm, ['k_lcm'], {})]
+        samplers_data_lcm = [
+            sd_samplers_common.SamplerData(label, lambda model, funcname=funcname: LCMSampler(funcname, model), aliases, options)
+            for label, funcname, aliases, options in samplers_lcm
         ]
-        sd_samplers_kdiffusion.k_diffusion_samplers_map = {x.name: x for x in sd_samplers_kdiffusion.samplers_data_k_diffusion}
-        sd_samplers.all_samplers = [
-            *sd_samplers_kdiffusion.samplers_data_k_diffusion,
-            *sd_samplers_timesteps.samplers_data_timesteps,
-        ]
+        sd_samplers.all_samplers.extend(samplers_data_lcm)
         sd_samplers.all_samplers_map = {x.name: x for x in sd_samplers.all_samplers}
         sd_samplers.set_samplers()
         AnimateDiffLCM.lcm_ui_injected = True
-
-
-    @staticmethod
-    def hack_kdiff_inner_model():
-        if AnimateDiffLCM.original_kdiff_inner_model is not None:
-            logger.info(f"CFGDenoiserKDiffusion already hacked to support LCM.")
-            return
-
-        logger.info(f"Hacking CFGDenoiserKDiffusion to use LCM inner model.")
-        from modules.sd_samplers_kdiffusion import CFGDenoiserKDiffusion
-        AnimateDiffLCM.original_kdiff_inner_model = CFGDenoiserKDiffusion.inner_model.fget
-        def lcm_inner_model(self):
-            if self.model_wrap is None:
-                denoiser = LCMCompVisDenoiser
-                self.model_wrap = denoiser(self.model)
-    
-            return self.model_wrap
-        CFGDenoiserKDiffusion.inner_model = property(lcm_inner_model)
-
-
-    @staticmethod
-    def restore_kdiff_inner_model():
-        if AnimateDiffLCM.original_kdiff_inner_model is None:
-            logger.info(f"CFGDenoiserKDiffusion inner model already restored.")
-            return
-
-        logger.info(f"Restoring CFGDenoiserKDiffusion inner model.")
-        from modules.sd_samplers_kdiffusion import CFGDenoiserKDiffusion
-        CFGDenoiserKDiffusion.inner_model = property(AnimateDiffLCM.original_kdiff_inner_model)
-        AnimateDiffLCM.original_kdiff_inner_model = None

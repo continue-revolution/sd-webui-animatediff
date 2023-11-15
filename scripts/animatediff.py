@@ -45,13 +45,6 @@ class AnimateDiffScript(scripts.Script):
         if p.is_api and isinstance(params, dict):
             self.ad_params = AnimateDiffProcess(**params)
             params = self.ad_params
-
-        from scripts.animatediff_lcm import AnimateDiffLCM
-        if p.sampler_name.lower() == 'lcm':
-            AnimateDiffLCM.hack_kdiff_inner_model()
-        elif AnimateDiffLCM.original_kdiff_inner_model is not None:
-            AnimateDiffLCM.restore_kdiff_inner_model()
-
         if params.enable:
             logger.info("AnimateDiff process start.")
             params.set_p(p)
@@ -93,11 +86,6 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if p.is_api and isinstance(params, dict): params = self.ad_params
-
-        if p.sampler_name.lower() == 'lcm':
-            from scripts.animatediff_lcm import AnimateDiffLCM
-            AnimateDiffLCM.restore_kdiff_inner_model()
-
         if params.enable:
             self.prompt_scheduler.save_infotext_txt(res)
             self.cn_hacker.restore()
