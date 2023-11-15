@@ -14,6 +14,7 @@ from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
 
 
+
 class AnimateDiffOutput:
     api_encode_pil_to_base64_hooked = False
 
@@ -149,6 +150,7 @@ class AnimateDiffOutput:
         video_paths = []
         video_array = [np.array(v) for v in frame_list]
         infotext = res.infotexts[index]
+        s3_enable =shared.opts.data.get("animatediff_s3_enable", False) 
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
         if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", False) or getattr(params, "force_save_to_custom", False)):
             video_path_prefix.mkdir(exist_ok=True, parents=True)
@@ -274,7 +276,9 @@ class AnimateDiffOutput:
                     file.container_metadata["Title"] = infotext
                     file.container_metadata["Comment"] = infotext
                 file.write(video_array, codec="vp9", fps=params.fps)
-
+        
+        if s3_enable:
+            for video_path in video_paths: self._save_to_s3_stroge(video_path)  
         return video_paths
 
 
@@ -302,3 +306,54 @@ class AnimateDiffOutput:
             with open(v_path, "rb") as video_file:
                 videos.append(base64.b64encode(video_file.read()).decode("utf-8"))
         return videos
+
+    def _install_requirement_if_absent(self,lib):
+        import launch
+        if not launch.is_installed(lib):
+            launch.run_pip(f"install {lib}", f"animatediff requirement: {lib}")
+
+    def _exist_bucket(self,s3_client,bucketname):
+        try:
+            s3_client.head_bucket(Bucket=bucketname)
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return False
+            else:
+                raise
+
+    def _save_to_s3_stroge(self ,file_path):
+        """
+        put object to object storge
+        :type bucketname: string
+        :param bucketname: will save to this 'bucket' , access_key and secret_key must have permissions to save 
+        :type file  : file 
+        :param file : the local file 
+        """        
+        self._install_requirement_if_absent('boto3')
+        import boto3
+        from botocore.exceptions import ClientError
+        import os
+        host = shared.opts.data.get("animatediff_s3_host", '127.0.0.1')
+        port = shared.opts.data.get("animatediff_s3_port", '9001') 
+        access_key = shared.opts.data.get("animatediff_s3_access_key", '') 
+        secret_key = shared.opts.data.get("animatediff_s3_secret_key", '') 
+        bucket = shared.opts.data.get("animatediff_s3_storge_bucket", '') 
+        client = boto3.client(
+                service_name='s3',
+                aws_access_key_id = access_key,
+                aws_secret_access_key = secret_key,
+                endpoint_url=f'http://{host}:{port}',
+                )
+                
+        if not os.path.exists(file_path): return
+        date = datetime.datetime.now().strftime('%Y-%m-%d')
+        if not self._exist_bucket(client,bucket):
+            client.create_bucket(Bucket=bucket)
+
+        filename = os.path.split(file_path)[1]
+        targetpath = f"{date}/{filename}"
+        client.upload_file(file_path, bucket,  targetpath)
+        logger.info(f"{file_path} saved to s3 in bucket: {bucket}")
+        return f"http://{host}:{port}/{bucket}/{targetpath}"
+        
