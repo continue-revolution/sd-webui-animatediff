@@ -108,6 +108,10 @@ class AnimateDiffMM:
 
 
     def restore(self, sd_model):
+        if not AnimateDiffMM.mm_injected:
+            logger.info("Motion module already removed.")
+            return
+
         inject_sdxl = sd_model.is_sdxl or self.mm.is_xl
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         self._restore_ddim_alpha(sd_model)

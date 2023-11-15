@@ -26,6 +26,7 @@ class AnimateDiffScript(scripts.Script):
         self.cfg_hacker = None
         self.cn_hacker = None
         self.prompt_scheduler = None
+        self.hacked = False
 
 
     def title(self):
@@ -56,7 +57,13 @@ class AnimateDiffScript(scripts.Script):
             self.cn_hacker = AnimateDiffControl(p, self.prompt_scheduler)
             self.cn_hacker.hack(params)
             update_infotext(p, params)
-        # TODO: do unload if not enabled but did not unload before
+            self.hacked = True
+        elif self.hacked:
+            self.cn_hacker.restore()
+            self.cfg_hacker.restore()
+            self.lora_hacker.restore()
+            motion_module.restore(p.sd_model)
+            self.hacked = False
 
 
     def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
@@ -85,6 +92,7 @@ class AnimateDiffScript(scripts.Script):
             self.cfg_hacker.restore()
             self.lora_hacker.restore()
             motion_module.restore(p.sd_model)
+            self.hacked = False
             AnimateDiffOutput().output(p, res, params)
             logger.info("AnimateDiff process end.")
 

@@ -313,6 +313,10 @@ class AnimateDiffInfV2V:
 
 
     def restore(self):
+        if AnimateDiffInfV2V.cfg_original_forward is None:
+            logger.info("CFGDenoiser already restored.")
+            return
+
         logger.info(f"Restoring CFGDenoiser forward function.")
         CFGDenoiser.forward = AnimateDiffInfV2V.cfg_original_forward
         AnimateDiffInfV2V.cfg_original_forward = None

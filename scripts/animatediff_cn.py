@@ -127,10 +127,11 @@ class AnimateDiffControl:
 
 
     def restore_batchhijack(self):
-        from scripts.batch_hijack import BatchHijack, instance
-        BatchHijack.processing_process_images_hijack = AnimateDiffControl.original_processing_process_images_hijack
-        AnimateDiffControl.original_processing_process_images_hijack = None
-        processing.process_images_inner = instance.processing_process_images_hijack
+        if AnimateDiffControl.original_processing_process_images_hijack is not None:
+            from scripts.batch_hijack import BatchHijack, instance
+            BatchHijack.processing_process_images_hijack = AnimateDiffControl.original_processing_process_images_hijack
+            AnimateDiffControl.original_processing_process_images_hijack = None
+            processing.process_images_inner = instance.processing_process_images_hijack
 
 
     def hack_cn(self):
@@ -615,10 +616,12 @@ class AnimateDiffControl:
 
 
     def restore_cn(self):
-        self.cn_script.controlnet_main_entry = AnimateDiffControl.original_controlnet_main_entry
-        AnimateDiffControl.original_controlnet_main_entry = None
-        self.cn_script.postprocess_batch = AnimateDiffControl.original_postprocess_batch
-        AnimateDiffControl.original_postprocess_batch = None
+        if AnimateDiffControl.original_controlnet_main_entry is not None:
+            self.cn_script.controlnet_main_entry = AnimateDiffControl.original_controlnet_main_entry
+            AnimateDiffControl.original_controlnet_main_entry = None
+        if AnimateDiffControl.original_postprocess_batch is not None:
+            self.cn_script.postprocess_batch = AnimateDiffControl.original_postprocess_batch
+            AnimateDiffControl.original_postprocess_batch = None
 
 
     def hack(self, params: AnimateDiffProcess):
