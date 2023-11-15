@@ -99,6 +99,7 @@ class AnimateDiffScript(scripts.Script):
 
 def on_ui_settings():
     section = ("animatediff", "AnimateDiff")
+    s3_selection =("animatediff", "AnimateDiff AWS") 
     shared.opts.add_option(
         "animatediff_model_path",
         shared.OptionInfo(
@@ -170,8 +171,61 @@ def on_ui_settings():
             section=section
         )
     )
-
-
+    shared.opts.add_option(
+        "animatediff_s3_enable",
+        shared.OptionInfo(
+            False,
+            "Enable to Store file in object storage that supports the s3 protocol",
+            gr.Checkbox,
+            section=s3_selection
+        )
+    )
+    shared.opts.add_option(
+        "animatediff_s3_host",
+        shared.OptionInfo(
+            None,
+            "S3 protocol host",
+            gr.Textbox,
+            section=s3_selection,
+        ),
+    )
+    shared.opts.add_option(
+        "animatediff_s3_port",
+        shared.OptionInfo(
+            None,
+            "S3 protocol port",
+            gr.Textbox,
+            section=s3_selection,
+        ),
+    )
+    shared.opts.add_option(
+        "animatediff_s3_access_key",
+        shared.OptionInfo(
+            None,
+            "S3 protocol access_key",
+            gr.Textbox,
+            section=s3_selection,
+        ),
+    )
+    shared.opts.add_option(
+        "animatediff_s3_secret_key",
+        shared.OptionInfo(
+            None,
+            "S3 protocol secret_key",
+            gr.Textbox,
+            section=s3_selection,
+        ),
+    )
+    shared.opts.add_option(
+        "animatediff_s3_storge_bucket",
+        shared.OptionInfo(
+            None,
+            "Bucket for file storage",
+            gr.Textbox,
+            section=s3_selection,
+        ),
+    )    
+    
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)
 script_callbacks.on_before_ui(AnimateDiffUiGroup.on_before_ui)
