@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image, ImageFilter, ImageOps
-from modules import processing, shared, masking, images
+from modules import processing, shared, masking, images, devices
 from modules.paths import data_path
 from modules.processing import (StableDiffusionProcessing,
                                 StableDiffusionProcessingImg2Img,
@@ -244,6 +244,8 @@ class AnimateDiffControl:
                 else:
                     model_net = cn_script.load_control_model(p, unet, unit.model)
                     model_net.reset()
+                    if model_net is not None and getattr(devices, "fp8", False):
+                        model_net.to(torch.float8_e4m3fn)
 
                     if getattr(model_net, 'is_control_lora', False):
                         control_lora = model_net.control_model
