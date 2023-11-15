@@ -307,9 +307,8 @@ class AnimateDiffOutput:
                 videos.append(base64.b64encode(video_file.read()).decode("utf-8"))
         return videos
 
-    def _install_boto3_if_absent():
+    def _install_requirement_if_absent(self,lib):
         import launch
-        lib = 'boto3'
         if not launch.is_installed(lib):
             launch.run_pip(f"install {lib}", f"animatediff requirement: {lib}")
 
@@ -331,7 +330,7 @@ class AnimateDiffOutput:
         :type file  : file 
         :param file : the local file 
         """        
-        self._install_boto3_if_absent()
+        self._install_requirement_if_absent('boto3')
         import boto3
         from botocore.exceptions import ClientError
         import os
