@@ -341,3 +341,13 @@ class AnimateDiffUiGroup:
         if elem_id == "img2img_generate":
             AnimateDiffUiGroup.img2img_submit_button = component
             return
+
+
+    @staticmethod
+    def on_before_component(component, **_kwargs):
+        elem_id = getattr(component, "elem_id", None)
+
+        if elem_id == "txt2img_sampling":
+            from scripts.animatediff_lcm import AnimateDiffLCM
+            AnimateDiffLCM.hack_kdiff_ui()
+            return
