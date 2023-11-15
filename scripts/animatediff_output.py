@@ -12,9 +12,7 @@ from modules.processing import Processed, StableDiffusionProcessing
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
-import boto3
-from botocore.exceptions import ClientError
-import os
+
 
 
 class AnimateDiffOutput:
@@ -152,6 +150,7 @@ class AnimateDiffOutput:
         video_paths = []
         video_array = [np.array(v) for v in frame_list]
         infotext = res.infotexts[index]
+        s3_enable =shared.opts.data.get("animatediff_s3_enable", False) 
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
         if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", False) or getattr(params, "force_save_to_custom", False)):
             video_path_prefix.mkdir(exist_ok=True, parents=True)
@@ -277,7 +276,9 @@ class AnimateDiffOutput:
                     file.container_metadata["Title"] = infotext
                     file.container_metadata["Comment"] = infotext
                 file.write(video_array, codec="vp9", fps=params.fps)
-        [self._save_to_s3_stroge(video_path) for video_path in video_paths]
+        
+        if s3_enable:
+            for video_path in video_paths: self._save_to_s3_stroge(video_path)  
         return video_paths
 
 
@@ -306,6 +307,12 @@ class AnimateDiffOutput:
                 videos.append(base64.b64encode(video_file.read()).decode("utf-8"))
         return videos
 
+    def _install_boto3_if_absent():
+        import launch
+        lib = 'boto3'
+        if not launch.is_installed(lib):
+            launch.run_pip(f"install {lib}", f"animatediff requirement: {lib}")
+
     def _exist_bucket(self,s3_client,bucketname):
         try:
             s3_client.head_bucket(Bucket=bucketname)
@@ -324,9 +331,10 @@ class AnimateDiffOutput:
         :type file  : file 
         :param file : the local file 
         """        
-        s3_enable =shared.opts.data.get("animatediff_s3_enable", False) 
-        if not s3_enable:
-            return ""
+        self._install_boto3_if_absent()
+        import boto3
+        from botocore.exceptions import ClientError
+        import os
         host = shared.opts.data.get("animatediff_s3_host", '127.0.0.1')
         port = shared.opts.data.get("animatediff_s3_port", '9001') 
         access_key = shared.opts.data.get("animatediff_s3_access_key", '') 

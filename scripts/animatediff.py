@@ -90,6 +90,7 @@ class AnimateDiffScript(scripts.Script):
 
 def on_ui_settings():
     section = ("animatediff", "AnimateDiff")
+    s3_selection =("animatediff", "AnimateDiff AWS") 
     shared.opts.add_option(
         "animatediff_model_path",
         shared.OptionInfo(
@@ -165,54 +166,54 @@ def on_ui_settings():
         "animatediff_s3_enable",
         shared.OptionInfo(
             False,
-            "enable to Store file in object storage that supports the s3 protocol",
+            "Enable to Store file in object storage that supports the s3 protocol",
             gr.Checkbox,
-            section=section
+            section=s3_selection
         )
     )
     shared.opts.add_option(
         "animatediff_s3_host",
         shared.OptionInfo(
             None,
-            "s3 protocol host",
+            "S3 protocol host",
             gr.Textbox,
-            section=section,
+            section=s3_selection,
         ),
     )
     shared.opts.add_option(
         "animatediff_s3_port",
         shared.OptionInfo(
             None,
-            "s3 protocol port",
+            "S3 protocol port",
             gr.Textbox,
-            section=section,
+            section=s3_selection,
         ),
     )
     shared.opts.add_option(
         "animatediff_s3_access_key",
         shared.OptionInfo(
             None,
-            "s3 protocol access_key",
+            "S3 protocol access_key",
             gr.Textbox,
-            section=section,
+            section=s3_selection,
         ),
     )
     shared.opts.add_option(
         "animatediff_s3_secret_key",
         shared.OptionInfo(
             None,
-            "s3 protocol secret_key",
+            "S3 protocol secret_key",
             gr.Textbox,
-            section=section,
+            section=s3_selection,
         ),
     )
     shared.opts.add_option(
         "animatediff_s3_storge_bucket",
         shared.OptionInfo(
             None,
-            "bucket for file storage",
+            "Bucket for file storage",
             gr.Textbox,
-            section=section,
+            section=s3_selection,
         ),
     )    
     
