@@ -127,6 +127,7 @@ class AnimateDiffLCM:
             *sd_samplers_timesteps.samplers_data_timesteps,
         ]
         sd_samplers.all_samplers_map = {x.name: x for x in sd_samplers.all_samplers}
+        sd_samplers.set_samplers()
         AnimateDiffLCM.lcm_ui_injected = True
 
 
