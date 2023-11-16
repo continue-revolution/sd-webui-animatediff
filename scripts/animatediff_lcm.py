@@ -31,7 +31,7 @@ class LCMCompVisDenoiser(DiscreteEpsDDPMDenoiser):
         super().__init__(model, alphas_cumprod_valid, quantize=None)
 
 
-    def get_sigma(self, n=None, sgm=False):
+    def get_sigmas(self, n=None, sgm=False):
         if n is None:
             return sampling.append_zero(self.sigmas.flip(0))
 
@@ -39,9 +39,9 @@ class LCMCompVisDenoiser(DiscreteEpsDDPMDenoiser):
         end = self.sigma_to_t(self.sigma_min)
 
         if sgm:
-            t = torch.linspace(start, end, n + 1)[:-1]
+            t = torch.linspace(start, end, n + 1, device=shared.sd_model.device)[:-1]
         else:
-            t = torch.linspace(start, end, n)
+            t = torch.linspace(start, end, n, device=shared.sd_model.device)
 
         return sampling.append_zero(self.t_to_sigma(t))
 
@@ -61,27 +61,20 @@ class LCMCompVisDenoiser(DiscreteEpsDDPMDenoiser):
         return self.inner_model.apply_model(*args, **kwargs)
 
 
-    def get_c_in(self, sigma):
-        c_in = 1 / (sigma ** 2 + self.sigma_data ** 2) ** 0.5
-        return c_in
-
-
-    def get_scaled_out(self, sigma, model_output, model_input):
-        x0 = model_input - model_output * utils.append_dims(sigma, model_output.ndim)
-
+    def get_scaled_out(self, sigma, output, input):
         sigma_data = 0.5
-        scaled_timestep = utils.append_dims(self.sigma_to_t(sigma), model_output.ndim) * 10.0
+        scaled_timestep = utils.append_dims(self.sigma_to_t(sigma), output.ndim) * 10.0
 
         c_skip = sigma_data**2 / (scaled_timestep**2 + sigma_data**2)
         c_out = scaled_timestep / (scaled_timestep**2 + sigma_data**2) ** 0.5
 
-        return c_out * x0 + c_skip * model_input
+        return c_out * output + c_skip * input
 
 
     def forward(self, input, sigma, **kwargs):
-        c_in = utils.append_dims(self.get_c_in(sigma), input.ndim)
+        c_out, c_in = [utils.append_dims(x, input.ndim) for x in self.get_scalings(sigma)]
         eps = self.get_eps(input * c_in, self.sigma_to_t(sigma), **kwargs)
-        return self.get_scaled_out(sigma, eps, input * c_in)
+        return self.get_scaled_out(sigma, input + eps * c_out, input)
 
 
 def sample_lcm(model, x, sigmas, extra_args=None, callback=None, disable=None, noise_sampler=None):
