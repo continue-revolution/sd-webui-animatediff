@@ -8,6 +8,7 @@ from modules.processing import StableDiffusionProcessing
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_i2ibatch import animatediff_i2ibatch
+from scripts.animatediff_lcm import AnimateDiffLCM
 
 
 class ToolButton(gr.Button, gr.components.FormComponent):
@@ -341,3 +342,8 @@ class AnimateDiffUiGroup:
         if elem_id == "img2img_generate":
             AnimateDiffUiGroup.img2img_submit_button = component
             return
+
+
+    @staticmethod
+    def on_before_ui():
+        AnimateDiffLCM.hack_kdiff_ui()

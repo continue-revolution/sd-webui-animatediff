@@ -228,3 +228,4 @@ def on_ui_settings():
     
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)
+script_callbacks.on_before_ui(AnimateDiffUiGroup.on_before_ui)
