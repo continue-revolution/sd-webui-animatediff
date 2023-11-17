@@ -17,6 +17,11 @@ You might also be interested in another extension I created: [Segment Anything f
 - [Prompt Travel](#prompt-travel)
 - [ControlNet V2V](#controlnet-v2v)
 - [SDXL](#sdxl)
+- [Optimizations](#optimizations)
+  - [Attention](#attention)
+  - [FP8](#fp8)
+  - [LCM](#lcm)
+  - [Others](#others)
 - [Model Zoo](#model-zoo)
 - [VRAM](#vram)
 - [Batch Size](#batch-size)
@@ -55,6 +60,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/10/29`: [v1.11.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.0): Support [HotShot-XL](https://github.com/hotshotco/Hotshot-XL) for SDXL. See [SDXL](#sdxl) for more information.
 - `2023/11/06`: [v1.11.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.1): Optimize VRAM for ControlNet V2V, patch [encode_pil_to_base64](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/api/api.py#L104-L133) for api return a video, save frames to `AnimateDiff/yy-mm-dd/`, recover from assertion error, optional [request id](#api) for API.
 - `2023/11/10`: [v1.12.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.0): [AnimateDiff for SDXL](https://github.com/guoyww/AnimateDiff/tree/sdxl) supported. See [SDXL](#sdxl) for more information. You need to add `--disable-safe-unpickle` to your command line arguments to get rid of the bad file error.
+- `2023/11/16`: [v1.12.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.1): FP8 precision and LCM sampler supported. See [Optimizations](#optimizations) for more information.
 
 For future update plan, please query [here](https://github.com/continue-revolution/sd-webui-animatediff/pull/294).
 
@@ -210,6 +216,35 @@ Although AnimateDiffXL & HotShot-XL have identical structure with AnimateDiff-SD
 Technically all features available for AnimateDiff + SD1.5 are also available for (AnimateDiff / HotShot) + SDXL. However, I have not tested all of them. I have tested infinite context generation and prompt travel; I have not tested ControlNet. If you find any bug, please report it to me.
 
 For download link, please read [Model Zoo](#model-zoo). For VRAM usage, please read [VRAM](#vram). For demo, please see [demo](#animatediff--sdxl).
+
+
+## Optimizations
+Optimizations can be significantly helpful if you want to improve speed and reduce VRAM usage. With [attention optimization](#attention), [FP8](#fp8) and unchecking `Batch cond/uncond` in `Settings/Optimization`, I am able to run 4 x ControlNet + AnimateDiff + Stable Diffusion to generate 36 frames of 1024 * 1024 images with 18GB VRAM.
+
+### Attention
+Adding `--xformers` / `--opt-sdp-attention` to your command lines can significantly reduce VRAM and improve speed. However, due to a bug in xformers, you may or may not get CUDA error. If you get CUDA error, please either completely switch to `--opt-sdp-attention`, or preserve `--xformers` -> go to `Settings/AnimateDiff` -> choose "Optimize attention layers with sdp (torch >= 2.0.0 required)".
+
+### FP8
+FP8 requires torch >= 2.1.0 and WebUI [test-fp8](https://github.com/AUTOMATIC1111/stable-diffusion-webui/tree/test-fp8) branch by [@KohakuBlueleaf](https://github.com/KohakuBlueleaf). Follow these steps to enable FP8:
+1. Switch to `test-fp8` branch via `git checkout test-fp8` in your `stable-diffusion-webui` directory.
+1. Reinstall torch via adding `--reinstall-torch` ONCE to your command line arguments.
+1. Add `--opt-unet-fp8-storage` to your command line arguments and launch WebUI.
+
+### LCM
+[Latent Consistency Model](https://github.com/luosiallen/latent-consistency-model) is a recent breakthrough in Stable Diffusion community. I provide a "gift" to everyone who update this extension to >= [v1.12.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.1) that you will find `LCM` sampler in the normal place that you choose samplers in WebUI. You can generate images / videos within 6-8 steps if you
+- choose `Euler A` / `LCM` sampler
+- use [LCM LoRA](https://civitai.com/models/195519/lcm-lora-weights-stable-diffusion-acceleration-module)
+- use a low CFG denoising strength (1-2 is recommended)
+
+Note that LCM sampler is still under experiment and subject to change adhering to the [original author](https://github.com/luosiallen)'s wish.
+
+Benefits of using this extension instead of [sd-webui-lcm](https://github.com/0xbitches/sd-webui-lcm) are
+- you do not need to install diffusers
+- you can use LCM with any other extensions, including ControlNet and AnimateDiff
+
+### Others
+- Remove any VRAM heavy arguments such as `--no-half`. These arguments can significantly increase VRAM usage and reduce speed.
+- Check `Batch cond/uncond` in `Settings/Optimization` to improve speed; uncheck it to reduce VRAM usage.
 
 
 ## Model Zoo
