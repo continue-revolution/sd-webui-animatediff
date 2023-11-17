@@ -3,7 +3,7 @@ import os
 
 import torch
 from einops import rearrange
-from modules import hashes, shared, sd_models
+from modules import hashes, shared, sd_models, devices
 from modules.devices import cpu, device, torch_gc
 
 from motion_module import MotionWrapper, MotionModuleType
@@ -47,6 +47,8 @@ class AnimateDiffMM:
         self.mm.to(device).eval()
         if not shared.cmd_opts.no_half:
             self.mm.half()
+            if getattr(devices, "fp8", False):
+                self.mm.to(torch.float8_e4m3fn)
 
 
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
@@ -106,6 +108,10 @@ class AnimateDiffMM:
 
 
     def restore(self, sd_model):
+        if not AnimateDiffMM.mm_injected:
+            logger.info("Motion module already removed.")
+            return
+
         inject_sdxl = sd_model.is_sdxl or self.mm.is_xl
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         self._restore_ddim_alpha(sd_model)
