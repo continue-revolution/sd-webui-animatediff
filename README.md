@@ -232,7 +232,7 @@ FP8 requires torch >= 2.1.0 and WebUI [test-fp8](https://github.com/AUTOMATIC111
 
 ### LCM
 [Latent Consistency Model](https://github.com/luosiallen/latent-consistency-model) is a recent breakthrough in Stable Diffusion community. I provide a "gift" to everyone who update this extension to >= [v1.12.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.1) - you will find `LCM` sampler in the normal place you select samplers in WebUI. You can generate images / videos within 6-8 steps if you
-- select `Euler A` / `LCM` sampler (other samplers may also work, subject to further experiments)
+- select `Euler A` / `Euler` / `LCM` sampler (other samplers may also work, subject to further experiments)
 - use [LCM LoRA](https://civitai.com/models/195519/lcm-lora-weights-stable-diffusion-acceleration-module)
 - use a low CFG denoising strength (1-2 is recommended)
 
