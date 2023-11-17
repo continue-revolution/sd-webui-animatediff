@@ -231,16 +231,16 @@ FP8 requires torch >= 2.1.0 and WebUI [test-fp8](https://github.com/AUTOMATIC111
 1. Add `--opt-unet-fp8-storage` to your command line arguments and launch WebUI.
 
 ### LCM
-[Latent Consistency Model](https://github.com/luosiallen/latent-consistency-model) is a recent breakthrough in Stable Diffusion community. I provide a "gift" to everyone who update this extension to >= [v1.12.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.1) that you will find `LCM` sampler in the normal place that you choose samplers in WebUI. You can generate images / videos within 6-8 steps if you
-- choose `Euler A` / `LCM` sampler
+[Latent Consistency Model](https://github.com/luosiallen/latent-consistency-model) is a recent breakthrough in Stable Diffusion community. I provide a "gift" to everyone who update this extension to >= [v1.12.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.1) - you will find `LCM` sampler in the normal place you select samplers in WebUI. You can generate images / videos within 6-8 steps if you
+- select `Euler A` / `LCM` sampler (other samplers may also work, subject to further experiments)
 - use [LCM LoRA](https://civitai.com/models/195519/lcm-lora-weights-stable-diffusion-acceleration-module)
 - use a low CFG denoising strength (1-2 is recommended)
 
-Note that LCM sampler is still under experiment and subject to change adhering to the [original author](https://github.com/luosiallen)'s wish.
+Note that LCM sampler is still under experiment and subject to change adhering to [@luosiallen](https://github.com/luosiallen)'s wish.
 
 Benefits of using this extension instead of [sd-webui-lcm](https://github.com/0xbitches/sd-webui-lcm) are
 - you do not need to install diffusers
-- you can use LCM with any other extensions, including ControlNet and AnimateDiff
+- you can use LCM sampler with any other extensions, such as ControlNet and AnimateDiff
 
 ### Others
 - Remove any VRAM heavy arguments such as `--no-half`. These arguments can significantly increase VRAM usage and reduce speed.
