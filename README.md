@@ -228,7 +228,7 @@ Adding `--xformers` / `--opt-sdp-attention` to your command lines can significan
 FP8 requires torch >= 2.1.0 and WebUI [test-fp8](https://github.com/AUTOMATIC1111/stable-diffusion-webui/tree/test-fp8) branch by [@KohakuBlueleaf](https://github.com/KohakuBlueleaf). Follow these steps to enable FP8:
 1. Switch to `test-fp8` branch via `git checkout test-fp8` in your `stable-diffusion-webui` directory.
 1. Reinstall torch via adding `--reinstall-torch` ONCE to your command line arguments.
-1. Add `--opt-unet-fp8-storage` to your command line arguments and launch WebUI.
+1. Goto Settings Tab > Optimizations > FP8 weight, change it to `Enable`
 
 ### LCM
 [Latent Consistency Model](https://github.com/luosiallen/latent-consistency-model) is a recent breakthrough in Stable Diffusion community. I provide a "gift" to everyone who update this extension to >= [v1.12.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.1) - you will find `LCM` sampler in the normal place you select samplers in WebUI. You can generate images / videos within 6-8 steps if you

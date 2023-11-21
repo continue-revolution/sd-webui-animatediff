@@ -48,7 +48,9 @@ class AnimateDiffMM:
         if not shared.cmd_opts.no_half:
             self.mm.half()
             if getattr(devices, "fp8", False):
-                self.mm.to(torch.float8_e4m3fn)
+                for module in self.mm.modules():
+                    if isinstance(module, (torch.nn.Conv2d, torch.nn.Linear))):
+                        module.to(torch.float8_e4m3fn)
 
 
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
