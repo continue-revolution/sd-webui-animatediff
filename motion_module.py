@@ -546,6 +546,7 @@ class CrossAttention(nn.Module):
                 hidden_states = self._attention(query, key, value, attention_mask)
             else:
                 hidden_states = self._sliced_attention(query, key, value, sequence_length, dim, attention_mask)
+            return hidden_states
 
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)        
         return hidden_states
