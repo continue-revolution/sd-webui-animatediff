@@ -49,7 +49,7 @@ class AnimateDiffMM:
             self.mm.half()
             if getattr(devices, "fp8", False):
                 for module in self.mm.modules():
-                    if isinstance(module, (torch.nn.Conv2d, torch.nn.Linear))):
+                    if isinstance(module, (torch.nn.Conv2d, torch.nn.Linear)):
                         module.to(torch.float8_e4m3fn)
 
 
