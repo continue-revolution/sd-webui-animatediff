@@ -245,8 +245,10 @@ class AnimateDiffControl:
                 else:
                     model_net = cn_script.load_control_model(p, unet, unit.model)
                     model_net.reset()
-                    if model_net is not None and getattr(devices, "fp8", False):
-                        model_net.to(torch.float8_e4m3fn)
+                    if model_net is not None and getattr(devices, "fp8", False) and not isinstance(model_net, PlugableIPAdapter):
+                        for _module in model_net.modules():
+                            if isinstance(_module, (torch.nn.Conv2d, torch.nn.Linear)):
+                                _module.to(torch.float8_e4m3fn)
 
                     if getattr(model_net, 'is_control_lora', False):
                         control_lora = model_net.control_model
