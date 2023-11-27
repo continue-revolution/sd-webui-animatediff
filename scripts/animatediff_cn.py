@@ -7,6 +7,7 @@ import shutil
 import cv2
 import numpy as np
 import torch
+from tqdm import tqdm
 from PIL import Image, ImageFilter, ImageOps
 from modules import processing, shared, masking, images, devices
 from modules.paths import data_path
@@ -388,7 +389,7 @@ class AnimateDiffControl:
                 hr_controls = []
                 controls_ipadapter = {'hidden_states': [], 'image_embeds': []}
                 hr_controls_ipadapter = {'hidden_states': [], 'image_embeds': []}
-                for idx, input_image in enumerate(input_images):
+                for idx, input_image in tqdm(enumerate(input_images), total=len(input_images)):
                     detected_map, is_image = preprocessor(
                         input_image, 
                         res=preprocessor_resolution, 
