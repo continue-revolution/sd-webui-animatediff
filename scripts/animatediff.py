@@ -128,6 +128,45 @@ def on_ui_settings():
         )
     )
     shared.opts.add_option(
+        key="animatediff_mp4_crf",
+        info=shared.OptionInfo(
+            default=23,
+            label="MP4 Quality (CRF)",
+            component=gr.Slider,
+            component_args={
+                "minimum": 0,
+                "maximum": 51,
+                "step": 1},
+            section=section
+        )
+        .link("docs", "https://trac.ffmpeg.org/wiki/Encode/H.264#crf")
+        .info("17 for best quality, up to 28 for smaller size")
+    )
+    shared.opts.add_option(
+        key="animatediff_mp4_preset",
+        info=shared.OptionInfo(
+            default="",
+            label="MP4 Encoding Preset",
+            component=gr.Dropdown,
+            component_args={"choices": ["", 'veryslow', 'slower', 'slow', 'medium', 'fast', 'faster', 'veryfast', 'superfast', 'ultrafast']},
+            section=section,
+        )
+        .link("docs", "https://trac.ffmpeg.org/wiki/Encode/H.264#Preset")
+        .info("encoding speed, use the slowest you can tolerate")
+    )
+    shared.opts.add_option(
+        key="animatediff_mp4_tune",
+        info=shared.OptionInfo(
+            default="",
+            label="MP4 Tune encoding for content type",
+            component=gr.Dropdown,
+            component_args={"choices": ["", "film", "animation", "grain"]},
+            section=section
+        )
+        .link("docs", "https://trac.ffmpeg.org/wiki/Encode/H.264#Tune")
+        .info("optimize for specific content types")
+    )
+    shared.opts.add_option(
         "animatediff_webp_quality",
         shared.OptionInfo(
             80,
