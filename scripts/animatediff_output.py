@@ -233,14 +233,31 @@ class AnimateDiffOutput:
             except ImportError:
                 from launch import run_pip
                 run_pip(
-                    "install imageio[pyav]",
-                    "sd-webui-animatediff MP4 save requirement: imageio[pyav]",
+                    "install pyav",
+                    "sd-webui-animatediff MP4 save requirement: PyAV",
                 )
-            with imageio.imopen(video_path_mp4, 'w', plugin='pyav') as file:
-                if use_infotext:
-                    file.container_metadata["Comment"] = infotext
-                logger.info(f"Saving {video_path_mp4}")
-                file.write(video_array, codec='h264', fps=params.fps)
+                import av
+            options = {
+                "crf": str(shared.opts.data.get("animatediff_mp4_crf", 23))
+            }
+            preset = shared.opts.data.get("animatediff_mp4_preset", "")
+            if preset != "": options["preset"] = preset
+            tune = shared.opts.data.get("animatediff_mp4_tune", "")
+            if tune != "": options["tune"] = tune
+            output = av.open(video_path_mp4, "w")
+            logger.info(f"Saving {video_path_mp4}")
+            if use_infotext:
+                output.metadata["Comment"] = infotext
+            stream = output.add_stream('libx264', params.fps, options=options)
+            stream.width = frame_list[0].width
+            stream.height = frame_list[0].height
+            for img in video_array:
+                frame = av.VideoFrame.from_ndarray(img)
+                packet = stream.encode(frame)
+                output.mux(packet)
+            packet = stream.encode(None)
+            output.mux(packet)
+            output.close()
 
         if "TXT" in params.format and res.images[index].info is not None:
             video_path_txt = str(video_path_prefix) + ".txt"
