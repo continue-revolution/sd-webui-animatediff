@@ -30,21 +30,28 @@ class AnimateDiffMM:
             model_dir = os.path.join(self.script_dir, "model")
         return model_dir
 
-
-    def _load(self, model_name):
+    def _load_motion_module(self, model_name):
         model_path = os.path.join(self.get_model_dir(), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
+        logger.info(f"Loading motion module {model_name} from {model_path}")
+        model_hash = hashes.sha256(model_path, f"AnimateDiff/{model_name}")
+        mm_state_dict = sd_models.read_state_dict(model_path)
+        model_type = MotionModuleType.get_mm_type(mm_state_dict)
+        logger.info(f"Guessed {model_name} architecture: {model_type}")
+        self.mm = MotionWrapper(model_name, model_hash, model_type)
+        missed_keys = self.mm.load_state_dict(mm_state_dict)
+        logger.warn(f"Missing keys {missed_keys}")
+
+    def _load(self, model_name):
         if self.mm is None or self.mm.mm_name != model_name:
-            logger.info(f"Loading motion module {model_name} from {model_path}")
-            model_hash = hashes.sha256(model_path, f"AnimateDiff/{model_name}")
-            mm_state_dict = sd_models.read_state_dict(model_path)
-            model_type = MotionModuleType.get_mm_type(mm_state_dict)
-            logger.info(f"Guessed {model_name} architecture: {model_type}")
-            self.mm = MotionWrapper(model_name, model_hash, model_type)
-            missed_keys = self.mm.load_state_dict(mm_state_dict)
-            logger.warn(f"Missing keys {missed_keys}")
-        self.mm.to(device).eval()
+            self._load_motion_module(model_name)
+        try:
+            self.mm.to(device).eval()
+        except Exception as e:
+            logger.info(f'Failed to eval motion module {e}, attempt to reload motion model')
+            self._load_motion_module(model_name)
+            self.mm.to(device).eval()
         if not shared.cmd_opts.no_half:
             self.mm.half()
             if getattr(devices, "fp8", False):
