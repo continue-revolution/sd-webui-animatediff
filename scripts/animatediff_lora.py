@@ -78,7 +78,7 @@ class AnimateDiffLora:
             logger.info("AnimateDiff LoRA already restored")
             return
 
-        logger.info("Restoring hacked LoRa")
+        logger.info("Restoring hacked LoRA")
         import networks
         networks.load_network = AnimateDiffLora.original_load_network
         AnimateDiffLora.original_load_network = None
