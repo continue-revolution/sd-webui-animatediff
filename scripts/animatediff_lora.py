@@ -23,7 +23,7 @@ class AnimateDiffLora:
             logger.info("AnimateDiff LoRA already hacked")
             return
 
-        logger.info("Hacking loral to support motion lora")
+        logger.info("Hacking LoRA module to support motion LoRA")
         import network
         import networks
         AnimateDiffLora.original_load_network = networks.load_network
@@ -42,7 +42,7 @@ class AnimateDiffLora:
             sd = sd_models.read_state_dict(network_on_disk.filename)
             
             if 'motion_modules' in list(sd.keys())[0]:
-                logger.info(f"Loading motion lora {name} from {network_on_disk.filename}")
+                logger.info(f"Loading motion LoRA {name} from {network_on_disk.filename}")
                 matched_networks = {}
 
                 for key_network, weight in sd.items():
@@ -59,7 +59,7 @@ class AnimateDiffLora:
 
                 for key, weights in matched_networks.items():
                     net_module = networks.module_types[0].create_module(net, weights)
-                    assert net_module is not None, "Failed to create motion module lora"
+                    assert net_module is not None, "Failed to create motion module LoRA"
                     net.modules[key] = net_module
 
                 return net
@@ -78,7 +78,7 @@ class AnimateDiffLora:
             logger.info("AnimateDiff LoRA already restored")
             return
 
-        logger.info("Restoring hacked lora")
+        logger.info("Restoring hacked LoRA")
         import networks
         networks.load_network = AnimateDiffLora.original_load_network
         AnimateDiffLora.original_load_network = None
