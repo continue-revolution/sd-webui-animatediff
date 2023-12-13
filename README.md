@@ -62,7 +62,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/11/10`: [v1.12.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.0): [AnimateDiff for SDXL](https://github.com/guoyww/AnimateDiff/tree/sdxl) supported. See [SDXL](#sdxl) for more information. You need to add `--disable-safe-unpickle` to your command line arguments to get rid of the bad file error.
 - `2023/11/16`: [v1.12.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.1): FP8 precision and LCM sampler supported. See [Optimizations](#optimizations) for more information. You can also optionally upload videos to AWS S3 storage by configuring appropriately via `Settings/AnimateDiff AWS`.
 
-For future update plan, please query [here](https://github.com/continue-revolution/sd-webui-animatediff/pull/294).
+For future update plan, please query [#366](https://github.com/continue-revolution/sd-webui-animatediff/pull/366).
 
 
 ## How to Use
