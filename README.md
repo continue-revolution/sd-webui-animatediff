@@ -1,7 +1,7 @@
 # AnimateDiff for Stable Diffusion WebUI
-This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) w/ [CLI](https://github.com/s9roll7/animatediff-cli-prompt-travel) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) w/ [ControlNet](https://github.com/Mikubill/sd-webui-controlnet). You can generate GIFs in exactly the same way as generating images after enabling this extension.
+This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/)-related video generative models into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui). You can generate GIFs in exactly the same way as generating images after enabling this extension.
 
-This extension implements AnimateDiff in a different way. It does not require you to clone the whole SD1.5 repository. It also applied (probably) the least modification to `ldm`, so that you do not need to reload your model weights if you don't want to.
+This extension implements AnimateDiff in a different way. It does not require you to clone the whole SD1.5 repository. It also applies (probably) the least modification to `ldm`, so that you do not need to reload your model weights if you don't want to.
 
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything).
 
@@ -38,9 +38,24 @@ You might also be interested in another extension I created: [Segment Anything f
 
 
 ## Update
+### General Information
+Now that video generation in AI research community has been under an explosive growth - I've noticed tons of papers published recently and I expect more to come. Please read [this survey repository](https://github.com/showlab/Awesome-Video-Diffusion) to get a feeling.
 
-For future update plan, please query [here](https://github.com/continue-revolution/sd-webui-animatediff/pull/294).
+However, I don't believe that the majority of them will be useful, and I only have limited bandwidth to work on my open-source projects. Please always doubt and experiment before getting too excited and submit a [feature request](https://github.com/continue-revolution/sd-webui-animatediff/issues/new/choose) whenever you encounter a new work. In general, I am only interested in video-generation related research works that meet at least one of the following criteria:
+- have more than 1k stars on GitHub with full source code & model checkpoint released
+- directly related to AnimateDiff, created by the same team as AnimateDiff
+- you submit a feature request demostrating why you think we should have it in A1111, and I agree with you
+- you submit a pull request, and I think your code is good enough to be merged
 
+I am now also a dev of [sd-webui-controlnet](https://github.com/Mikubill/sd-webui-controlnet), which means that sometimes actual code update may take place in ControlNet repository (or even both) instead of here only. Some video models (especially models by StabilityAI, such as [Stable Video Diffusion](https://github.com/Stability-AI/generative-models/commit/059d8e9cd9c55aea1ef2ece39abf605efb8b7cc9)) are not suitable to be an extension, but should be integrated into A1111 WebUI directly, and it could be extraordinaty challenging to do so. I will clearly write the instruction on which repo (A1111 WebUI / ControlNet / AnimateDiff) you should update in each version update below, as long as I wrote that code.
+
+Please read
+- [#366](https://github.com/continue-revolution/sd-webui-animatediff/pull/366) for update plan.
+- [CHANGELOG](#CHANGELOG.md) for v1.x.x update history.
+- the following section for v2.x.x update history.
+
+### V2 Update History
+TODO
 
 ## How to Use
 1. Update your WebUI to v1.6.0 and ControlNet to v1.1.410, then install this extension via link. I do not plan to support older version.
@@ -228,7 +243,7 @@ Benefits of using this extension instead of [sd-webui-lcm](https://github.com/0x
 - `mm_sd_v14.ckpt` & `mm_sd_v15.ckpt` & `mm_sd_v15_v2.ckpt` & `mm_sdxl_v10_beta.ckpt` by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff/tree/main) | [CivitAI](https://civitai.com/models/108836)
 - `mm_sd_v14.safetensors` & `mm_sd_v15.safetensors` & `mm_sd_v15_v2.safetensors` by [@neph1](https://github.com/neph1): [HuggingFace](https://huggingface.co/guoyww/animatediff/tree/refs%2Fpr%2F3)
 - `mm_sd_v14.fp16.safetensors` & `mm_sd_v15.fp16.safetensors` & `mm_sd_v15_v2.fp16.safetensors` by [@neggles](https://huggingface.co/neggles/): [HuggingFace](https://huggingface.co/neggles/)
-- `mm-Stabilized_high.pth` & `mm-Stabbilized_mid.pth` by [@manshoety](https://huggingface.co/manshoety): [HuggingFace](https://huggingface.co/manshoety/AD_Stabilized_Motion/tree/main)
+- `mm-Stabilized_high.pth` & `mm-Stabilized_mid.pth` by [@manshoety](https://huggingface.co/manshoety): [HuggingFace](https://huggingface.co/manshoety/AD_Stabilized_Motion/tree/main)
 - `temporaldiff-v1-animatediff.ckpt` by [@CiaraRowles](https://huggingface.co/CiaraRowles): [HuggingFace](https://huggingface.co/CiaraRowles/TemporalDiff/tree/main)
 - `hsxl_temporal_layers.safetensors` & `hsxl_tenporal_layers.f16.safetensors` by [@hotshotco](https://huggingface.co/hotshotco/): [HuggingFace](https://huggingface.co/hotshotco/Hotshot-XL/tree/main)
 
