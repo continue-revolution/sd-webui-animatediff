@@ -51,7 +51,7 @@ I am now also a dev of [sd-webui-controlnet](https://github.com/Mikubill/sd-webu
 
 Please read
 - [#366](https://github.com/continue-revolution/sd-webui-animatediff/pull/366) for update plan.
-- [CHANGELOG](#CHANGELOG.md) for v1.x.x update history.
+- [CHANGELOG](CHANGELOG.md) for v1.x.x update history.
 - the following section for v2.x.x update history.
 
 ### V2 Update History
