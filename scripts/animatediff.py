@@ -57,6 +57,7 @@ class AnimateDiffScript(scripts.Script):
             self.cn_hacker = AnimateDiffControl(p, self.prompt_scheduler)
             self.cn_hacker.hack(params)
             update_infotext(p, params)
+            p.override_settings['pad_cond_uncond'] = True
             self.hacked = True
         elif self.hacked:
             self.cn_hacker.restore()
