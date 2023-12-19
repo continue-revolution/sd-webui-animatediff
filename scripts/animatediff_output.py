@@ -16,9 +16,6 @@ from scripts.animatediff_ui import AnimateDiffProcess
 
 
 class AnimateDiffOutput:
-    api_encode_pil_to_base64_hooked = False
-
-
     def output(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         video_paths = []
         logger.info("Merging images into GIF.")
@@ -41,22 +38,10 @@ class AnimateDiffOutput:
             frame_list = self._interp(p, params, frame_list, filename)
             video_paths += self._save(params, frame_list, video_path_prefix, res, i)
 
-        if len(video_paths) > 0:
-            if p.is_api:
-                if not AnimateDiffOutput.api_encode_pil_to_base64_hooked:
-                    # TODO: remove this hook when WebUI is updated to v1.7.0
-                    logger.info("Hooking api.encode_pil_to_base64 to encode video to base64")
-                    AnimateDiffOutput.api_encode_pil_to_base64_hooked = True
-                    from modules.api import api
-                    api_encode_pil_to_base64 = api.encode_pil_to_base64
-                    def hooked_encode_pil_to_base64(image):
-                        if isinstance(image, str):
-                            return image
-                        return api_encode_pil_to_base64(image)
-                    api.encode_pil_to_base64 = hooked_encode_pil_to_base64
-                res.images = self._encode_video_to_b64(video_paths) + (frame_list if 'Frame' in params.format else [])
-            else:
-                res.images = video_paths
+        if len(video_paths) == 0:
+            return
+
+        res.images = video_paths if not p.is_api else (self._encode_video_to_b64(video_paths) + (frame_list if 'Frame' in params.format else []))
 
 
     def _add_reverse(self, params: AnimateDiffProcess, frame_list: list):
