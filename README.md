@@ -299,6 +299,11 @@ We are currently developing approach to support batch size on WebUI in the near 
 
 The prompt is similar to [above](#prompt-travel).
 
+### AnimateDiff V3
+You should be able to read infotext to understand how I generated this sample.
+![00024-3973810345](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/5f3e3858-8033-4a16-94b0-4dbc0d0a67fc)
+
+
 ### AnimateDiff + SDXL
 You should be able to read infotext to understand how I generated this sample.
 ![00025-1668075705](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/6d32daf9-51c6-490f-a942-db36f84f23cf)
