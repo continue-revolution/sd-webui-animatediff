@@ -13,10 +13,12 @@ You might also be interested in another extension I created: [Segment Anything f
   - [API](#api)
 - [WebUI Parameters](#webui-parameters)
 - [Img2GIF](#img2gif)
-- [Motion LoRA](#motion-lora)
 - [Prompt Travel](#prompt-travel)
 - [ControlNet V2V](#controlnet-v2v)
-- [SDXL](#sdxl)
+- [Model Spec](#model-spec)
+  - [Motion LoRA](#motion-lora)
+  - [V3](#v3)
+  - [SDXL](#sdxl)
 - [Optimizations](#optimizations)
   - [Attention](#attention)
   - [FP8](#fp8)
@@ -59,11 +61,11 @@ You might also be interested in another extension I created: [Segment Anything f
 - `2023/10/25`: [v1.10.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.10.0): Support img2img batch. You need ControlNet installed to make it work properly (you do not need to enable ControlNet). See [ControlNet V2V](#controlnet-v2v) for more information.
 - `2023/10/29`: [v1.11.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.0): [HotShot-XL](https://github.com/hotshotco/Hotshot-XL) supported. See [SDXL](#sdxl) for more information.
 - `2023/11/06`: [v1.11.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.11.1): Optimize VRAM for ControlNet V2V, patch [encode_pil_to_base64](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/api/api.py#L104-L133) for api return a video, save frames to `AnimateDiff/yy-mm-dd/`, recover from assertion error, optional [request id](#api) for API.
-- `2023/11/10`: [v1.12.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.0): [AnimateDiff for SDXL](https://github.com/guoyww/AnimateDiff/tree/sdxl) supported. See [SDXL](#sdxl) for more information. You need to add `--disable-safe-unpickle` to your command line arguments to get rid of the bad file error.
+- `2023/11/10`: [v1.12.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.0): [AnimateDiff for SDXL](https://github.com/guoyww/AnimateDiff/tree/sdxl) supported. See [SDXL](#sdxl) for more information.
 - `2023/11/16`: [v1.12.1](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.12.1): FP8 precision and LCM sampler supported. See [Optimizations](#optimizations) for more information. You can also optionally upload videos to AWS S3 storage by configuring appropriately via `Settings/AnimateDiff AWS`.
-- `2023/12/19`: [v1.13.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.13.0): [AnimateDiff V3](https://github.com/guoyww/AnimateDiff?tab=readme-ov-file#202312-animatediff-v3-and-sparsectrl) supported.
+- `2023/12/19`: [v1.13.0](https://github.com/continue-revolution/sd-webui-animatediff/releases/tag/v1.13.0): [AnimateDiff V3](https://github.com/guoyww/AnimateDiff?tab=readme-ov-file#202312-animatediff-v3-and-sparsectrl) supported. See [V3](#v3) for more information. Also: release all official models in fp16 & safetensors format [here](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main), add option to disable LCM sampler in `Settings/AnimateDiff`, remove patch [encode_pil_to_base64](https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/master/modules/api/api.py#L104-L133) because A1111 [v1.7.0](https://github.com/AUTOMATIC1111/stable-diffusion-webui/tree/v1.7.0) now supports video return for API. 
 
-For future update plan, please query [#366](https://github.com/continue-revolution/sd-webui-animatediff/pull/366).
+For future update plan, please query [#366](https://github.com/continue-revolution/sd-webui-animatediff/pull/366). `v1.13.x` is the last version update for `v1`. SparseCtrl, Magic Animate and other control methods will be supported in `v2` via updating both this repo and sd-webui-controlnet.
 
 
 ## How to Use
@@ -153,9 +155,9 @@ It is quite similar to the way you use ControlNet. API will return a video in ba
 
 Please read
 - [Img2GIF](#img2gif) for extra parameters on img2gif panel.
-- [Motion LoRA](#motion-lora) for how to use Motion LoRA.
 - [Prompt Travel](#prompt-travel) for how to trigger prompt travel.
 - [ControlNet V2V](#controlnet-v2v) for how to use ControlNet V2V.
+- [Model Spec](#model-spec) for how to use Motion LoRA, V3 and SDXL.
 
 
 ## Img2GIF
@@ -168,10 +170,6 @@ init_latent = init_latent * init_alpha + random_tensor * (1 - init_alpha)
 ```
 
 If you upload a last frame: your `init_latent` will be changed in a similar way. Read [this code](https://github.com/continue-revolution/sd-webui-animatediff/tree/v1.5.0/scripts/animatediff_latent.py#L28-L65) to understand how it works.
-
-
-## Motion LoRA
-[Download](https://huggingface.co/guoyww/animatediff) and use them like any other LoRA you use (example: download motion lora to `stable-diffusion-webui/models/Lora` and add `<lora:v2_lora_PanDown:0.8>` to your positive prompt). **Motion LoRA only supports V2 motion modules**.
 
 
 ## Prompt Travel
@@ -204,8 +202,14 @@ For people who want to inpaint videos: enter a folder which contains two sub-fol
 AnimateDiff in img2img batch will be available in [v1.10.0](https://github.com/continue-revolution/sd-webui-animatediff/pull/224).
 
 
-## SDXL
+## Model Spec
+### Motion LoRA
+[Download](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main/lora) and use them like any other LoRA you use (example: download motion lora to `stable-diffusion-webui/models/Lora` and add `<lora:mm_sd15_v2_lora_PanLeft:0.8>` to your positive prompt). **Motion LoRA only supports V2 motion modules**.
 
+### V3
+You may optionally use [adapter](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/lora/mm_sd15_v3_adapter.safetensors?download=true) for V3, in the same way as the way you use LoRA. You MUST use [my link](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/lora/mm_sd15_v3_adapter.safetensors?download=true) instead of the [official link](https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_adapter.ckpt?download=true). The official adapter won't work for A1111 due to state dict incompatibility.
+
+### SDXL
 [AnimateDiffXL](https://github.com/guoyww/AnimateDiff/tree/sdxl) and [HotShot-XL](https://github.com/hotshotco/Hotshot-XL) have identical architecture to AnimateDiff-SD1.5. The only 2 difference are
 - HotShot-XL is trained with 8 frames instead of 16 frames. You are recommended to set `Context batch size` to 8 for HotShot-XL.
 - AnimateDiffXL is still trained with 16 frames. You do not need to change `Context batch size` for AnimateDiffXL.
@@ -215,8 +219,6 @@ AnimateDiff in img2img batch will be available in [v1.10.0](https://github.com/c
 Although AnimateDiffXL & HotShot-XL have identical structure with AnimateDiff-SD1.5, I strongly discourage you from using AnimateDiff-SD1.5 for SDXL, or using HotShot / AnimateDiffXL for SD1.5 - you will get severe artifect if you do that. I have decided not to supported that, despite the fact that it is not hard for me to do that.
 
 Technically all features available for AnimateDiff + SD1.5 are also available for (AnimateDiff / HotShot) + SDXL. However, I have not tested all of them. I have tested infinite context generation and prompt travel; I have not tested ControlNet. If you find any bug, please report it to me.
-
-For download link, please read [Model Zoo](#model-zoo). For VRAM usage, please read [VRAM](#vram). For demo, please see [demo](#animatediff--sdxl).
 
 
 ## Optimizations
@@ -249,12 +251,12 @@ Benefits of using this extension instead of [sd-webui-lcm](https://github.com/0x
 
 
 ## Model Zoo
-- `mm_sd_v14.ckpt` & `mm_sd_v15.ckpt` & `mm_sd_v15_v2.ckpt` & `mm_sdxl_v10_beta.ckpt` by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff/tree/main) | [CivitAI](https://civitai.com/models/108836)
-- `mm_sd_v14.safetensors` & `mm_sd_v15.safetensors` & `mm_sd_v15_v2.safetensors` by [@neph1](https://github.com/neph1): [HuggingFace](https://huggingface.co/guoyww/animatediff/tree/refs%2Fpr%2F3)
-- `mm_sd_v14.fp16.safetensors` & `mm_sd_v15.fp16.safetensors` & `mm_sd_v15_v2.fp16.safetensors` by [@neggles](https://huggingface.co/neggles/): [HuggingFace](https://huggingface.co/neggles/)
-- `mm-Stabilized_high.pth` & `mm-Stabbilized_mid.pth` by [@manshoety](https://huggingface.co/manshoety): [HuggingFace](https://huggingface.co/manshoety/AD_Stabilized_Motion/tree/main)
-- `temporaldiff-v1-animatediff.ckpt` by [@CiaraRowles](https://huggingface.co/CiaraRowles): [HuggingFace](https://huggingface.co/CiaraRowles/TemporalDiff/tree/main)
-- `hsxl_temporal_layers.safetensors` & `hsxl_tenporal_layers.f16.safetensors` by [@hotshotco](https://huggingface.co/hotshotco/): [HuggingFace](https://huggingface.co/hotshotco/Hotshot-XL/tree/main)
+I am maintaining a [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main) to provide all official models in fp16 & safetensors format. You are highly recommended to use my link. You MUST use my link to download adapter for V3. You may still use the old links if you want, for all models except adapter for V3.
+
+- "Official" models by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff/tree/main) | [CivitAI](https://civitai.com/models/108836)
+- "Stabilized" community models by [@manshoety](https://huggingface.co/manshoety): [HuggingFace](https://huggingface.co/manshoety/AD_Stabilized_Motion/tree/main)
+- "TemporalDiff" models by [@CiaraRowles](https://huggingface.co/CiaraRowles): [HuggingFace](https://huggingface.co/CiaraRowles/TemporalDiff/tree/main)
+- "HotShotXL" models by [@hotshotco](https://huggingface.co/hotshotco/): [HuggingFace](https://huggingface.co/hotshotco/Hotshot-XL/tree/main)
 
 
 ## VRAM
