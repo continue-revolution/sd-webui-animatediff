@@ -117,6 +117,9 @@ class AnimateDiffLCM:
 
     @staticmethod
     def hack_kdiff_ui():
+        if shared.opts.data.get("animatediff_disable_lcm", False):
+            return
+
         if AnimateDiffLCM.lcm_ui_injected:
             logger.info(f"LCM UI already injected.")
             return

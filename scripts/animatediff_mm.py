@@ -39,7 +39,7 @@ class AnimateDiffMM:
             logger.info(f"Loading motion module {model_name} from {model_path}")
             model_hash = hashes.sha256(model_path, f"AnimateDiff/{model_name}")
             mm_state_dict = sd_models.read_state_dict(model_path)
-            model_type = MotionModuleType.get_mm_type(mm_state_dict)
+            model_type = MotionModuleType.get_mm_type(mm_state_dict, model_name)
             logger.info(f"Guessed {model_name} architecture: {model_type}")
             self.mm = MotionWrapper(model_name, model_hash, model_type)
             missed_keys = self.mm.load_state_dict(mm_state_dict)
@@ -67,7 +67,7 @@ class AnimateDiffMM:
         if self.mm.is_v2:
             logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet middle block.")
             unet.middle_block.insert(-1, self.mm.mid_block.motion_modules[0])
-        elif not self.mm.is_adxl:
+        elif not (self.mm.is_adxl or self.mm.is_v3):
             logger.info(f"Hacking {sd_ver} GroupNorm32 forward function.")
             if self.mm.is_hotshot:
                 from sgm.modules.diffusionmodules.util import GroupNorm32
@@ -137,7 +137,7 @@ class AnimateDiffMM:
         if self.mm.is_v2:
             logger.info(f"Removing motion module from {sd_ver} UNet middle block.")
             unet.middle_block.pop(-2)
-        elif not self.mm.is_adxl:
+        elif not (self.mm.is_adxl or self.mm.is_v3):
             logger.info(f"Restoring {sd_ver} GroupNorm32 forward function.")
             if self.mm.is_hotshot:
                 from sgm.modules.diffusionmodules.util import GroupNorm32

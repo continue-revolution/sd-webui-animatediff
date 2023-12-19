@@ -15,19 +15,23 @@ import math
 class MotionModuleType(Enum):
     AnimateDiffV1 = "AnimateDiff V1, Yuwei GUo, Shanghai AI Lab"
     AnimateDiffV2 = "AnimateDiff V2, Yuwei Guo, Shanghai AI Lab"
+    AnimateDiffV3 = "AnimateDiff V3, Yuwei Guo, Shanghai AI Lab"
     AnimateDiffXL = "AnimateDiff SDXL, Yuwei Guo, Shanghai AI Lab"
     HotShotXL = "HotShot-XL, John Mullan, Natural Synthetics Inc"
 
 
     @staticmethod
-    def get_mm_type(state_dict: dict):
+    def get_mm_type(state_dict: dict, filename: str = None):
         keys = list(state_dict.keys())
         if any(["mid_block" in k for k in keys]):
             return MotionModuleType.AnimateDiffV2
         elif any(["temporal_attentions" in k for k in keys]):
             return MotionModuleType.HotShotXL
         elif any(["down_blocks.3" in k for k in keys]):
-            return MotionModuleType.AnimateDiffV1
+            if "v3" in filename and "sd15" in filename:
+                return MotionModuleType.AnimateDiffV3
+            else:
+                return MotionModuleType.AnimateDiffV1
         else:
             return MotionModuleType.AnimateDiffXL
 
@@ -43,10 +47,11 @@ class MotionWrapper(nn.Module):
     def __init__(self, mm_name: str, mm_hash: str, mm_type: MotionModuleType):
         super().__init__()
         self.is_v2 = mm_type == MotionModuleType.AnimateDiffV2
+        self.is_v3 = mm_type == MotionModuleType.AnimateDiffV3
         self.is_hotshot = mm_type == MotionModuleType.HotShotXL
         self.is_adxl = mm_type == MotionModuleType.AnimateDiffXL
         self.is_xl = self.is_hotshot or self.is_adxl
-        max_len = 32 if (self.is_v2 or self.is_adxl) else 24
+        max_len = 32 if (self.is_v2 or self.is_adxl or self.is_v3) else 24
         in_channels = (320, 640, 1280) if (self.is_hotshot or self.is_adxl) else (320, 640, 1280, 1280)
         self.down_blocks = nn.ModuleList([])
         self.up_blocks = nn.ModuleList([])
