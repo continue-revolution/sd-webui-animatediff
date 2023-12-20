@@ -187,6 +187,18 @@ class AnimateDiffInfV2V:
             if self.mask_before_denoising and self.mask is not None:
                 x = self.init_latent * self.mask + self.nmask * x
 
+
+            #MILES CHANGE
+            milesNumber = (1, 0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.25,0.2,0.15,0.1,0.09,.08,.07,.06,.05,.04,.03,.02,.01, 0, 0, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1, 1, 1, 1, 1, 1)
+            
+            
+            for i in range(x.shape[0]):
+                if (self.step / state.sampling_steps) < milesNumber[i]: 
+                    x[i, :, :, :] = self.init_latent[i, :, :, :]
+            
+            #END MILES CHANGE
+
+
             batch_size = len(conds_list)
             repeats = [len(conds_list[i]) for i in range(batch_size)]
 
