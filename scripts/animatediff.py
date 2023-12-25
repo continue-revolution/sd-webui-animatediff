@@ -47,7 +47,7 @@ class AnimateDiffScript(scripts.Script):
             self.prompt_scheduler = AnimateDiffPromptSchedule(params)
             self.lora_hacker = AnimateDiffLora(motion_module.mm.is_v2)
             self.lora_hacker.hack()
-            self.cfg_hacker = AnimateDiffInfV2V(p, self.prompt_scheduler)
+            self.cfg_hacker = AnimateDiffInfV2V(p)
             self.cfg_hacker.hack(params)
             update_infotext(p, params)
             self.hacked = True

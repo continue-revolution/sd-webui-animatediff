@@ -18,13 +18,12 @@ from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 class AnimateDiffInfV2V:
     cfg_original_forward = None
 
-    def __init__(self, p, prompt_scheduler: AnimateDiffPromptSchedule):
+    def __init__(self, p):
         try:
             from scripts.external_code import find_cn_script
             self.cn_script = find_cn_script(p.scripts)
         except:
             self.cn_script = None
-        self.prompt_scheduler = prompt_scheduler
 
 
     # Returns fraction that has denominator that is a power of 2
@@ -100,7 +99,6 @@ class AnimateDiffInfV2V:
         logger.info(f"Hacking CFGDenoiser forward function.")
         AnimateDiffInfV2V.cfg_original_forward = CFGDenoiser.forward
         cn_script = self.cn_script
-        prompt_scheduler = self.prompt_scheduler
 
         def mm_cn_select(context: List[int]):
             # take control images for current context.
@@ -238,7 +236,7 @@ class AnimateDiffInfV2V:
 
             if tensor.shape[1] == uncond.shape[1] or skip_uncond:
                 prompt_closed_loop = (params.video_length > params.batch_size) and (params.closed_loop in ['R+P', 'A']) # hook
-                tensor = prompt_scheduler.multi_cond(tensor, prompt_closed_loop) # hook
+                tensor = params.prompt_scheduler.multi_cond(tensor, prompt_closed_loop) # hook
                 if is_edit_model:
                     cond_in = catenate_conds([tensor, uncond, uncond])
                 elif skip_uncond:
