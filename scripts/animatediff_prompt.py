@@ -12,7 +12,7 @@ class AnimateDiffPromptSchedule:
     def __init__(self, params):
         self.prompt_map = None
         self.original_prompt = None
-        params.prompt_schedule = self
+        params.prompt_scheduler = self
 
 
     def save_infotext_img(self, p: StableDiffusionProcessing):

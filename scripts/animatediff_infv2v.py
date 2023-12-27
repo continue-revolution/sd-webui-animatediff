@@ -155,6 +155,8 @@ class AnimateDiffInfV2V:
                 else:
                     _context = context
                 mm_cn_select(_context)
+                print(x_in.shape)
+                print(_context)
                 out = self.inner_model(
                     x_in[_context], sigma_in[_context],
                     cond=make_condition_dict(

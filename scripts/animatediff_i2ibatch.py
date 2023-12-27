@@ -21,7 +21,7 @@ from modules.sd_samplers_common import images_tensor_to_samples, approximation_i
 from scripts.animatediff_logger import logger_animatediff as logger
 
 
-def hacked_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack this when i2i-batch with batch mask
+def animatediff_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack this when i2i-batch with batch mask
     self.image_cfg_scale: float = self.image_cfg_scale if shared.sd_model.cond_stage_key == "edit" else None
 
     self.sampler = sd_samplers.create_sampler(self.sampler_name, self.sd_model)
@@ -171,7 +171,7 @@ def hacked_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack thi
     self.image_conditioning = self.img2img_image_conditioning(image * 2 - 1, self.init_latent, image_masks) # let's ignore this image_masks which is related to inpaint model with different arch
 
 
-def hacked_img2img_process_batch_hijack(
+def amimatediff_i2i_batch(
         p: StableDiffusionProcessingImg2Img, input_dir: str, output_dir: str, inpaint_mask_dir: str,
         args, to_scale=False, scale_by=1.0, use_png_info=False, png_info_props=None, png_info_dir=None):
     output_dir = output_dir.strip()
@@ -188,7 +188,7 @@ def hacked_img2img_process_batch_hijack(
             assert len(inpaint_masks) == 1 or len(inpaint_masks) == len(images), 'The number of masks must be 1 or equal to the number of images.'
             logger.info(f"\n[i2i batch] Inpaint batch is enabled. {len(inpaint_masks)} masks found.")
             if len(inpaint_masks) > 1: # batch mask
-                p.init = MethodType(hacked_i2i_init, p)
+                p.init = MethodType(animatediff_i2i_init, p)
 
     logger.info(f"[i2i batch] Will process {len(images)} images, creating {p.n_iter} new videos.")
 

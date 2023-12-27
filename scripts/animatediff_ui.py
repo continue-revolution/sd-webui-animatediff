@@ -25,7 +25,7 @@ class AnimateDiffProcess:
 
     def __init__(
         self,
-        model="mm_sd_v15_v2.ckpt",
+        model="mm_sd15_v3.safetensors",
         enable=False,
         video_length=0,
         fps=8,
@@ -138,6 +138,7 @@ class AnimateDiffProcess:
         if self.video_default:
             self.video_length = min_batch_in_cn
             p.batch_size = min_batch_in_cn
+        return self.video_length
 
 
     def post_setup_cn_batches(self, p: StableDiffusionProcessing):
