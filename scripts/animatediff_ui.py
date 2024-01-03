@@ -80,17 +80,17 @@ class AnimateDiffProcess:
 
     def get_dict(self, is_img2img: bool):
         infotext = {
-            "enable": self.enable,
-            "model": self.model,
-            "video_length": self.video_length,
-            "fps": self.fps,
-            "loop_number": self.loop_number,
-            "closed_loop": self.closed_loop,
-            "batch_size": self.batch_size,
-            "stride": self.stride,
-            "overlap": self.overlap,
-            "interp": self.interp,
-            "interp_x": self.interp_x,
+            "Enable AnimateDiff": self.enable,
+            "Motion module": self.model,
+            "Number of frames": self.video_length,
+            "FPS": self.fps,
+            "Display loop number": self.loop_number,
+            "Closed loop": self.closed_loop,
+            "Context batch size": self.batch_size,
+            "Stride": self.stride,
+            "Overlap": self.overlap,
+            "Frame Interpolation": self.interp,
+            "Interp X": self.interp_x,
         }
         if self.request_id:
             infotext['request_id'] = self.request_id

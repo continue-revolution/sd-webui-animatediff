@@ -13,7 +13,7 @@ from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
-from scripts.animatediff_infotext import update_infotext
+from scripts.animatediff_infotext import update_infotext, infotext_pasted
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
@@ -38,8 +38,21 @@ class AnimateDiffScript(scripts.Script):
 
 
     def ui(self, is_img2img):
-        return (AnimateDiffUiGroup().render(is_img2img, motion_module.get_model_dir()),)
-
+        ui_group = AnimateDiffUiGroup()
+        unit = ui_group.render(is_img2img, motion_module.get_model_dir())
+        ui_controls = ui_group.params.get_list(is_img2img)
+        
+        # Set up controls to be copy-pasted using infotext
+        infotext_fields: List[Tuple[gr.components.IOComponent, str]] = []
+        paste_field_names: List[str] = []
+        for control in ui_controls:
+            control_locator = f"AnimateDiff {control.label}"
+            infotext_fields.append((control, control_locator))
+            paste_field_names.append(control_locator)
+        self.infotext_fields = infotext_fields
+        self.paste_field_names = paste_field_names 
+        
+        return (unit,)
 
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
         if p.is_api and isinstance(params, dict):
@@ -277,3 +290,4 @@ def on_ui_settings():
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)
 script_callbacks.on_before_ui(AnimateDiffUiGroup.on_before_ui)
+script_callbacks.on_infotext_pasted(infotext_pasted)
