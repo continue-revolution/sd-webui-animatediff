@@ -98,10 +98,10 @@ class AnimateDiffProcess:
             infotext['mm_hash'] = motion_module.mm.mm_hash[:8]
         if is_img2img:
             infotext.update({
-                "latent_power": self.latent_power,
-                "latent_scale": self.latent_scale,
-                "latent_power_last": self.latent_power_last,
-                "latent_scale_last": self.latent_scale_last,
+                "Latent power": self.latent_power,
+                "Latent scale": self.latent_scale,
+                "Optional latent power for last frame": self.latent_power_last,
+                "Optional latent scale for last frame": self.latent_scale_last,
             })
         infotext_str = ', '.join(f"{k}: {v}" for k, v in infotext.items())
         return infotext_str
