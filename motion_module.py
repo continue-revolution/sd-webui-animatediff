@@ -13,7 +13,7 @@ import math
 
 
 class MotionModuleType(Enum):
-    AnimateDiffV1 = "AnimateDiff V1, Yuwei GUo, Shanghai AI Lab"
+    AnimateDiffV1 = "AnimateDiff V1, Yuwei Guo, Shanghai AI Lab"
     AnimateDiffV2 = "AnimateDiff V2, Yuwei Guo, Shanghai AI Lab"
     AnimateDiffV3 = "AnimateDiff V3, Yuwei Guo, Shanghai AI Lab"
     AnimateDiffXL = "AnimateDiff SDXL, Yuwei Guo, Shanghai AI Lab"
@@ -60,7 +60,7 @@ class MotionWrapper(nn.Module):
         self.up_blocks = nn.ModuleList([])
         for c in in_channels:
             if self.is_sparsectrl:
-                self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len, attention_block_types=("Temporal_Self")))
+                self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len, attention_block_types=("Temporal_Self", )))
             else:
                 self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len))
                 self.up_blocks.insert(0,MotionModule(c, num_mm=3, max_len=max_len))

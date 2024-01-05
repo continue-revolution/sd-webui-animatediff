@@ -238,7 +238,7 @@ def amimatediff_i2i_batch(
                 info_img_path = os.path.join(png_info_dir, os.path.basename(image))
                 info_img = Image.open(info_img_path)
             from modules import images as imgutil
-            from modules.generation_parameters_copypaste import parse_generation_parameters
+            from modules.infotext import parse_generation_parameters
             geninfo, _ = imgutil.read_info_from_image(info_img)
             parsed_parameters = parse_generation_parameters(geninfo)
             parsed_parameters = {k: v for k, v in parsed_parameters.items() if k in (png_info_props or {})}
