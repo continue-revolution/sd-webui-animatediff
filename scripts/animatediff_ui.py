@@ -45,6 +45,7 @@ class AnimateDiffProcess:
         latent_power_last=1,
         latent_scale_last=32,
         request_id = '',
+        freeinit_enable=False,
     ):
         self.model = model
         self.enable = enable
@@ -60,6 +61,7 @@ class AnimateDiffProcess:
         self.interp_x = interp_x
         self.video_source = video_source
         self.video_path = video_path
+        self.freeinit_enable = freeinit_enable
         self.latent_power = latent_power
         self.latent_scale = latent_scale
         self.last_frame = last_frame
@@ -72,7 +74,7 @@ class AnimateDiffProcess:
 
 
     def get_list(self, is_img2img: bool):
-        return list(vars(self).values())[:(19 if is_img2img else 14)]
+        return list(vars(self).values())[:(20 if is_img2img else 15)]
 
 
     def get_dict(self, is_img2img: bool):
@@ -88,6 +90,7 @@ class AnimateDiffProcess:
             "overlap": self.overlap,
             "interp": self.interp,
             "interp_x": self.interp_x,
+            "freeinit_enable": self.freeinit_enable,
         }
         if self.request_id:
             infotext['request_id'] = self.request_id
@@ -264,6 +267,10 @@ class AnimateDiffUiGroup:
                     label="Frame Interpolation",
                     elem_id=f"{elemid_prefix}interp-choice",
                     value=self.params.interp
+                )
+                self.params.freeinit_enable = gr.Checkbox(
+                    value=self.params.freeinit_enable, label="Enable FreeInit", 
+                    elem_id=f"{elemid_prefix}freeinit-enable"
                 )
                 self.params.interp_x = gr.Number(
                     value=self.params.interp_x, label="Interp X", precision=0, 
