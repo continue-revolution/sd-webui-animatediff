@@ -12,7 +12,6 @@ from modules.sd_samplers_cfg_denoiser import CFGDenoiser, catenate_conds, subscr
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
-from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 
 
 class AnimateDiffInfV2V:

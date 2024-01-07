@@ -6,7 +6,6 @@ from modules.scripts import PostprocessBatchListArgs, PostprocessImageArgs
 from scripts.animatediff_infv2v import AnimateDiffInfV2V
 from scripts.animatediff_latent import AnimateDiffI2VLatent
 from scripts.animatediff_logger import logger_animatediff as logger
-from scripts.animatediff_lora import AnimateDiffLora
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
@@ -21,7 +20,6 @@ motion_module.set_script_dir(script_dir)
 class AnimateDiffScript(scripts.Script):
 
     def __init__(self):
-        self.lora_hacker = None
         self.cfg_hacker = None
         self.prompt_scheduler = None
         self.hacked = False
@@ -45,15 +43,12 @@ class AnimateDiffScript(scripts.Script):
             params.set_p(p)
             motion_module.inject(p.sd_model, params.model)
             self.prompt_scheduler = AnimateDiffPromptSchedule(params)
-            self.lora_hacker = AnimateDiffLora(motion_module.mm.is_v2)
-            self.lora_hacker.hack()
             self.cfg_hacker = AnimateDiffInfV2V(p)
             self.cfg_hacker.hack(params)
             update_infotext(p, params)
             self.hacked = True
         elif self.hacked:
             self.cfg_hacker.restore()
-            self.lora_hacker.restore()
             motion_module.restore(p.sd_model)
             self.hacked = False
 
@@ -77,7 +72,6 @@ class AnimateDiffScript(scripts.Script):
         if params.enable:
             self.prompt_scheduler.save_infotext_txt(res)
             self.cfg_hacker.restore()
-            self.lora_hacker.restore()
             motion_module.restore(p.sd_model)
             self.hacked = False
             AnimateDiffOutput().output(p, res, params)
