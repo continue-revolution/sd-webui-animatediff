@@ -20,7 +20,6 @@ motion_module.set_script_dir(script_dir)
 class AnimateDiffScript(scripts.Script):
 
     def __init__(self):
-        self.prompt_scheduler = None
         self.hacked = False
 
 
@@ -41,11 +40,10 @@ class AnimateDiffScript(scripts.Script):
             logger.info("AnimateDiff process start.")
             params.set_p(p)
             motion_module.inject(p.sd_model, params.model)
-            self.prompt_scheduler = AnimateDiffPromptSchedule(params)
+            params.prompt_scheduler = AnimateDiffPromptSchedule()
             update_infotext(p, params)
             self.hacked = True
         elif self.hacked:
-            self.cfg_hacker.restore()
             motion_module.restore(p.sd_model)
             self.hacked = False
 
@@ -57,7 +55,7 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess_batch_list(self, p: StableDiffusionProcessing, pp: PostprocessBatchListArgs, params: AnimateDiffProcess, **kwargs):
         if params.enable:
-            self.prompt_scheduler.save_infotext_img(p)
+            params.prompt_scheduler.save_infotext_img(p)
 
 
     def postprocess_image(self, p: StableDiffusionProcessing, pp: PostprocessImageArgs, params: AnimateDiffProcess, *args):
@@ -67,7 +65,7 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if params.enable:
-            self.prompt_scheduler.save_infotext_txt(res)
+            params.prompt_scheduler.save_infotext_txt(res)
             motion_module.restore(p.sd_model)
             self.hacked = False
             AnimateDiffOutput().output(p, res, params)

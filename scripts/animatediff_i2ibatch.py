@@ -251,7 +251,7 @@ def amimatediff_i2i_batch(
         p.cfg_scale = float(parsed_parameters.get("CFG scale", cfg_scale))
         p.sampler_name = parsed_parameters.get("Sampler", sampler_name)
         p.steps = int(parsed_parameters.get("Steps", steps))
-        
+
     p.init_images = frame_images
     if len(frame_masks) > 0:
         p.image_mask = frame_masks
