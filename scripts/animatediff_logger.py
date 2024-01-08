@@ -37,5 +37,7 @@ if not logger_animatediff.handlers:
 
 # Configure logger
 loglevel_string = getattr(shared.cmd_opts, "loglevel", "INFO")
+if not loglevel_string:
+    loglevel_string = "INFO"
 loglevel = getattr(logging, loglevel_string.upper(), None)
 logger_animatediff.setLevel(loglevel)
