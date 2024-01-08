@@ -44,6 +44,13 @@ class AnimateDiffOutput:
         res.images = video_paths if not p.is_api else (self._encode_video_to_b64(video_paths) + (frame_list if 'Frame' in params.format else []))
 
 
+    def _remove_frame_extract(self, params: AnimateDiffProcess):
+        if params.video_source and params.video_path and not shared.opts.data.get("animatediff_frame_extract_path", None) and Path(params.video_path).exists():
+            logger.info(f"Removing extracted frames from {params.video_path}")
+            import shutil
+            shutil.rmtree(params.video_path)
+
+
     def _add_reverse(self, params: AnimateDiffProcess, frame_list: list):
         if params.video_length <= params.batch_size and params.closed_loop in ['A']:
             frame_list_reverse = frame_list[::-1]
@@ -309,10 +316,12 @@ class AnimateDiffOutput:
                 videos.append(base64.b64encode(video_file.read()).decode("utf-8"))
         return videos
 
+
     def _install_requirement_if_absent(self,lib):
         import launch
         if not launch.is_installed(lib):
             launch.run_pip(f"install {lib}", f"animatediff requirement: {lib}")
+
 
     def _exist_bucket(self,s3_client,bucketname):
         try:
@@ -323,6 +332,7 @@ class AnimateDiffOutput:
                 return False
             else:
                 raise
+
 
     def _save_to_s3_stroge(self ,file_path):
         """
@@ -357,5 +367,4 @@ class AnimateDiffOutput:
         targetpath = f"{date}/{filename}"
         client.upload_file(file_path, bucket,  targetpath)
         logger.info(f"{file_path} saved to s3 in bucket: {bucket}")
-        return f"http://{host}:{port}/{bucket}/{targetpath}"
-        
+        return f"http://{host}:{port}/{bucket}/{targetpath}"  
