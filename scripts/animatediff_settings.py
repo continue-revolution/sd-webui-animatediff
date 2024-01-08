@@ -117,15 +117,6 @@ def on_ui_settings():
         )
     )
     shared.opts.add_option(
-        "animatediff_disable_lcm",
-        shared.OptionInfo(
-            False,
-            "Disable LCM",
-            gr.Checkbox,
-            section=section
-        )
-    )
-    shared.opts.add_option(
         "animatediff_s3_enable",
         shared.OptionInfo(
             False,
