@@ -80,17 +80,17 @@ class AnimateDiffProcess:
 
     def get_dict(self, is_img2img: bool):
         infotext = {
-            "Enable AnimateDiff": self.enable,
-            "Motion module": self.model,
-            "Number of frames": self.video_length,
-            "FPS": self.fps,
-            "Display loop number": self.loop_number,
-            "Closed loop": self.closed_loop,
-            "Context batch size": self.batch_size,
-            "Stride": self.stride,
-            "Overlap": self.overlap,
-            "Frame Interpolation": self.interp,
-            "Interp X": self.interp_x,
+            "enable": self.enable,
+            "model": self.model,
+            "video_length": self.video_length,
+            "fps": self.fps,
+            "loop_number": self.loop_number,
+            "closed_loop": self.closed_loop,
+            "batch_size": self.batch_size,
+            "stride": self.stride,
+            "overlap": self.overlap,
+            "interp": self.interp,
+            "interp_x": self.interp_x,
         }
         if self.request_id:
             infotext['request_id'] = self.request_id
@@ -98,10 +98,10 @@ class AnimateDiffProcess:
             infotext['mm_hash'] = motion_module.mm.mm_hash[:8]
         if is_img2img:
             infotext.update({
-                "Latent power": self.latent_power,
-                "Latent scale": self.latent_scale,
-                "Optional latent power for last frame": self.latent_power_last,
-                "Optional latent scale for last frame": self.latent_scale_last,
+                "latent_power": self.latent_power,
+                "latent_scale": self.latent_scale,
+                "latent_power_last": self.latent_power_last,
+                "latent_scale_last": self.latent_scale_last,
             })
         infotext_str = ', '.join(f"{k}: {v}" for k, v in infotext.items())
         return infotext_str
