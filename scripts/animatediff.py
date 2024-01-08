@@ -13,6 +13,7 @@ from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_infotext import update_infotext
 from scripts.animatediff_settings import on_ui_settings
 
+
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
 
@@ -42,6 +43,10 @@ class AnimateDiffScript(scripts.Script):
             motion_module.inject(p.sd_model, params.model)
             params.prompt_scheduler = AnimateDiffPromptSchedule()
             update_infotext(p, params)
+            if params.freeinit_enable:
+                self.freeinit_hacker = AnimateDiffFreeInit()
+                self.freeinit_hacker.hack(p, params)
+
             self.hacked = True
         elif self.hacked:
             motion_module.restore(p.sd_model)
