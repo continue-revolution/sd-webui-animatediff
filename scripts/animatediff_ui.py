@@ -80,17 +80,17 @@ class AnimateDiffProcess:
 
     def get_dict(self, is_img2img: bool):
         infotext = {
-            "Enable AnimateDiff": self.enable,
-            "Motion module": self.model,
-            "Number of frames": self.video_length,
-            "FPS": self.fps,
-            "Display loop number": self.loop_number,
-            "Closed loop": self.closed_loop,
-            "Context batch size": self.batch_size,
-            "Stride": self.stride,
-            "Overlap": self.overlap,
-            "Frame Interpolation": self.interp,
-            "Interp X": self.interp_x,
+            "enable": self.enable,
+            "model": self.model,
+            "video_length": self.video_length,
+            "fps": self.fps,
+            "loop_number": self.loop_number,
+            "closed_loop": self.closed_loop,
+            "batch_size": self.batch_size,
+            "stride": self.stride,
+            "overlap": self.overlap,
+            "interp": self.interp,
+            "interp_x": self.interp_x,
         }
         if self.request_id:
             infotext['request_id'] = self.request_id
@@ -98,10 +98,10 @@ class AnimateDiffProcess:
             infotext['mm_hash'] = motion_module.mm.mm_hash[:8]
         if is_img2img:
             infotext.update({
-                "Latent power": self.latent_power,
-                "Latent scale": self.latent_scale,
-                "Optional latent power for last frame": self.latent_power_last,
-                "Optional latent scale for last frame": self.latent_scale_last,
+                "latent_power": self.latent_power,
+                "latent_scale": self.latent_scale,
+                "latent_power_last": self.latent_power_last,
+                "latent_scale_last": self.latent_scale_last,
             })
         infotext_str = ', '.join(f"{k}: {v}" for k, v in infotext.items())
         return infotext_str
@@ -141,7 +141,13 @@ class AnimateDiffUiGroup:
         self.params = AnimateDiffProcess()
 
 
-    def render(self, is_img2img: bool, model_dir: str):
+    def render(
+        self,
+        is_img2img: bool,
+        model_dir: str,
+        infotext_fields,
+        paste_field_names
+    ):
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
         elemid_prefix = "img2img-ad-" if is_img2img else "txt2img-ad-"
@@ -313,6 +319,19 @@ class AnimateDiffUiGroup:
                 remove = gr.Button(value="Remove motion module from any memory")
                 unload.click(fn=motion_module.unload)
                 remove.click(fn=motion_module.remove)
+
+        # Set up controls to be copy-pasted using infotext
+        remove = ["format", "request_id", "video_source", "video_path", "last_frame"]
+        if not is_img2img:
+            remove.extend(["latent_power", "latent_power_last", "latent_scale", "latent_scale_last"])
+        fields = [
+            field 
+            for field in dir(self.params) 
+            if field not in remove and not callable(getattr(self.params, field)) and not field.startswith("__")
+        ]
+        infotext_fields.extend((getattr(self.params, field), f"AnimateDiff {field}") for field in fields)
+        paste_field_names.extend(f"AnimateDiff {field}" for field in fields)
+
         return self.register_unit(is_img2img)
 
 

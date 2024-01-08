@@ -27,6 +27,8 @@ class AnimateDiffScript(scripts.Script):
         self.cn_hacker = None
         self.prompt_scheduler = None
         self.hacked = False
+        self.infotext_fields: List[Tuple[gr.components.IOComponent, str]] = []
+        self.paste_field_names: List[str] = []
 
 
     def title(self):
@@ -38,20 +40,12 @@ class AnimateDiffScript(scripts.Script):
 
 
     def ui(self, is_img2img):
-        ui_group = AnimateDiffUiGroup()
-        unit = ui_group.render(is_img2img, motion_module.get_model_dir())
-        ui_controls = ui_group.params.get_list(is_img2img)
-        
-        # Set up controls to be copy-pasted using infotext
-        infotext_fields: List[Tuple[gr.components.IOComponent, str]] = []
-        paste_field_names: List[str] = []
-        for control in ui_controls:
-            control_locator = f"AnimateDiff {control.label}"
-            infotext_fields.append((control, control_locator))
-            paste_field_names.append(control_locator)
-        self.infotext_fields = infotext_fields
-        self.paste_field_names = paste_field_names 
-        
+        unit = AnimateDiffUiGroup().render(
+            is_img2img,
+            motion_module.get_model_dir(),
+            self.infotext_fields,
+            self.paste_field_names
+        )
         return (unit,)
 
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
