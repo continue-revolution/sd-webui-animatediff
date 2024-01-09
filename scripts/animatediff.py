@@ -74,5 +74,4 @@ class AnimateDiffScript(scripts.Script):
 
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)
-script_callbacks.on_before_ui(AnimateDiffUiGroup.on_before_ui)
 script_callbacks.on_cfg_denoiser(AnimateDiffInfV2V.animatediff_on_cfg_denoiser)
