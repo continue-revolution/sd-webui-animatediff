@@ -107,6 +107,18 @@ class AnimateDiffProcess:
         return infotext_str
 
 
+    def get_param_names(self, is_img2img: bool):
+        remove = ["format", "request_id", "video_source", "video_path", "last_frame"]
+        if not is_img2img:
+            remove.extend(["latent_power", "latent_power_last", "latent_scale", "latent_scale_last"])
+        
+        return (
+            field 
+            for field in self.__dict__ 
+            if field not in remove and not callable(getattr(self, field)) and not field.startswith("__")
+        )
+
+
     def _check(self):
         assert (
             self.video_length >= 0 and self.fps > 0
@@ -321,14 +333,7 @@ class AnimateDiffUiGroup:
                 remove.click(fn=motion_module.remove)
 
         # Set up controls to be copy-pasted using infotext
-        remove = ["format", "request_id", "video_source", "video_path", "last_frame"]
-        if not is_img2img:
-            remove.extend(["latent_power", "latent_power_last", "latent_scale", "latent_scale_last"])
-        fields = [
-            field 
-            for field in dir(self.params) 
-            if field not in remove and not callable(getattr(self.params, field)) and not field.startswith("__")
-        ]
+        fields = self.params.get_param_names(is_img2img)
         infotext_fields.extend((getattr(self.params, field), f"AnimateDiff {field}") for field in fields)
         paste_field_names.extend(f"AnimateDiff {field}" for field in fields)
 
