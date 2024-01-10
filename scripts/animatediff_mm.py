@@ -90,7 +90,7 @@ class AnimateDiffMM:
             if inject_sdxl and mm_idx >= 6:
                 break
             mm_idx0, mm_idx1 = mm_idx // 2, mm_idx % 2
-            mm_inject = getattr(self.mm.down_blocks[mm_idx0], "temporal_attentions" if self.mm.is_hotshot else "motion_modules")[mm_idx1]
+            mm_inject = getattr(self.mm.down_blocks[mm_idx0], "motion_modules")[mm_idx1]
             unet.input_blocks[unet_idx].append(mm_inject)
 
         logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet output blocks.")
@@ -98,7 +98,7 @@ class AnimateDiffMM:
             if inject_sdxl and unet_idx >= 9:
                 break
             mm_idx0, mm_idx1 = unet_idx // 3, unet_idx % 3
-            mm_inject = getattr(self.mm.up_blocks[mm_idx0], "temporal_attentions" if self.mm.is_hotshot else "motion_modules")[mm_idx1]
+            mm_inject = getattr(self.mm.up_blocks[mm_idx0], "motion_modules")[mm_idx1]
             if unet_idx % 3 == 2 and unet_idx != (8 if self.mm.is_xl else 11):
                 unet.output_blocks[unet_idx].insert(-1, mm_inject)
             else:
@@ -178,8 +178,9 @@ class AnimateDiffMM:
     def _set_layer_mapping(self, sd_model):
         if hasattr(sd_model, 'network_layer_mapping'):
             for name, module in self.mm.named_modules():
-                sd_model.network_layer_mapping[name] = module
-                module.network_layer_name = name
+                network_name = name.replace(".", "_")
+                sd_model.network_layer_mapping[network_name] = module
+                module.network_layer_name = network_name
 
 
     def _restore_ddim_alpha(self, sd_model):

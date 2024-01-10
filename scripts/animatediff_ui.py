@@ -4,11 +4,9 @@ import cv2
 import gradio as gr
 
 from modules import shared
-from modules.processing import StableDiffusionProcessing
+from modules.processing import StableDiffusionProcessing, StableDiffusionProcessingImg2Img
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
-from scripts.animatediff_i2ibatch import animatediff_i2ibatch
-from scripts.animatediff_lcm import AnimateDiffLCM
 
 
 class ToolButton(gr.Button, gr.components.FormComponent):
@@ -26,7 +24,7 @@ class AnimateDiffProcess:
 
     def __init__(
         self,
-        model="mm_sd_v15_v2.ckpt",
+        model="mm_sd15_v3.safetensors",
         enable=False,
         video_length=0,
         fps=8,
@@ -67,15 +65,13 @@ class AnimateDiffProcess:
         self.latent_power_last = latent_power_last
         self.latent_scale_last = latent_scale_last
         self.request_id = request_id
+        self.video_default = False
+        self.is_i2i_batch = False
+        self.prompt_scheduler = None
 
 
     def get_list(self, is_img2img: bool):
-        list_var = list(vars(self).values())[:-1]
-        if is_img2img:
-            animatediff_i2ibatch.hack()
-        else:
-            list_var = list_var[:-5]
-        return list_var
+        return list(vars(self).values())[:(19 if is_img2img else 14)]
 
 
     def get_dict(self, is_img2img: bool):
@@ -125,12 +121,39 @@ class AnimateDiffProcess:
         if self.video_length == 0:
             self.video_length = p.batch_size
             self.video_default = True
-        else:
-            self.video_default = False
         if self.overlap == -1:
             self.overlap = self.batch_size // 4
         if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", False):
             p.do_not_save_samples = True
+
+
+    def fix_video_length(self, p: StableDiffusionProcessing, min_batch_in_cn: int):
+        # ensure that params.video_length <= video_length and params.batch_size <= video_length
+        if self.video_length > min_batch_in_cn:
+            self.video_length = min_batch_in_cn
+            p.batch_size = min_batch_in_cn
+        if self.batch_size > min_batch_in_cn:
+            self.batch_size = min_batch_in_cn
+        if self.video_default:
+            self.video_length = min_batch_in_cn
+            p.batch_size = min_batch_in_cn
+        return self.video_length
+
+
+    def post_setup_cn_batches(self, p: StableDiffusionProcessing):
+        if self.is_i2i_batch and isinstance(p, StableDiffusionProcessingImg2Img):
+            if len(p.init_images) > self.video_length:
+                p.init_images = p.init_images[:self.video_length]
+                if p.image_mask and isinstance(p.image_mask, list) and len(p.image_mask) > self.video_length:
+                    p.image_mask = p.image_mask[:self.video_length]
+            if len(p.init_images) < self.video_length:
+                self.video_length = len(p.init_images)
+                p.batch_size = len(p.init_images)
+            if len(p.init_images) < self.batch_size:
+                self.batch_size = len(p.init_images)
+        from scripts.animatediff_infotext import update_infotext
+        self.prompt_scheduler.parse_prompt(p)
+        update_infotext(p, self)
 
 
 class AnimateDiffUiGroup:
@@ -343,7 +366,3 @@ class AnimateDiffUiGroup:
             AnimateDiffUiGroup.img2img_submit_button = component
             return
 
-
-    @staticmethod
-    def on_before_ui():
-        AnimateDiffLCM.hack_kdiff_ui()
