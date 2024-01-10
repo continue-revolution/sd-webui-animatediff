@@ -112,11 +112,11 @@ class AnimateDiffProcess:
         if not is_img2img:
             remove.extend(["latent_power", "latent_power_last", "latent_scale", "latent_scale_last"])
         
-        return (
+        return [
             field 
             for field in self.__dict__ 
             if field not in remove and not callable(getattr(self, field)) and not field.startswith("__")
-        )
+        ]
 
 
     def _check(self):
@@ -153,13 +153,7 @@ class AnimateDiffUiGroup:
         self.params = AnimateDiffProcess()
 
 
-    def render(
-        self,
-        is_img2img: bool,
-        model_dir: str,
-        infotext_fields,
-        paste_field_names
-    ):
+    def render(self, is_img2img: bool, model_dir: str, infotext_fields, paste_field_names):
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
         elemid_prefix = "img2img-ad-" if is_img2img else "txt2img-ad-"

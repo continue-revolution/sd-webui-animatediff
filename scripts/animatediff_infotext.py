@@ -23,7 +23,7 @@ def infotext_pasted(infotext, results):
         if not k.startswith("AnimateDiff"):
             continue
 
-        assert isinstance(v, str), f"Expect string but got {v}."
+        assert isinstance(v, str), f"Expected string but got {v}."
         try:
             for items in v.split(', '):
                 field, value = items.split(': ')
