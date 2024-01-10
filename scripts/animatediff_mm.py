@@ -17,6 +17,7 @@ class AnimateDiffMM:
         self.mm: MotionWrapper = None
         self.script_dir = None
         self.prev_alpha_cumprod = None
+        self.prev_alpha_cumprod_original = None
         self.gn32_original_forward = None
 
 
@@ -169,7 +170,9 @@ class AnimateDiffMM:
         alphas = 1.0 - betas
         alphas_cumprod = torch.cumprod(alphas, dim=0)
         self.prev_alpha_cumprod = sd_model.alphas_cumprod
+        self.prev_alpha_cumprod_original = sd_model.alphas_cumprod_original
         sd_model.alphas_cumprod = alphas_cumprod
+        sd_model.alphas_cumprod_original = alphas_cumprod
     
 
     def _set_layer_mapping(self, sd_model):
@@ -183,7 +186,9 @@ class AnimateDiffMM:
     def _restore_ddim_alpha(self, sd_model):
         logger.info(f"Restoring DDIM alpha.")
         sd_model.alphas_cumprod = self.prev_alpha_cumprod
+        sd_model.alphas_cumprod_original = self.prev_alpha_cumprod_original
         self.prev_alpha_cumprod = None
+        self.prev_alpha_cumprod_original = None
 
 
     def unload(self):
