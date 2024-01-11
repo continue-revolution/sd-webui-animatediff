@@ -22,8 +22,6 @@ motion_module.set_script_dir(script_dir)
 class AnimateDiffScript(scripts.Script):
 
     def __init__(self):
-        self.cfg_hacker = None
-        self.prompt_scheduler = None
         self.hacked = False
 
 
@@ -44,9 +42,7 @@ class AnimateDiffScript(scripts.Script):
             logger.info("AnimateDiff process start.")
             params.set_p(p)
             motion_module.inject(p.sd_model, params.model)
-            self.prompt_scheduler = AnimateDiffPromptSchedule(params)
-            self.cfg_hacker = AnimateDiffInfV2V(p)
-            self.cfg_hacker.hack(params)
+            params.prompt_scheduler = AnimateDiffPromptSchedule()
             update_infotext(p, params)
             if params.freeinit_enable:
                 self.freeinit_hacker = AnimateDiffFreeInit(params)
@@ -54,7 +50,6 @@ class AnimateDiffScript(scripts.Script):
 
             self.hacked = True
         elif self.hacked:
-            self.cfg_hacker.restore()
             motion_module.restore(p.sd_model)
             self.hacked = False
 
@@ -66,7 +61,7 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess_batch_list(self, p: StableDiffusionProcessing, pp: PostprocessBatchListArgs, params: AnimateDiffProcess, **kwargs):
         if params.enable:
-            self.prompt_scheduler.save_infotext_img(p)
+            params.prompt_scheduler.save_infotext_img(p)
 
 
     def postprocess_image(self, p: StableDiffusionProcessing, pp: PostprocessImageArgs, params: AnimateDiffProcess, *args):
@@ -76,8 +71,7 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if params.enable:
-            self.prompt_scheduler.save_infotext_txt(res)
-            self.cfg_hacker.restore()
+            params.prompt_scheduler.save_infotext_txt(res)
             motion_module.restore(p.sd_model)
             self.hacked = False
             AnimateDiffOutput().output(p, res, params)
@@ -86,4 +80,4 @@ class AnimateDiffScript(scripts.Script):
 
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)
-script_callbacks.on_before_ui(AnimateDiffUiGroup.on_before_ui)
+script_callbacks.on_cfg_denoiser(AnimateDiffInfV2V.animatediff_on_cfg_denoiser)

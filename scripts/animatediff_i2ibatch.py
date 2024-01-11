@@ -17,11 +17,14 @@ from modules.processing import (StableDiffusionProcessingImg2Img,
                                 opt_f)
 from modules.shared import opts
 from modules.sd_samplers_common import images_tensor_to_samples, approximation_indexes
+from modules.sd_models import get_closet_checkpoint_match
 
 from scripts.animatediff_logger import logger_animatediff as logger
 
 
 def animatediff_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack this when i2i-batch with batch mask
+    self.extra_generation_params["Denoising strength"] = self.denoising_strength
+
     self.image_cfg_scale: float = self.image_cfg_scale if shared.sd_model.cond_stage_key == "edit" else None
 
     self.sampler = sd_samplers.create_sampler(self.sampler_name, self.sd_model)
@@ -199,6 +202,10 @@ def amimatediff_i2i_batch(
     cfg_scale = p.cfg_scale
     sampler_name = p.sampler_name
     steps = p.steps
+    override_settings = p.override_settings
+    sd_model_checkpoint_override = get_closet_checkpoint_match(override_settings.get("sd_model_checkpoint", None))
+    batch_results = None
+    discard_further_results = False
     frame_images = []
     frame_masks = []
 
@@ -238,7 +245,7 @@ def amimatediff_i2i_batch(
                 info_img_path = os.path.join(png_info_dir, os.path.basename(image))
                 info_img = Image.open(info_img_path)
             from modules import images as imgutil
-            from modules.infotext import parse_generation_parameters
+            from modules.infotext_utils import parse_generation_parameters
             geninfo, _ = imgutil.read_info_from_image(info_img)
             parsed_parameters = parse_generation_parameters(geninfo)
             parsed_parameters = {k: v for k, v in parsed_parameters.items() if k in (png_info_props or {})}
@@ -251,20 +258,46 @@ def amimatediff_i2i_batch(
         p.cfg_scale = float(parsed_parameters.get("CFG scale", cfg_scale))
         p.sampler_name = parsed_parameters.get("Sampler", sampler_name)
         p.steps = int(parsed_parameters.get("Steps", steps))
-        
+
+        model_info = get_closet_checkpoint_match(parsed_parameters.get("Model hash", None))
+        if model_info is not None:
+            p.override_settings['sd_model_checkpoint'] = model_info.name
+        elif sd_model_checkpoint_override:
+            p.override_settings['sd_model_checkpoint'] = sd_model_checkpoint_override
+        else:
+            p.override_settings.pop("sd_model_checkpoint", None)
+
+    if output_dir:
+        p.outpath_samples = output_dir
+        p.override_settings['save_to_dirs'] = False
+        p.override_settings['save_images_replace_action'] = "Add number suffix"
+        if p.n_iter > 1 or p.batch_size > 1:
+            p.override_settings['samples_filename_pattern'] = f'{image_path.stem}-[generation_number]'
+        else:
+            p.override_settings['samples_filename_pattern'] = f'{image_path.stem}'
+
     p.init_images = frame_images
     if len(frame_masks) > 0:
         p.image_mask = frame_masks
 
     proc = scripts.scripts_img2img.run(p, *args) # we should not support this, but just leave it here
+
     if proc is None:
-        if output_dir:
-            p.outpath_samples = output_dir
-            p.override_settings['save_to_dirs'] = False
-            if p.n_iter > 1 or p.batch_size > 1:
-                p.override_settings['samples_filename_pattern'] = f'{image_path.stem}-[generation_number]'
-            else:
-                p.override_settings['samples_filename_pattern'] = f'{image_path.stem}'
-        return process_images(p)
+        p.override_settings.pop('save_images_replace_action', None)
+        proc = process_images(p)
     else:
         logger.warn("Warning: you are using an unsupported external script. AnimateDiff may not work properly.")
+
+    if not discard_further_results and proc:
+        if batch_results:
+            batch_results.images.extend(proc.images)
+            batch_results.infotexts.extend(proc.infotexts)
+        else:
+            batch_results = proc
+
+        if 0 <= shared.opts.img2img_batch_show_results_limit < len(batch_results.images):
+            discard_further_results = True
+            batch_results.images = batch_results.images[:int(shared.opts.img2img_batch_show_results_limit)]
+            batch_results.infotexts = batch_results.infotexts[:int(shared.opts.img2img_batch_show_results_limit)]
+
+    return batch_results

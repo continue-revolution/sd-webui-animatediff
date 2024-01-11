@@ -9,10 +9,9 @@ from scripts.animatediff_infotext import write_params_txt
 
 class AnimateDiffPromptSchedule:
 
-    def __init__(self, params):
+    def __init__(self):
         self.prompt_map = None
         self.original_prompt = None
-        params.prompt_scheduler = self
 
 
     def save_infotext_img(self, p: StableDiffusionProcessing):
