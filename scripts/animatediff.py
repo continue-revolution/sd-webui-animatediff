@@ -12,6 +12,7 @@ from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_infotext import update_infotext
 from scripts.animatediff_settings import on_ui_settings
+from scripts.animatediff_freeinit import AnimateDiffFreeInit
 
 
 script_dir = scripts.basedir()
@@ -48,7 +49,7 @@ class AnimateDiffScript(scripts.Script):
             self.cfg_hacker.hack(params)
             update_infotext(p, params)
             if params.freeinit_enable:
-                self.freeinit_hacker = AnimateDiffFreeInit()
+                self.freeinit_hacker = AnimateDiffFreeInit(params)
                 self.freeinit_hacker.hack(p, params)
 
             self.hacked = True

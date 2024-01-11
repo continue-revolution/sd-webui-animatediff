@@ -48,20 +48,11 @@ def ddim_add_noise(
 
 
 class AnimateDiffFreeInit:
-    def __init__(self, v2: bool):
-        self.v2 = v2
-        self.num_iters = 10
-        self.method = 'butterworth'
-        self.n = 4
-        self.d_s = 0.25
-        self.d_t = 0.25
-        self.filter_params = { 
-                    'method': 'butterworth',
-                    'n': 4,
-                    'd_s': 0.25,
-                    'd_t': 0.25,
-                }
-
+    def __init__(self, params):
+        self.num_iters = params.freeinit_iters
+        self.method = params.freeinit_filter
+        self.d_s = params.freeinit_ds
+        self.d_t = params.freeinit_dt
 
     @torch.no_grad()
     def init_filter(self, video_length, height, width, filter_params):
@@ -86,7 +77,6 @@ class AnimateDiffFreeInit:
         # init filter
         filter_params = { 
             'method': self.method,
-            'n': self.n,
             'd_s': self.d_s,
             'd_t': self.d_t,
         }
@@ -94,8 +84,27 @@ class AnimateDiffFreeInit:
 
 
         def sample(self, conditioning, unconditional_conditioning, seeds, subseeds, subseed_strength, prompts):
-            #import ipdb; ipdb.set_trace()
             self.sampler = sd_samplers.create_sampler(self.sampler_name, self.sd_model)
+
+            # hack total progress bar
+            # only works in terminal tqdm (not in gradio)
+            """
+            setattr(self.sampler, 'freeinit_num_iters', self.num_freeinit_iters)  
+
+            def callback_hack(self, d):
+                step = d['i'] // self.freeinit_num_iters
+
+                if self.stop_at is not None and step > self.stop_at:
+                    raise InterruptedException
+
+                shared.state.sampling_step = step
+
+                if d['i'] % self.freeinit_num_iters == 0:
+                    shared.total_tqdm.update()
+
+            self.sampler.callback_state = MethodType(callback_hack, self.sampler) 
+            """
+
 
             # Sampling with FreeInit
             x = self.rng.next()
@@ -104,7 +113,7 @@ class AnimateDiffFreeInit:
             num_channels_latents = x.shape[1] # TODO
             video_length = x.shape[0] #TODO
 
-            for iter in range(self.num_iters):
+            for iter in range(self.num_freeinit_iters):
                 if iter == 0:
                     initial_x = x.detach().clone()
                 else:
@@ -154,20 +163,11 @@ class AnimateDiffFreeInit:
         #AnimateDiffFreeinit.original_sample = p.sample
         p.sample = MethodType(sample, p)   # register
         setattr(p, 'freq_filter', self.freq_filter)  
+        setattr(p, 'num_freeinit_iters', self.num_iters)  
 
     
     #def restore(self, p: StableDiffusionProcessing):
     #    p.sample = partial(AnimateDiffFreeinit.original_sample, p)
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -216,7 +216,7 @@ def get_freq_filter(shape, device, params: dict):
     elif params['method'] == "box":
         return box_low_pass_filter(shape=shape, d_s=params['d_s'], d_t=params['d_t']).to(device)
     elif params['method'] == "butterworth":
-        return butterworth_low_pass_filter(shape=shape, n=params['n'], d_s=params['d_s'], d_t=params['d_t']).to(device)
+        return butterworth_low_pass_filter(shape=shape, n=4, d_s=params['d_s'], d_t=params['d_t']).to(device)
     else:
         raise NotImplementedError
 
