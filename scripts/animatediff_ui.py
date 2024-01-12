@@ -107,6 +107,18 @@ class AnimateDiffProcess:
         return infotext_str
 
 
+    def get_param_names(self, is_img2img: bool):
+        remove = ["format", "request_id", "video_source", "video_path", "last_frame"]
+        if not is_img2img:
+            remove.extend(["latent_power", "latent_power_last", "latent_scale", "latent_scale_last"])
+        
+        return [
+            field 
+            for field in self.__dict__ 
+            if field not in remove and not callable(getattr(self, field)) and not field.startswith("__")
+        ]
+
+
     def _check(self):
         assert (
             self.video_length >= 0 and self.fps > 0
@@ -141,7 +153,7 @@ class AnimateDiffUiGroup:
         self.params = AnimateDiffProcess()
 
 
-    def render(self, is_img2img: bool, model_dir: str):
+    def render(self, is_img2img: bool, model_dir: str, infotext_fields, paste_field_names):
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
         elemid_prefix = "img2img-ad-" if is_img2img else "txt2img-ad-"
@@ -313,6 +325,12 @@ class AnimateDiffUiGroup:
                 remove = gr.Button(value="Remove motion module from any memory")
                 unload.click(fn=motion_module.unload)
                 remove.click(fn=motion_module.remove)
+
+        # Set up controls to be copy-pasted using infotext
+        fields = self.params.get_param_names(is_img2img)
+        infotext_fields.extend((getattr(self.params, field), f"AnimateDiff {field}") for field in fields)
+        paste_field_names.extend(f"AnimateDiff {field}" for field in fields)
+
         return self.register_unit(is_img2img)
 
 
