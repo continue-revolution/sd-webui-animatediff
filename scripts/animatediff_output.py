@@ -218,8 +218,8 @@ class AnimateDiffOutput:
             except ImportError:
                 from launch import run_pip
                 run_pip(
-                    "install pyav",
-                    "sd-webui-animatediff MP4 save requirement: PyAV",
+                    "install imageio[pyav]",
+                    "sd-webui-animatediff MP4 save requirement: imageio[pyav]",
                 )
                 import av
             options = {
