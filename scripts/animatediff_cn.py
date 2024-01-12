@@ -114,7 +114,7 @@ class AnimateDiffControl:
                             unit.batch_images = unit.batch_images[:params.video_length]
 
             animatediff_i2ibatch.cap_init_image(p, params)
-            prompt_scheduler.parse_prompt(p)
+            prompt_scheduler.parse_prompt(p, params)
             update_infotext(p, params)
             return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
         
