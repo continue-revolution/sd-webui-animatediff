@@ -5,7 +5,7 @@ from modules.processing import StableDiffusionProcessing, Processed
 
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_infotext import write_params_txt
-
+from scripts.animatediff_ui import AnimateDiffProcess
 
 class AnimateDiffPromptSchedule:
 
@@ -31,7 +31,7 @@ class AnimateDiffPromptSchedule:
                 write_params_txt(res.info)
 
 
-    def parse_prompt(self, p: StableDiffusionProcessing):
+    def parse_prompt(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
         if type(p.prompt) is not str:
             logger.warn("prompt is not str, cannot support prompt map")
             return
@@ -55,6 +55,8 @@ class AnimateDiffPromptSchedule:
                 match = re.match(r'^(\d+): (.+)$', line)
                 if match:
                     frame, prompt = match.groups()
+                    assert int(frame) < params.video_length, \
+                        f"invalid prompt travel frame number: {int(frame)} >= number of frames ({params.video_length})"
                     data['mapp_prompts'][int(frame)] = prompt
                 else:
                     mode = 'tail'
