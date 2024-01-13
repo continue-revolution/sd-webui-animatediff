@@ -148,7 +148,7 @@ class AnimateDiffMM:
 
         AnimateDiffMM.mm_injected = False
         logger.info(f"Removal finished.")
-        if shared.cmd_opts.lowvram:
+        if sd_model.lowvram:
             self.unload()
 
 
