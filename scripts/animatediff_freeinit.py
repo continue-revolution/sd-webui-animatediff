@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from modules import sd_models, shared
+from modules import sd_models, shared, sd_samplers, devices
 from modules.paths import extensions_builtin_dir
 from modules.processing import StableDiffusionProcessing, opt_C, opt_f, StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img
 from types import MethodType
@@ -15,10 +15,6 @@ from types import MethodType
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
 
-# free init new
-from functools import partial
-import torch
-from modules import sd_samplers, devices, shared
 
 
 def ddim_add_noise(
