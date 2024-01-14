@@ -9,7 +9,7 @@ import sys
 
 from modules import sd_models, shared
 from modules.paths import extensions_builtin_dir
-from modules.processing import StableDiffusionProcessing
+from modules.processing import StableDiffusionProcessing, opt_C, opt_f, StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img
 from types import MethodType
 
 from scripts.animatediff_logger import logger_animatediff as logger
@@ -58,17 +58,12 @@ class AnimateDiffFreeInit:
     def init_filter(self, video_length, height, width, filter_params):
         # initialize frequency filter for noise reinitialization
         batch_size = 1
-        #self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
-        self.vae_scale_factor = 2 ** (4 -1)
-        num_channels_latents = 4
-
         filter_shape = [
             batch_size, 
-            #video_length,
-            num_channels_latents, 
+            opt_C, 
             video_length, 
-            height // self.vae_scale_factor, 
-            width // self.vae_scale_factor
+            height // opt_f, 
+            width // opt_f
         ]
         self.freq_filter = get_freq_filter(filter_shape, device=devices.device, params=filter_params)
 
@@ -83,16 +78,15 @@ class AnimateDiffFreeInit:
         self.init_filter(params.video_length, p.height, p.width, filter_params)
 
 
-        def sample(self, conditioning, unconditional_conditioning, seeds, subseeds, subseed_strength, prompts):
+        def sample_t2i(self, conditioning, unconditional_conditioning, seeds, subseeds, subseed_strength, prompts):
             self.sampler = sd_samplers.create_sampler(self.sampler_name, self.sd_model)
 
-            # hack total progress bar
-            # only works in terminal tqdm (not in gradio)
-            """
+            # hack total progress bar （works in an ugly way)
             setattr(self.sampler, 'freeinit_num_iters', self.num_freeinit_iters)  
+            setattr(self.sampler, 'freeinit_num_iter', 0)  
 
             def callback_hack(self, d):
-                step = d['i'] // self.freeinit_num_iters
+                step = d['i'] // self.freeinit_num_iters + self.freeinit_num_iter * (shared.state.sampling_steps // self.freeinit_num_iters)
 
                 if self.stop_at is not None and step > self.stop_at:
                     raise InterruptedException
@@ -103,23 +97,18 @@ class AnimateDiffFreeInit:
                     shared.total_tqdm.update()
 
             self.sampler.callback_state = MethodType(callback_hack, self.sampler) 
-            """
-
 
             # Sampling with FreeInit
             x = self.rng.next()
             x_dtype = x.dtype
-            num_videos_per_prompt = 1
-            num_channels_latents = x.shape[1] # TODO
-            video_length = x.shape[0] #TODO
-
+ 
             for iter in range(self.num_freeinit_iters):
+                self.sampler.freeinit_num_iter = iter
                 if iter == 0:
                     initial_x = x.detach().clone()
                 else:
-                    #import ipdb; ipdb.set_trace()
                     # z_0
-                    diffuse_timesteps = torch.tensor(999)
+                    diffuse_timesteps = torch.tensor(1000 - 1)
                     z_T = ddim_add_noise(x, initial_x, diffuse_timesteps)   # [16, 4, 64, 64]
                     # z_T
                     # 2. create random noise z_rand for high-frequency
@@ -132,16 +121,7 @@ class AnimateDiffFreeInit:
                     x = x[0].permute(1, 0, 2, 3)
                     x = x.to(x_dtype)
 
-                # Coarse-to-Fine Sampling for Fast Inference (can lead to sub-optimal results)
-                #if use_fast_sampling:
-                #    current_num_inference_steps= int(num_inference_steps / num_iters * (iter + 1))
-                #    self.scheduler.set_timesteps(current_num_inference_steps, device=device)
-                #    timesteps = self.scheduler.timesteps
-                #  --------------------------------------------------------------------------
-                # Denoising loop
-
                 x = self.sampler.sample(self, x, conditioning, unconditional_conditioning, image_conditioning=self.txt2img_image_conditioning(x))
-                # [16, 4, 64, 64]
             samples = x
             del x
 
@@ -160,17 +140,54 @@ class AnimateDiffFreeInit:
 
             return self.sample_hr_pass(samples, decoded_samples, seeds, subseeds, subseed_strength, prompts)
 
-        #AnimateDiffFreeinit.original_sample = p.sample
-        p.sample = MethodType(sample, p)   # register
+
+        def sample_i2i(self, conditioning, unconditional_conditioning, seeds, subseeds, subseed_strength, prompts):
+            x = self.rng.next()
+            x_dtype = x.dtype
+ 
+
+            if self.initial_noise_multiplier != 1.0:
+                self.extra_generation_params["Noise multiplier"] = self.initial_noise_multiplier
+                x *= self.initial_noise_multiplier
+
+            for iter in range(self.num_freeinit_iters):
+                if iter == 0:
+                    initial_x = x.detach().clone()
+                else:
+                    # z_0
+                    diffuse_timesteps = torch.tensor(1000 - 1)
+                    z_T = ddim_add_noise(x, initial_x, diffuse_timesteps)   # [16, 4, 64, 64]
+                    # z_T
+                    # 2. create random noise z_rand for high-frequency
+                    z_T = z_T.permute(1, 0, 2, 3)[None, ...]    # [bs, 4, 16, 64, 64]
+                    #z_rand = torch.randn(z_T.shape, device=devices.device)
+                    z_rand = initial_x.detach().clone().permute(1, 0, 2, 3)[None, ...]
+                    # 3. Roise Reinitialization
+                    x = freq_mix_3d(z_T.to(dtype=torch.float32), z_rand, LPF=self.freq_filter)
+                    
+                    x = x[0].permute(1, 0, 2, 3)
+                    x = x.to(x_dtype)
+
+                x = self.sampler.sample_img2img(self, self.init_latent, x, conditioning, unconditional_conditioning, image_conditioning=self.image_conditioning)
+            samples = x
+
+            if self.mask is not None:
+                samples = samples * self.nmask + self.init_latent * self.mask
+
+            del x
+            devices.torch_gc()
+
+            return samples
+
+        if isinstance(p, StableDiffusionProcessingTxt2Img):
+            p.sample = MethodType(sample_t2i, p)
+        elif isinstance(p, StableDiffusionProcessingImg2Img):
+            p.sample = MethodType(sample_i2i, p)
+        else:
+            raise NotImplementedError
+
         setattr(p, 'freq_filter', self.freq_filter)  
         setattr(p, 'num_freeinit_iters', self.num_iters)  
-
-    
-    #def restore(self, p: StableDiffusionProcessing):
-    #    p.sample = partial(AnimateDiffFreeinit.original_sample, p)
-
-
-
 
 
 def freq_mix_3d(x, noise, LPF):
