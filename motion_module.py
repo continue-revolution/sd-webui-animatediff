@@ -1,15 +1,13 @@
 from enum import Enum
 from typing import Optional
 
-import torch
-import torch.nn.functional as F
-from torch import nn
-
-from modules import sd_hijack, shared
-from ldm.modules.attention import FeedForward
-
-from einops import rearrange, repeat
 import math
+import torch
+from torch import nn
+from einops import rearrange
+
+from modules import shared
+from ldm.modules.attention import FeedForward
 
 
 class MotionModuleType(Enum):
@@ -48,31 +46,30 @@ def zero_module(module):
 class MotionWrapper(nn.Module):
     def __init__(self, mm_name: str, mm_hash: str, mm_type: MotionModuleType):
         super().__init__()
-        self.is_v2 = mm_type == MotionModuleType.AnimateDiffV2
-        self.is_v3 = mm_type == MotionModuleType.AnimateDiffV3
-        self.is_hotshot = mm_type == MotionModuleType.HotShotXL
-        self.is_adxl = mm_type == MotionModuleType.AnimateDiffXL
-        self.is_xl = self.is_hotshot or self.is_adxl
-        self.is_sparsectrl = mm_type == MotionModuleType.SparseCtrl
-        max_len = 32 if (self.is_v2 or self.is_adxl or self.is_v3 or self.is_sparsectrl) else 24
+        self.mm_name = mm_name
+        self.mm_type = mm_type
+        self.mm_hash = mm_hash
+        max_len = 24 if (mm_type in [MotionModuleType.AnimateDiffV1, MotionModuleType.HotShotXL]) else 32
         in_channels = (320, 640, 1280) if self.is_xl else (320, 640, 1280, 1280)
         self.down_blocks = nn.ModuleList([])
         self.up_blocks = nn.ModuleList([])
         for c in in_channels:
-            if self.is_sparsectrl:
+            if mm_type in [MotionModuleType.SparseCtrl]:
                 self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len, attention_block_types=("Temporal_Self", )))
             else:
                 self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len))
                 self.up_blocks.insert(0,MotionModule(c, num_mm=3, max_len=max_len))
-        if self.is_v2:
+        if mm_type in [MotionModuleType.AnimateDiffV2]:
             self.mid_block = MotionModule(1280, num_mm=1, max_len=max_len)
-        self.mm_name = mm_name
-        self.mm_type = mm_type
-        self.mm_hash = mm_hash
 
 
     def enable_gn_hack(self):
-        return not (self.is_adxl or self.is_v3)
+        return self.mm_type in [MotionModuleType.AnimateDiffV1, MotionModuleType.HotShotXL]
+
+
+    @property
+    def is_xl(self):
+        return self.mm_type in [MotionModuleType.AnimateDiffXL, MotionModuleType.HotShotXL]
 
 
 class MotionModule(nn.Module):
@@ -93,8 +90,6 @@ class VanillaTemporalModule(nn.Module):
         num_attention_heads                = 8,
         num_transformer_block              = 1,
         attention_block_types              =( "Temporal_Self", "Temporal_Self" ),
-        cross_frame_attention_mode         = None,
-        temporal_position_encoding         = True,
         temporal_position_encoding_max_len = 24,
         temporal_attention_dim_div         = 1,
         zero_initialize                    = True,
@@ -107,8 +102,6 @@ class VanillaTemporalModule(nn.Module):
             attention_head_dim=in_channels // num_attention_heads // temporal_attention_dim_div,
             num_layers=num_transformer_block,
             attention_block_types=attention_block_types,
-            cross_frame_attention_mode=cross_frame_attention_mode,
-            temporal_position_encoding=temporal_position_encoding,
             temporal_position_encoding_max_len=temporal_position_encoding_max_len,
         )
         
@@ -116,7 +109,7 @@ class VanillaTemporalModule(nn.Module):
             self.temporal_transformer.proj_out = zero_module(self.temporal_transformer.proj_out)
 
 
-    def forward(self, input_tensor, encoder_hidden_states=None, attention_mask=None): # TODO: encoder_hidden_states do seem to be always None
+    def forward(self, input_tensor, encoder_hidden_states=None, attention_mask=None):
         return self.temporal_transformer(input_tensor, encoder_hidden_states, attention_mask)
 
 
@@ -131,13 +124,10 @@ class TemporalTransformer3DModel(nn.Module):
         attention_block_types              = ( "Temporal_Self", "Temporal_Self", ),        
         dropout                            = 0.0,
         norm_num_groups                    = 32,
-        cross_attention_dim                = 768,
         activation_fn                      = "geglu",
         attention_bias                     = False,
         upcast_attention                   = False,
         
-        cross_frame_attention_mode         = None,
-        temporal_position_encoding         = False,
         temporal_position_encoding_max_len = 24,
     ):
         super().__init__()
@@ -155,13 +145,9 @@ class TemporalTransformer3DModel(nn.Module):
                     attention_head_dim=attention_head_dim,
                     attention_block_types=attention_block_types,
                     dropout=dropout,
-                    norm_num_groups=norm_num_groups,
-                    cross_attention_dim=cross_attention_dim,
                     activation_fn=activation_fn,
                     attention_bias=attention_bias,
                     upcast_attention=upcast_attention,
-                    cross_frame_attention_mode=cross_frame_attention_mode,
-                    temporal_position_encoding=temporal_position_encoding,
                     temporal_position_encoding_max_len=temporal_position_encoding_max_len,
                 )
                 for d in range(num_layers)
@@ -169,7 +155,7 @@ class TemporalTransformer3DModel(nn.Module):
         )
         self.proj_out = nn.Linear(inner_dim, in_channels)    
     
-    def forward(self, hidden_states, encoder_hidden_states=None, attention_mask=None):
+    def forward(self, hidden_states):
         video_length = hidden_states.shape[0] // (2 if shared.opts.batch_cond_uncond else 1)
         batch, channel, height, weight = hidden_states.shape
         residual = hidden_states
@@ -181,7 +167,7 @@ class TemporalTransformer3DModel(nn.Module):
 
         # Transformer Blocks
         for block in self.transformer_blocks:
-            hidden_states = block(hidden_states, encoder_hidden_states=encoder_hidden_states, video_length=video_length)
+            hidden_states = block(hidden_states, video_length=video_length)
         
         # output
         hidden_states = self.proj_out(hidden_states)
@@ -199,13 +185,9 @@ class TemporalTransformerBlock(nn.Module):
         attention_head_dim,
         attention_block_types              = ( "Temporal_Self", "Temporal_Self", ),
         dropout                            = 0.0,
-        norm_num_groups                    = 32,
-        cross_attention_dim                = 768,
         activation_fn                      = "geglu",
         attention_bias                     = False,
         upcast_attention                   = False,
-        cross_frame_attention_mode         = None,
-        temporal_position_encoding         = False,
         temporal_position_encoding_max_len = 24,
     ):
         super().__init__()
@@ -213,21 +195,15 @@ class TemporalTransformerBlock(nn.Module):
         attention_blocks = []
         norms = []
         
-        for block_name in attention_block_types:
+        for _ in attention_block_types:
             attention_blocks.append(
                 VersatileAttention(
-                    attention_mode=block_name.split("_")[0],
-                    cross_attention_dim=cross_attention_dim if block_name.endswith("_Cross") else None,
-                    
                     query_dim=dim,
                     heads=num_attention_heads,
                     dim_head=attention_head_dim,
                     dropout=dropout,
                     bias=attention_bias,
                     upcast_attention=upcast_attention,
-        
-                    cross_frame_attention_mode=cross_frame_attention_mode,
-                    temporal_position_encoding=temporal_position_encoding,
                     temporal_position_encoding_max_len=temporal_position_encoding_max_len,
                 )
             )
@@ -240,12 +216,11 @@ class TemporalTransformerBlock(nn.Module):
         self.ff_norm = nn.LayerNorm(dim)
 
 
-    def forward(self, hidden_states, encoder_hidden_states=None, attention_mask=None, video_length=None):
+    def forward(self, hidden_states, video_length):
         for attention_block, norm in zip(self.attention_blocks, self.norms):
             norm_hidden_states = norm(hidden_states).type(hidden_states.dtype)
             hidden_states = attention_block(
                 norm_hidden_states,
-                encoder_hidden_states=encoder_hidden_states if attention_block.is_cross_attention else None,
                 video_length=video_length,
             ) + hidden_states
             
@@ -301,348 +276,52 @@ class CrossAttention(nn.Module):
         bias=False,
         upcast_attention: bool = False,
         upcast_softmax: bool = False,
-        added_kv_proj_dim: Optional[int] = None,
-        norm_num_groups: Optional[int] = None,
     ):
         super().__init__()
         inner_dim = dim_head * heads
         cross_attention_dim = cross_attention_dim if cross_attention_dim is not None else query_dim
         self.upcast_attention = upcast_attention
         self.upcast_softmax = upcast_softmax
-
         self.scale = dim_head**-0.5
-
         self.heads = heads
-        # for slice_size > 0 the attention score computation
-        # is split across the batch axis to save memory
-        # You can set slice_size with `set_attention_slice`
-        self.sliceable_head_dim = heads
-        self._slice_size = None
-
-        self.added_kv_proj_dim = added_kv_proj_dim
-
-        if norm_num_groups is not None:
-            self.group_norm = nn.GroupNorm(num_channels=inner_dim, num_groups=norm_num_groups, eps=1e-5, affine=True)
-        else:
-            self.group_norm = None
 
         self.to_q = nn.Linear(query_dim, inner_dim, bias=bias)
         self.to_k = nn.Linear(cross_attention_dim, inner_dim, bias=bias)
         self.to_v = nn.Linear(cross_attention_dim, inner_dim, bias=bias)
 
-        if self.added_kv_proj_dim is not None:
-            self.add_k_proj = nn.Linear(added_kv_proj_dim, cross_attention_dim)
-            self.add_v_proj = nn.Linear(added_kv_proj_dim, cross_attention_dim)
-
         self.to_out = nn.ModuleList([])
         self.to_out.append(nn.Linear(inner_dim, query_dim))
         self.to_out.append(nn.Dropout(dropout))
-
-    def reshape_heads_to_batch_dim(self, tensor):
-        batch_size, seq_len, dim = tensor.shape
-        head_size = self.heads
-        tensor = tensor.reshape(batch_size, seq_len, head_size, dim // head_size)
-        tensor = tensor.permute(0, 2, 1, 3).reshape(batch_size * head_size, seq_len, dim // head_size)
-        return tensor
-
-    def reshape_batch_dim_to_heads(self, tensor):
-        batch_size, seq_len, dim = tensor.shape
-        head_size = self.heads
-        tensor = tensor.reshape(batch_size // head_size, head_size, seq_len, dim)
-        tensor = tensor.permute(0, 2, 1, 3).reshape(batch_size // head_size, seq_len, dim * head_size)
-        return tensor
-
-    def set_attention_slice(self, slice_size):
-        if slice_size is not None and slice_size > self.sliceable_head_dim:
-            raise ValueError(f"slice_size {slice_size} has to be smaller or equal to {self.sliceable_head_dim}.")
-
-        self._slice_size = slice_size
-
-    def forward(self, hidden_states, encoder_hidden_states=None, attention_mask=None):
-        batch_size, sequence_length, _ = hidden_states.shape
-
-        encoder_hidden_states = encoder_hidden_states
-
-        if self.group_norm is not None:
-            hidden_states = self.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2).type(hidden_states.dtype)
-
-        query = self.to_q(hidden_states)
-        dim = query.shape[-1]
-        query = self.reshape_heads_to_batch_dim(query)
-
-        if self.added_kv_proj_dim is not None:
-            key = self.to_k(hidden_states)
-            value = self.to_v(hidden_states)
-            encoder_hidden_states_key_proj = self.add_k_proj(encoder_hidden_states)
-            encoder_hidden_states_value_proj = self.add_v_proj(encoder_hidden_states)
-
-            key = self.reshape_heads_to_batch_dim(key)
-            value = self.reshape_heads_to_batch_dim(value)
-            encoder_hidden_states_key_proj = self.reshape_heads_to_batch_dim(encoder_hidden_states_key_proj)
-            encoder_hidden_states_value_proj = self.reshape_heads_to_batch_dim(encoder_hidden_states_value_proj)
-
-            key = torch.concat([encoder_hidden_states_key_proj, key], dim=1)
-            value = torch.concat([encoder_hidden_states_value_proj, value], dim=1)
-        else:
-            encoder_hidden_states = encoder_hidden_states if encoder_hidden_states is not None else hidden_states
-            key = self.to_k(encoder_hidden_states)
-            value = self.to_v(encoder_hidden_states)
-
-            key = self.reshape_heads_to_batch_dim(key)
-            value = self.reshape_heads_to_batch_dim(value)
-
-        if attention_mask is not None:
-            if attention_mask.shape[-1] != query.shape[1]:
-                target_length = query.shape[1]
-                attention_mask = F.pad(attention_mask, (0, target_length), value=0.0)
-                attention_mask = attention_mask.repeat_interleave(self.heads, dim=0)
-
-        # attention, what we cannot get enough of
-        if sd_hijack.current_optimizer is not None and sd_hijack.current_optimizer.name in ["xformers", "sdp", "sdp-no-mem", "sub-quadratic"]:
-            hidden_states = self._memory_efficient_attention(query, key, value, attention_mask, sd_hijack.current_optimizer.name)
-            # Some versions of xformers return output in fp32, cast it back to the dtype of the input
-            hidden_states = hidden_states.to(query.dtype)
-        else:
-            if self._slice_size is None or query.shape[0] // self._slice_size == 1:
-                hidden_states = self._attention(query, key, value, attention_mask)
-            else:
-                hidden_states = self._sliced_attention(query, key, value, sequence_length, dim, attention_mask)
-
-        # linear proj
-        hidden_states = self.to_out[0](hidden_states)
-
-        # dropout
-        hidden_states = self.to_out[1](hidden_states)
-        return hidden_states
-
-    def _attention(self, query, key, value, attention_mask=None):
-        if self.upcast_attention:
-            query = query.float()
-            key = key.float()
-
-        attention_scores = torch.baddbmm(
-            torch.empty(query.shape[0], query.shape[1], key.shape[1], dtype=query.dtype, device=query.device),
-            query,
-            key.transpose(-1, -2),
-            beta=0,
-            alpha=self.scale,
-        )
-
-        if attention_mask is not None:
-            attention_scores = attention_scores + attention_mask
-
-        if self.upcast_softmax:
-            attention_scores = attention_scores.float()
-
-        attention_probs = attention_scores.softmax(dim=-1)
-
-        # cast back to the original dtype
-        attention_probs = attention_probs.to(value.dtype)
-
-        # compute attention output
-        hidden_states = torch.bmm(attention_probs, value)
-
-        # reshape hidden_states
-        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
-        return hidden_states
-
-    def _sliced_attention(self, query, key, value, sequence_length, dim, attention_mask):
-        batch_size_attention = query.shape[0]
-        hidden_states = torch.zeros(
-            (batch_size_attention, sequence_length, dim // self.heads), device=query.device, dtype=query.dtype
-        )
-        slice_size = self._slice_size if self._slice_size is not None else hidden_states.shape[0]
-        for i in range(hidden_states.shape[0] // slice_size):
-            start_idx = i * slice_size
-            end_idx = (i + 1) * slice_size
-
-            query_slice = query[start_idx:end_idx]
-            key_slice = key[start_idx:end_idx]
-
-            if self.upcast_attention:
-                query_slice = query_slice.float()
-                key_slice = key_slice.float()
-
-            attn_slice = torch.baddbmm(
-                torch.empty(slice_size, query.shape[1], key.shape[1], dtype=query_slice.dtype, device=query.device),
-                query_slice,
-                key_slice.transpose(-1, -2),
-                beta=0,
-                alpha=self.scale,
-            )
-
-            if attention_mask is not None:
-                attn_slice = attn_slice + attention_mask[start_idx:end_idx]
-
-            if self.upcast_softmax:
-                attn_slice = attn_slice.float()
-
-            attn_slice = attn_slice.softmax(dim=-1)
-
-            # cast back to the original dtype
-            attn_slice = attn_slice.to(value.dtype)
-            attn_slice = torch.bmm(attn_slice, value[start_idx:end_idx])
-
-            hidden_states[start_idx:end_idx] = attn_slice
-
-        # reshape hidden_states
-        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
-        return hidden_states
-
-    def _memory_efficient_attention(self, q, k, v, mask, current_optimizer_name):
-        # TODO attention_mask
-        q = q.contiguous()
-        k = k.contiguous()
-        v = v.contiguous()
-
-        fallthrough = False
-
-        if current_optimizer_name == "xformers" or fallthrough:
-            fallthrough = False
-            try:
-                import xformers.ops
-                from modules.sd_hijack_optimizations import get_xformers_flash_attention_op
-                hidden_states = xformers.ops.memory_efficient_attention(
-                    q, k, v, attn_bias=mask,
-                    op=get_xformers_flash_attention_op(q, k, v))
-            except (ImportError, RuntimeError, AttributeError):
-                fallthrough = True
-
-        if current_optimizer_name == "sdp" or fallthrough:
-            fallthrough = False
-            try:
-                hidden_states = torch.nn.functional.scaled_dot_product_attention(
-                    q, k, v, attn_mask=mask, dropout_p=0.0, is_causal=False
-                )
-            except (ImportError, RuntimeError, AttributeError):
-                fallthrough = True
-        
-        if current_optimizer_name == "sdp-no-mem" or fallthrough:
-            fallthrough = False
-            try:
-                with torch.backends.cuda.sdp_kernel(enable_flash=True, enable_math=True, enable_mem_efficient=False):
-                    hidden_states = torch.nn.functional.scaled_dot_product_attention(
-                        q, k, v, attn_mask=mask, dropout_p=0.0, is_causal=False
-                    )
-            except (ImportError, RuntimeError, AttributeError):
-                fallthrough = True
-
-        if current_optimizer_name == "sub-quadratic" or fallthrough:
-            fallthrough = False
-            try:
-                from modules.sd_hijack_optimizations import sub_quad_attention
-                from modules import shared
-                hidden_states = sub_quad_attention(
-                    q, k, v, 
-                    q_chunk_size=shared.cmd_opts.sub_quad_q_chunk_size, 
-                    kv_chunk_size=shared.cmd_opts.sub_quad_kv_chunk_size, 
-                    chunk_threshold=shared.cmd_opts.sub_quad_chunk_threshold, 
-                    use_checkpoint=self.training
-                )
-            except (ImportError, RuntimeError, AttributeError):
-                fallthrough = True
-
-        if fallthrough:
-            fallthrough = False
-            if self._slice_size is None or query.shape[0] // self._slice_size == 1:
-                hidden_states = self._attention(query, key, value, attention_mask)
-            else:
-                hidden_states = self._sliced_attention(query, key, value, sequence_length, dim, attention_mask)
-            return hidden_states
-
-        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)        
-        return hidden_states
 
 
 class VersatileAttention(CrossAttention):
     def __init__(
             self,
-            attention_mode                     = None,
-            cross_frame_attention_mode         = None,
-            temporal_position_encoding         = False,
             temporal_position_encoding_max_len = 24,
             *args, **kwargs
         ):
         super().__init__(*args, **kwargs)
-        assert attention_mode == "Temporal"
 
-        self.attention_mode = attention_mode
-        self.is_cross_attention = kwargs["cross_attention_dim"] is not None
-        
         self.pos_encoder = PositionalEncoding(
-            kwargs["query_dim"],
-            dropout=0., 
-            max_len=temporal_position_encoding_max_len,
-        ) if (temporal_position_encoding and attention_mode == "Temporal") else None
+            kwargs["query_dim"], 
+            max_len=temporal_position_encoding_max_len)
 
-    def extra_repr(self):
-        return f"(Module Info) Attention_Mode: {self.attention_mode}, Is_Cross_Attention: {self.is_cross_attention}"
 
-    def forward(self, hidden_states, encoder_hidden_states=None, attention_mask=None, video_length=None):
-        batch_size, sequence_length, _ = hidden_states.shape
+    def forward(self, x: torch.Tensor, video_length: int):
+        d = x.shape[1]
+        x = rearrange(x, "(b f) d c -> (b d) f c", f=video_length)
+        x = self.pos_encoder(x)
 
-        if self.attention_mode == "Temporal":
-            d = hidden_states.shape[1]
-            hidden_states = rearrange(hidden_states, "(b f) d c -> (b d) f c", f=video_length)
-            
-            if self.pos_encoder is not None:
-                hidden_states = self.pos_encoder(hidden_states)
-            
-            encoder_hidden_states = repeat(encoder_hidden_states, "b n c -> (b d) n c", d=d) if encoder_hidden_states is not None else encoder_hidden_states
-        else:
-            raise NotImplementedError
+        q = self.to_q(x)
+        k = self.to_k(x)
+        v = self.to_v(x)
 
-        encoder_hidden_states = encoder_hidden_states
+        q, k, v = map(lambda t: rearrange(t, 'b s (h d) -> (b h) s d', h=self.heads), (q, k, v))
+        x = torch.nn.functional.scaled_dot_product_attention(q, k, v)
+        q, k, v = map(lambda t: rearrange(t, '(b h) s d -> b s (h d)', h=self.heads), (q, k, v))
 
-        if self.group_norm is not None:
-            hidden_states = self.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2).dtype(hidden_states.dtype)
+        x = self.to_out[0](x) # linear proj
+        x = self.to_out[1](x) # dropout
+        x = rearrange(x, "(b d) f c -> (b f) d c", d=d)
 
-        query = self.to_q(hidden_states)
-        dim = query.shape[-1]
-        query = self.reshape_heads_to_batch_dim(query)
-
-        if self.added_kv_proj_dim is not None:
-            raise NotImplementedError
-
-        encoder_hidden_states = encoder_hidden_states if encoder_hidden_states is not None else hidden_states
-        key = self.to_k(encoder_hidden_states)
-        value = self.to_v(encoder_hidden_states)
-
-        key = self.reshape_heads_to_batch_dim(key)
-        value = self.reshape_heads_to_batch_dim(value)
-
-        if attention_mask is not None:
-            if attention_mask.shape[-1] != query.shape[1]:
-                target_length = query.shape[1]
-                attention_mask = F.pad(attention_mask, (0, target_length), value=0.0)
-                attention_mask = attention_mask.repeat_interleave(self.heads, dim=0)
-
-        xformers_option = shared.opts.data.get("animatediff_xformers", "Optimize attention layers with xformers")
-        optimizer_collections = ["xformers", "sdp", "sdp-no-mem", "sub-quadratic"]
-        if xformers_option == "Do not optimize attention layers": # "Do not optimize attention layers"
-            optimizer_collections = optimizer_collections[1:]
-
-        # attention, what we cannot get enough of
-        if sd_hijack.current_optimizer is not None and sd_hijack.current_optimizer.name in optimizer_collections:
-            optimizer_name = sd_hijack.current_optimizer.name
-            if xformers_option == "Optimize attention layers with sdp (torch >= 2.0.0 required)" and optimizer_name == "xformers":
-                optimizer_name = "sdp" # "Optimize attention layers with sdp (torch >= 2.0.0 required)"
-            hidden_states = self._memory_efficient_attention(query, key, value, attention_mask, optimizer_name)
-            # Some versions of xformers return output in fp32, cast it back to the dtype of the input
-            hidden_states = hidden_states.to(query.dtype)
-        else:
-            if self._slice_size is None or query.shape[0] // self._slice_size == 1:
-                hidden_states = self._attention(query, key, value, attention_mask)
-            else:
-                hidden_states = self._sliced_attention(query, key, value, sequence_length, dim, attention_mask)
-
-        # linear proj
-        hidden_states = self.to_out[0](hidden_states)
-
-        # dropout
-        hidden_states = self.to_out[1](hidden_states)
-
-        if self.attention_mode == "Temporal":
-            hidden_states = rearrange(hidden_states, "(b d) f c -> (b f) d c", d=d)
-
-        return hidden_states
+        return x
