@@ -23,13 +23,13 @@ def infotext_pasted(infotext, results):
         if not k.startswith("AnimateDiff"):
             continue
 
-        assert isinstance(v, str), f"Expect string but got {v}."
+        assert isinstance(v, str), f"Expected string but got {v}."
         try:
             for items in v.split(', '):
                 field, value = items.split(': ')
                 results[f"AnimateDiff {field}"] = value
-        except Exception:
-            logger.warn(
-                f"Failed to parse infotext, legacy format infotext is no longer supported:\n{v}"
-            )
+            results.pop("AnimateDiff")
+        except Exception as e:
+            logger.warn(f"Failed to parse infotext value:\n{v}")
+            logger.warn(f"Exception: {e}")
         break
