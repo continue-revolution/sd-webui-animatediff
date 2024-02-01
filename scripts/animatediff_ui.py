@@ -76,7 +76,6 @@ class AnimateDiffProcess:
 
     def get_dict(self, is_img2img: bool):
         infotext = {
-            "enable": self.enable,
             "model": self.model,
             "video_length": self.video_length,
             "fps": self.fps,
@@ -308,46 +307,42 @@ class AnimateDiffUiGroup:
                 elem_id=f"{elemid_prefix}video-path"
             )
             if is_img2img:
-                with gr.Row():
-                    self.params.latent_power = gr.Slider(
-                        minimum=0.1,
-                        maximum=10,
-                        value=self.params.latent_power,
-                        step=0.1,
-                        label="Latent power",
-                        elem_id=f"{elemid_prefix}latent-power",
+                with gr.Accordion("I2V Traditional", open=False):
+                    with gr.Row():
+                        self.params.latent_power = gr.Slider(
+                            minimum=0.1,
+                            maximum=10,
+                            value=self.params.latent_power,
+                            step=0.1,
+                            label="Latent power",
+                            elem_id=f"{elemid_prefix}latent-power",
+                        )
+                        self.params.latent_scale = gr.Slider(
+                            minimum=1,
+                            maximum=128,
+                            value=self.params.latent_scale,
+                            label="Latent scale",
+                            elem_id=f"{elemid_prefix}latent-scale"
+                        )
+                        self.params.latent_power_last = gr.Slider(
+                            minimum=0.1,
+                            maximum=10,
+                            value=self.params.latent_power_last,
+                            step=0.1,
+                            label="Optional latent power for last frame",
+                            elem_id=f"{elemid_prefix}latent-power-last",
+                        )
+                        self.params.latent_scale_last = gr.Slider(
+                            minimum=1,
+                            maximum=128,
+                            value=self.params.latent_scale_last,
+                            label="Optional latent scale for last frame",
+                            elem_id=f"{elemid_prefix}latent-scale-last"
+                        )
+                    self.params.last_frame = gr.Image(
+                        label="Optional last frame. Leave it blank if you do not need one.",
+                        type="pil",
                     )
-                    self.params.latent_scale = gr.Slider(
-                        minimum=1,
-                        maximum=128,
-                        value=self.params.latent_scale,
-                        label="Latent scale",
-                        elem_id=f"{elemid_prefix}latent-scale"
-                    )
-                    self.params.latent_power_last = gr.Slider(
-                        minimum=0.1,
-                        maximum=10,
-                        value=self.params.latent_power_last,
-                        step=0.1,
-                        label="Optional latent power for last frame",
-                        elem_id=f"{elemid_prefix}latent-power-last",
-                    )
-                    self.params.latent_scale_last = gr.Slider(
-                        minimum=1,
-                        maximum=128,
-                        value=self.params.latent_scale_last,
-                        label="Optional latent scale for last frame",
-                        elem_id=f"{elemid_prefix}latent-scale-last"
-                    )
-                self.params.last_frame = gr.Image(
-                    label="Optional last frame. Leave it blank if you do not need one.",
-                    type="pil",
-                )
-            with gr.Row():
-                unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
-                remove = gr.Button(value="Remove motion module from any memory")
-                unload.click(fn=motion_module.unload)
-                remove.click(fn=motion_module.remove)
 
         # Set up controls to be copy-pasted using infotext
         fields = self.params.get_param_names(is_img2img)

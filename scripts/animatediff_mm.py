@@ -1,10 +1,9 @@
-import gc
 import os
 
 import torch
 from einops import rearrange
-from modules import hashes, shared, sd_models, devices
-from modules.devices import cpu, device, torch_gc
+from modules import hashes, shared, sd_models
+from modules.devices import device
 
 from motion_module import MotionWrapper, MotionModuleType
 from scripts.animatediff_logger import logger_animatediff as logger
@@ -46,12 +45,10 @@ class AnimateDiffMM:
             missed_keys = self.mm.load_state_dict(mm_state_dict)
             logger.warn(f"Missing keys {missed_keys}")
         self.mm.to(device).eval()
-        if not shared.cmd_opts.no_half:
-            self.mm.half()
-            if getattr(devices, "fp8", False):
-                for module in self.mm.modules():
-                    if isinstance(module, (torch.nn.Conv2d, torch.nn.Linear)):
-                        module.to(torch.float8_e4m3fn)
+        from ldm_patched.modules.model_management import unet_dtype
+        for module in self.mm.modules():
+            if isinstance(module, (torch.nn.Conv2d, torch.nn.Linear)):
+                module.to(unet_dtype())
 
 
     def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
@@ -70,7 +67,7 @@ class AnimateDiffMM:
             unet.middle_block.insert(-1, self.mm.mid_block.motion_modules[0])
         elif self.mm.enable_gn_hack():
             logger.info(f"Hacking {sd_ver} GroupNorm32 forward function.")
-            if self.mm.is_hotshot:
+            if self.mm.is_xl:
                 from sgm.modules.diffusionmodules.util import GroupNorm32
             else:
                 from ldm.modules.diffusionmodules.util import GroupNorm32
@@ -149,8 +146,6 @@ class AnimateDiffMM:
 
         AnimateDiffMM.mm_injected = False
         logger.info(f"Removal finished.")
-        if shared.cmd_opts.lowvram:
-            self.unload()
 
 
     def _set_ddim_alpha(self, sd_model):
@@ -189,22 +184,6 @@ class AnimateDiffMM:
         sd_model.alphas_cumprod_original = self.prev_alpha_cumprod_original
         self.prev_alpha_cumprod = None
         self.prev_alpha_cumprod_original = None
-
-
-    def unload(self):
-        logger.info("Moving motion module to CPU")
-        if self.mm is not None:
-            self.mm.to(cpu)
-        torch_gc()
-        gc.collect()
-
-
-    def remove(self):
-        logger.info("Removing motion module from any memory")
-        del self.mm
-        self.mm = None
-        torch_gc()
-        gc.collect()
 
 
 mm_animatediff = AnimateDiffMM()

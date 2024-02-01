@@ -6,7 +6,6 @@ import torch
 from torch import nn
 from einops import rearrange
 
-from modules import shared
 from ldm.modules.attention import FeedForward
 
 
@@ -44,6 +43,8 @@ def zero_module(module):
 
 
 class MotionWrapper(nn.Module):
+    video_length = 16
+
     def __init__(self, mm_name: str, mm_hash: str, mm_type: MotionModuleType):
         super().__init__()
         self.mm_name = mm_name
@@ -71,16 +72,20 @@ class MotionWrapper(nn.Module):
     def is_xl(self):
         return self.mm_type in [MotionModuleType.AnimateDiffXL, MotionModuleType.HotShotXL]
 
+    @property
+    def is_v2(self):
+        return self.mm_type in [MotionModuleType.AnimateDiffV2]
+
 
 class MotionModule(nn.Module):
     def __init__(self, in_channels, num_mm, max_len, attention_block_types=("Temporal_Self", "Temporal_Self")):
         super().__init__()
-        self.motion_modules = nn.ModuleList([get_motion_module(in_channels, max_len, attention_block_types) for _ in range(num_mm)])
-
-
-
-def get_motion_module(in_channels, max_len, attention_block_types):
-    return VanillaTemporalModule(in_channels=in_channels, temporal_position_encoding_max_len=max_len, attention_block_types=attention_block_types)
+        self.motion_modules = nn.ModuleList([
+            VanillaTemporalModule(
+                in_channels=in_channels,
+                temporal_position_encoding_max_len=max_len,
+                attention_block_types=attention_block_types)
+            for _ in range(num_mm)])
 
 
 class VanillaTemporalModule(nn.Module):
@@ -108,9 +113,6 @@ class VanillaTemporalModule(nn.Module):
         if zero_initialize:
             self.temporal_transformer.proj_out = zero_module(self.temporal_transformer.proj_out)
 
-
-    def forward(self, input_tensor, encoder_hidden_states=None, attention_mask=None):
-        return self.temporal_transformer(input_tensor, encoder_hidden_states, attention_mask)
 
 
 class TemporalTransformer3DModel(nn.Module):
@@ -150,28 +152,26 @@ class TemporalTransformer3DModel(nn.Module):
                     upcast_attention=upcast_attention,
                     temporal_position_encoding_max_len=temporal_position_encoding_max_len,
                 )
-                for d in range(num_layers)
+                for _ in range(num_layers)
             ]
         )
         self.proj_out = nn.Linear(inner_dim, in_channels)    
     
     def forward(self, hidden_states):
-        video_length = hidden_states.shape[0] // (2 if shared.opts.batch_cond_uncond else 1)
-        batch, channel, height, weight = hidden_states.shape
+        _, _, height, _ = hidden_states.shape
         residual = hidden_states
 
         hidden_states = self.norm(hidden_states).type(hidden_states.dtype)
-        inner_dim = hidden_states.shape[1]
-        hidden_states = hidden_states.permute(0, 2, 3, 1).reshape(batch, height * weight, inner_dim)
+        hidden_states = rearrange(hidden_states, "b c h w -> b (h w) c")
         hidden_states = self.proj_in(hidden_states)
 
         # Transformer Blocks
         for block in self.transformer_blocks:
-            hidden_states = block(hidden_states, video_length=video_length)
+            hidden_states = block(hidden_states)
         
         # output
         hidden_states = self.proj_out(hidden_states)
-        hidden_states = hidden_states.reshape(batch, height, weight, inner_dim).permute(0, 3, 1, 2).contiguous()
+        hidden_states = rearrange(hidden_states, "b (h w) c -> b c h w", h=height)
 
         output = hidden_states + residual
         return output
@@ -216,13 +216,10 @@ class TemporalTransformerBlock(nn.Module):
         self.ff_norm = nn.LayerNorm(dim)
 
 
-    def forward(self, hidden_states, video_length):
+    def forward(self, hidden_states):
         for attention_block, norm in zip(self.attention_blocks, self.norms):
             norm_hidden_states = norm(hidden_states).type(hidden_states.dtype)
-            hidden_states = attention_block(
-                norm_hidden_states,
-                video_length=video_length,
-            ) + hidden_states
+            hidden_states = attention_block(norm_hidden_states,) + hidden_states
             
         hidden_states = self.ff(self.ff_norm(hidden_states).type(hidden_states.dtype)) + hidden_states
         
@@ -289,9 +286,7 @@ class CrossAttention(nn.Module):
         self.to_k = nn.Linear(cross_attention_dim, inner_dim, bias=bias)
         self.to_v = nn.Linear(cross_attention_dim, inner_dim, bias=bias)
 
-        self.to_out = nn.ModuleList([])
-        self.to_out.append(nn.Linear(inner_dim, query_dim))
-        self.to_out.append(nn.Dropout(dropout))
+        self.to_out = nn.ModuleList([nn.Linear(inner_dim, query_dim), nn.Dropout(dropout)])
 
 
 class VersatileAttention(CrossAttention):
@@ -307,9 +302,9 @@ class VersatileAttention(CrossAttention):
             max_len=temporal_position_encoding_max_len)
 
 
-    def forward(self, x: torch.Tensor, video_length: int):
+    def forward(self, x: torch.Tensor):
         d = x.shape[1]
-        x = rearrange(x, "(b f) d c -> (b d) f c", f=video_length)
+        x = rearrange(x, "(b f) d c -> (b d) f c", f=MotionWrapper.video_length)
         x = self.pos_encoder(x)
 
         q = self.to_q(x)
@@ -320,8 +315,7 @@ class VersatileAttention(CrossAttention):
         x = torch.nn.functional.scaled_dot_product_attention(q, k, v)
         q, k, v = map(lambda t: rearrange(t, '(b h) s d -> b s (h d)', h=self.heads), (q, k, v))
 
-        x = self.to_out[0](x) # linear proj
-        x = self.to_out[1](x) # dropout
+        x = self.to_out(x) # linear proj and dropout
         x = rearrange(x, "(b d) f c -> (b f) d c", d=d)
 
         return x
