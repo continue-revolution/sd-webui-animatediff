@@ -1,4 +1,5 @@
 from typing import List, Tuple
+from fastapi import params
 import gradio as gr
 
 from modules import script_callbacks, scripts
@@ -15,6 +16,7 @@ from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_settings import on_ui_settings
 from scripts.animatediff_infotext import update_infotext, infotext_pasted
+from scripts.animatediff_utils import get_animatediff_arg
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
@@ -23,7 +25,6 @@ motion_module.set_script_dir(script_dir)
 class AnimateDiffScript(scripts.Script):
 
     def __init__(self):
-        self.hacked = False
         self.infotext_fields: List[Tuple[gr.components.IOComponent, str]] = []
         self.paste_field_names: List[str] = []
 
@@ -45,22 +46,33 @@ class AnimateDiffScript(scripts.Script):
         )
         return (unit,)
 
+
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
+        if p.is_api:
+            params = get_animatediff_arg(p)
+        AnimateDiffInfV2V.cached_ad_params = params
         if params.enable:
             logger.info("AnimateDiff process start.")
+            motion_module.load(params.model)
             params.set_p(p)
-            motion_module.inject(p.sd_model, params.model)
-            params.prompt_scheduler = AnimateDiffPromptSchedule()
+            # TODO: fix batch size and video length
+            params.prompt_scheduler = AnimateDiffPromptSchedule(p, params)
             update_infotext(p, params)
-            self.hacked = True
-        elif self.hacked:
-            motion_module.restore(p.sd_model)
-            self.hacked = False
 
 
     def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and not params.is_i2i_batch:
             AnimateDiffI2VLatent().randomize(p, params)
+
+
+    def process_batch(self, p, params: AnimateDiffProcess, **kwargs):
+        if params.enable:
+            motion_module.set_ddim_alpha(p.sd_model)
+
+
+    def process_before_every_sampling(self, p, params: AnimateDiffProcess, **kwargs):
+        if params.enable:
+            motion_module.inject(p.sd_model, params.model, params.batch_size)
 
 
     def postprocess_batch_list(self, p: StableDiffusionProcessing, pp: PostprocessBatchListArgs, params: AnimateDiffProcess, **kwargs):
@@ -71,8 +83,6 @@ class AnimateDiffScript(scripts.Script):
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if params.enable:
             params.prompt_scheduler.save_infotext_txt(res)
-            motion_module.restore(p.sd_model)
-            self.hacked = False
             AnimateDiffOutput().output(p, res, params)
             logger.info("AnimateDiff process end.")
 

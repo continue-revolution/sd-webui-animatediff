@@ -1,14 +1,12 @@
 import numpy as np
 import torch
 
-from modules import shared
 from modules.script_callbacks import CFGDenoiserParams
 from scripts.animatediff_logger import logger_animatediff as logger
-from scripts.animatediff_utils import get_animatediff_arg
 
 
 class AnimateDiffInfV2V:
-    cached_text_cond = None
+    cached_ad_params = None
 
 
     # Returns fraction that has denominator that is a power of 2
@@ -78,37 +76,32 @@ class AnimateDiffInfV2V:
 
     @staticmethod
     def animatediff_on_cfg_denoiser(cfg_params: CFGDenoiserParams):
-        ad_params = get_animatediff_arg(cfg_params.denoiser.p)
-        if not ad_params.enable:
-            return
-
-        if cfg_params.denoiser.step == 0:
-            # prompt travel
-            prompt_closed_loop = (ad_params.video_length > ad_params.batch_size) and (ad_params.closed_loop in ['R+P', 'A'])
-            AnimateDiffInfV2V.cached_text_cond = ad_params.prompt_scheduler.multi_cond(cfg_params.text_cond, prompt_closed_loop)
-            from motion_module import MotionWrapper
-            MotionWrapper.video_length = ad_params.batch_size
-
-            # infinite generation
-            def mm_sd_forward(self, x_in, sigma_in, cond):
-                logger.debug("Running special forward for AnimateDiff")
-                x_out = torch.zeros_like(x_in)
-                for context in AnimateDiffInfV2V.uniform(cfg_params.denoiser.step, ad_params.video_length, ad_params.batch_size, ad_params.stride, ad_params.overlap, ad_params.closed_loop):
-                    if shared.opts.batch_cond_uncond:
-                        _context = context + [c + ad_params.video_length for c in context]
-                    else:
-                        _context = context
-                    mm_cn_select(_context)
-                    out = self.original_forward(
-                        x_in[_context], sigma_in[_context],
-                        cond={k: ([v[0][_context]] if isinstance(v, list) else v[_context]) for k, v in cond.items()})
-                    x_out = x_out.to(dtype=out.dtype)
-                    x_out[_context] = out
-                    mm_cn_restore(_context)
-                return x_out
-
-        cfg_params.text_cond = AnimateDiffInfV2V.cached_text_cond
+        AnimateDiffInfV2V.cached_ad_params.step = cfg_params.denoiser.step
 
 
     @staticmethod
-    
+    def mm_sd_prompt_travel(model, x, timestep, uncond, cond, cond_scale, model_options, seed):
+        ad_params = AnimateDiffInfV2V.cached_ad_params
+        prompt_closed_loop = (ad_params.video_length > ad_params.batch_size) and (ad_params.closed_loop in ['R+P', 'A'])
+        cond = ad_params.prompt_scheduler.multi_cond(cond, prompt_closed_loop)
+        return model, x, timestep, uncond, cond, cond_scale, model_options, seed
+
+
+    @staticmethod
+    def mm_sd_forward(apply_model, info):
+        logger.debug("Running special forward for AnimateDiff")
+        x_out = torch.zeros_like(info["input"])
+        ad_params = AnimateDiffInfV2V.cached_ad_params
+        for context in AnimateDiffInfV2V.uniform(ad_params.step, ad_params.video_length, ad_params.batch_size, ad_params.stride, ad_params.overlap, ad_params.closed_loop):
+            if x_out.shape[0] == 2 * ad_params.video_length:
+                _context = context + [c + ad_params.video_length for c in context]
+            else:
+                _context = context
+            out = apply_model(
+                info["input"][_context],
+                info["timestep"],
+                **info["c"],
+            )
+            x_out = x_out.to(dtype=out.dtype)
+            x_out[_context] = out
+        return x_out

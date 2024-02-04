@@ -6,7 +6,8 @@ import torch
 from torch import nn
 from einops import rearrange
 
-from ldm.modules.attention import FeedForward
+from ldm_patched.ldm.modules.attention import FeedForward
+from ldm_patched.modules.ops import disable_weight_init
 
 
 class MotionModuleType(Enum):
@@ -43,9 +44,7 @@ def zero_module(module):
 
 
 class MotionWrapper(nn.Module):
-    video_length = 16
-
-    def __init__(self, mm_name: str, mm_hash: str, mm_type: MotionModuleType):
+    def __init__(self, mm_name: str, mm_hash: str, mm_type: MotionModuleType, operations = disable_weight_init):
         super().__init__()
         self.mm_name = mm_name
         self.mm_type = mm_type
@@ -56,12 +55,12 @@ class MotionWrapper(nn.Module):
         self.up_blocks = nn.ModuleList([])
         for c in in_channels:
             if mm_type in [MotionModuleType.SparseCtrl]:
-                self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len, attention_block_types=("Temporal_Self", )))
+                self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len, attention_block_types=("Temporal_Self", ), operations=operations))
             else:
-                self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len))
-                self.up_blocks.insert(0,MotionModule(c, num_mm=3, max_len=max_len))
+                self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len, operations=operations))
+                self.up_blocks.insert(0,MotionModule(c, num_mm=3, max_len=max_len, operations=operations))
         if mm_type in [MotionModuleType.AnimateDiffV2]:
-            self.mid_block = MotionModule(1280, num_mm=1, max_len=max_len)
+            self.mid_block = MotionModule(1280, num_mm=1, max_len=max_len, operations=operations)
 
 
     def enable_gn_hack(self):
@@ -72,19 +71,21 @@ class MotionWrapper(nn.Module):
     def is_xl(self):
         return self.mm_type in [MotionModuleType.AnimateDiffXL, MotionModuleType.HotShotXL]
 
+
     @property
-    def is_v2(self):
-        return self.mm_type in [MotionModuleType.AnimateDiffV2]
+    def is_adxl(self):
+        return self.mm_type == MotionModuleType.AnimateDiffXL
 
 
 class MotionModule(nn.Module):
-    def __init__(self, in_channels, num_mm, max_len, attention_block_types=("Temporal_Self", "Temporal_Self")):
+    def __init__(self, in_channels, num_mm, max_len, attention_block_types=("Temporal_Self", "Temporal_Self"), operations = disable_weight_init):
         super().__init__()
         self.motion_modules = nn.ModuleList([
             VanillaTemporalModule(
                 in_channels=in_channels,
                 temporal_position_encoding_max_len=max_len,
-                attention_block_types=attention_block_types)
+                attention_block_types=attention_block_types,
+                operations=operations,)
             for _ in range(num_mm)])
 
 
@@ -98,6 +99,7 @@ class VanillaTemporalModule(nn.Module):
         temporal_position_encoding_max_len = 24,
         temporal_attention_dim_div         = 1,
         zero_initialize                    = True,
+        operations                         = disable_weight_init,
     ):
         super().__init__()
         
@@ -108,6 +110,7 @@ class VanillaTemporalModule(nn.Module):
             num_layers=num_transformer_block,
             attention_block_types=attention_block_types,
             temporal_position_encoding_max_len=temporal_position_encoding_max_len,
+            operations=operations,
         )
         
         if zero_initialize:
@@ -131,13 +134,15 @@ class TemporalTransformer3DModel(nn.Module):
         upcast_attention                   = False,
         
         temporal_position_encoding_max_len = 24,
+
+        operations                         = disable_weight_init,
     ):
         super().__init__()
 
         inner_dim = num_attention_heads * attention_head_dim
 
-        self.norm = torch.nn.GroupNorm(num_groups=norm_num_groups, num_channels=in_channels, eps=1e-6, affine=True)
-        self.proj_in = nn.Linear(in_channels, inner_dim)
+        self.norm = operations.GroupNorm(num_groups=norm_num_groups, num_channels=in_channels, eps=1e-6, affine=True)
+        self.proj_in = operations.Linear(in_channels, inner_dim)
 
         self.transformer_blocks = nn.ModuleList(
             [
@@ -151,13 +156,14 @@ class TemporalTransformer3DModel(nn.Module):
                     attention_bias=attention_bias,
                     upcast_attention=upcast_attention,
                     temporal_position_encoding_max_len=temporal_position_encoding_max_len,
+                    operations=operations,
                 )
                 for _ in range(num_layers)
             ]
         )
-        self.proj_out = nn.Linear(inner_dim, in_channels)    
+        self.proj_out = operations.Linear(inner_dim, in_channels)    
     
-    def forward(self, hidden_states):
+    def forward(self, hidden_states: torch.Tensor, video_length: int):
         _, _, height, _ = hidden_states.shape
         residual = hidden_states
 
@@ -167,7 +173,7 @@ class TemporalTransformer3DModel(nn.Module):
 
         # Transformer Blocks
         for block in self.transformer_blocks:
-            hidden_states = block(hidden_states)
+            hidden_states = block(hidden_states, video_length)
         
         # output
         hidden_states = self.proj_out(hidden_states)
@@ -189,6 +195,7 @@ class TemporalTransformerBlock(nn.Module):
         attention_bias                     = False,
         upcast_attention                   = False,
         temporal_position_encoding_max_len = 24,
+        operations                         = disable_weight_init,
     ):
         super().__init__()
 
@@ -205,21 +212,22 @@ class TemporalTransformerBlock(nn.Module):
                     bias=attention_bias,
                     upcast_attention=upcast_attention,
                     temporal_position_encoding_max_len=temporal_position_encoding_max_len,
+                    operations=operations,
                 )
             )
-            norms.append(nn.LayerNorm(dim))
+            norms.append(operations.LayerNorm(dim))
             
         self.attention_blocks = nn.ModuleList(attention_blocks)
         self.norms = nn.ModuleList(norms)
 
-        self.ff = FeedForward(dim, dropout=dropout, glu=(activation_fn=='geglu'))
-        self.ff_norm = nn.LayerNorm(dim)
+        self.ff = FeedForward(dim, dropout=dropout, glu=(activation_fn=='geglu'), operations=operations)
+        self.ff_norm = operations.LayerNorm(dim)
 
 
-    def forward(self, hidden_states):
+    def forward(self, hidden_states: torch.Tensor, video_length: int):
         for attention_block, norm in zip(self.attention_blocks, self.norms):
             norm_hidden_states = norm(hidden_states).type(hidden_states.dtype)
-            hidden_states = attention_block(norm_hidden_states,) + hidden_states
+            hidden_states = attention_block(norm_hidden_states, video_length) + hidden_states
             
         hidden_states = self.ff(self.ff_norm(hidden_states).type(hidden_states.dtype)) + hidden_states
         
@@ -273,6 +281,7 @@ class CrossAttention(nn.Module):
         bias=False,
         upcast_attention: bool = False,
         upcast_softmax: bool = False,
+        operations = disable_weight_init,
     ):
         super().__init__()
         inner_dim = dim_head * heads
@@ -282,11 +291,11 @@ class CrossAttention(nn.Module):
         self.scale = dim_head**-0.5
         self.heads = heads
 
-        self.to_q = nn.Linear(query_dim, inner_dim, bias=bias)
-        self.to_k = nn.Linear(cross_attention_dim, inner_dim, bias=bias)
-        self.to_v = nn.Linear(cross_attention_dim, inner_dim, bias=bias)
+        self.to_q = operations.Linear(query_dim, inner_dim, bias=bias)
+        self.to_k = operations.Linear(cross_attention_dim, inner_dim, bias=bias)
+        self.to_v = operations.Linear(cross_attention_dim, inner_dim, bias=bias)
 
-        self.to_out = nn.ModuleList([nn.Linear(inner_dim, query_dim), nn.Dropout(dropout)])
+        self.to_out = nn.ModuleList([operations.Linear(inner_dim, query_dim), nn.Dropout(dropout)])
 
 
 class VersatileAttention(CrossAttention):
@@ -302,9 +311,9 @@ class VersatileAttention(CrossAttention):
             max_len=temporal_position_encoding_max_len)
 
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, video_length: int):
         d = x.shape[1]
-        x = rearrange(x, "(b f) d c -> (b d) f c", f=MotionWrapper.video_length)
+        x = rearrange(x, "(b f) d c -> (b d) f c", f=video_length)
         x = self.pos_encoder(x)
 
         q = self.to_q(x)
