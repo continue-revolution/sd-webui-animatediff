@@ -322,7 +322,7 @@ class VersatileAttention(CrossAttention):
 
     def forward(self, x: torch.Tensor):
         from scripts.animatediff_mm import mm_animatediff
-        video_length = mm_animatediff.ad_params.video_length
+        video_length = mm_animatediff.ad_params.batch_size
 
         d = x.shape[1]
         x = rearrange(x, "(b f) d c -> (b d) f c", f=video_length)
@@ -334,7 +334,7 @@ class VersatileAttention(CrossAttention):
 
         q, k, v = map(lambda t: rearrange(t, 'b s (h d) -> (b h) s d', h=self.heads), (q, k, v))
         x = torch.nn.functional.scaled_dot_product_attention(q, k, v)
-        q, k, v = map(lambda t: rearrange(t, '(b h) s d -> b s (h d)', h=self.heads), (q, k, v))
+        x = rearrange(x, '(b h) s d -> b s (h d)', h=self.heads)
 
         x = self.to_out(x) # linear proj and dropout
         x = rearrange(x, "(b d) f c -> (b f) d c", d=d)

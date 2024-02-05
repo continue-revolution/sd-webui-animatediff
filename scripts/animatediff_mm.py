@@ -46,10 +46,11 @@ class AnimateDiffMM:
             logger.warn(f"Missing keys {missed_keys}")
 
 
-    def inject(self, sd_model, model_name="mm_sd_v3.safetensors", video_length=16):
+    def inject(self, sd_model, model_name="mm_sd_v3.safetensors"):
         unet: UnetPatcher = sd_model.forge_objects.unet.clone()
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         assert sd_model.is_sdxl == self.mm.is_xl, f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."
+        input_block_map = {block_idx: mm_idx for mm_idx, block_idx in enumerate([1, 2, 4, 5, 7, 8, 10, 11])}
 
         # TODO: What's the best way to do GroupNorm32 forward function hack?
         # TODO: What's the best way to change memory calculation?
@@ -77,6 +78,7 @@ class AnimateDiffMM:
                     if getattr(self.mm, "mid_block", None) is not None:
                         return self.mm.mid_block(x)
                 elif block_type == "input":
+                    block_idx = input_block_map[block_idx]
                     mm_idx0, mm_idx1 = block_idx // 2, block_idx % 2
                     return self.mm.down_blocks[mm_idx0].motion_modules[mm_idx1](x)
                 elif block_type == "output":

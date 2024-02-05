@@ -72,7 +72,7 @@ class AnimateDiffScript(scripts.Script):
 
     def process_before_every_sampling(self, p, params: AnimateDiffProcess, **kwargs):
         if params.enable:
-            motion_module.inject(p.sd_model, params.model, params.batch_size)
+            motion_module.inject(p.sd_model, params.model)
 
 
     def postprocess_batch_list(self, p: StableDiffusionProcessing, pp: PostprocessBatchListArgs, params: AnimateDiffProcess, **kwargs):

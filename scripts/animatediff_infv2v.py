@@ -109,10 +109,30 @@ class AnimateDiffInfV2V:
                 _context = context + [c + ad_params.video_length for c in context]
             else:
                 _context = context
+
+            info_c = {}
+            for k, v in info["c"].items():
+                if isinstance(v, torch.Tensor):
+                    if v.shape[0] == 2 * ad_params.video_length:
+                        info_c[k] = v[_context]
+                    elif v.shape[0] == ad_params.video_length:
+                        info_c[k] = v[context]
+                    else:
+                        info_c[k] = v
+                elif isinstance(v, list):
+                    if len(v) == 2 * ad_params.video_length:
+                        info_c[k] = [v[i] for i in _context]
+                    elif len(v) == ad_params.video_length:
+                        info_c[k] = [v[i] for i in context]
+                    else:
+                        info_c[k] = v
+                else:
+                    info_c[k] = v
+
             out = apply_model(
                 info["input"][_context],
-                info["timestep"],
-                **info["c"],
+                info["timestep"][_context],
+                **info_c,
             )
             x_out = x_out.to(dtype=out.dtype)
             x_out[_context] = out
