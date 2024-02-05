@@ -13,10 +13,15 @@ class AnimateDiffMM:
     def __init__(self):
         self.mm: MotionWrapper = None
         self.script_dir = None
+        self.ad_params = None
 
 
     def set_script_dir(self, script_dir):
         self.script_dir = script_dir
+
+
+    def set_ad_params(self, ad_params):
+        self.ad_params = ad_params
 
 
     def get_model_dir(self):
@@ -42,8 +47,8 @@ class AnimateDiffMM:
 
 
     def inject(self, sd_model, model_name="mm_sd_v3.safetensors", video_length=16):
-        unet: UnetPatcher = p.sd_model.forge_objects.unet.clone()
-        sd_ver = "SDXL" if p.sd_model.is_sdxl else "SD1.5"
+        unet: UnetPatcher = sd_model.forge_objects.unet.clone()
+        sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         assert sd_model.is_sdxl == self.mm.is_xl, f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."
 
         # TODO: What's the best way to do GroupNorm32 forward function hack?
@@ -70,20 +75,19 @@ class AnimateDiffMM:
                 block_type, block_idx  = transformer_options["block"]
                 if block_type == "middle":
                     if getattr(self.mm, "mid_block", None) is not None:
-                        return self.mm.mid_block(x, video_length)
+                        return self.mm.mid_block(x)
                 elif block_type == "input":
                     mm_idx0, mm_idx1 = block_idx // 2, block_idx % 2
-                    return self.mm.down_blocks[mm_idx0].motion_modules[mm_idx1](x, video_length)
+                    return self.mm.down_blocks[mm_idx0].motion_modules[mm_idx1](x)
                 elif block_type == "output":
                     mm_idx0, mm_idx1 = block_idx // 3, block_idx % 3
-                    return self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1](x, video_length)
+                    return self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1](x)
             return x
 
-        from animatediff_infv2v import AnimateDiffInfV2V
+        from scripts.animatediff_infv2v import AnimateDiffInfV2V
         mm_patcher = unet.add_extra_torch_module_during_sampling(self.mm)
         unet.add_extra_preserved_memory_during_sampling(mm_patcher.model_size())
         unet.set_model_unet_function_wrapper(AnimateDiffInfV2V.mm_sd_forward)
-        unet.add_conditioning_modifier(AnimateDiffInfV2V.mm_sd_prompt_travel)
         unet.add_block_inner_modifier(mm_block_modifier)
         sd_model.forge_objects.unet = unet
 
@@ -103,7 +107,7 @@ class AnimateDiffMM:
                 dtype=torch.float32,
                 device=get_torch_device())
         alphas_cumprod = torch.cumprod(1.0 - betas, dim=0)
-        unet.add_alphas_cumprod_modifier(lambda x: alphas_cumprod)
+        unet.add_alphas_cumprod_modifier(lambda _: alphas_cumprod)
         sd_model.forge_objects.unet = unet
 
 

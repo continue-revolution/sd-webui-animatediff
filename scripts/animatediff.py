@@ -50,7 +50,7 @@ class AnimateDiffScript(scripts.Script):
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
         if p.is_api:
             params = get_animatediff_arg(p)
-        AnimateDiffInfV2V.cached_ad_params = params
+        motion_module.set_ad_params(params)
         if params.enable:
             logger.info("AnimateDiff process start.")
             motion_module.load(params.model)

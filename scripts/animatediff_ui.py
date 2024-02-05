@@ -103,15 +103,11 @@ class AnimateDiffProcess:
 
 
     def get_param_names(self, is_img2img: bool):
-        remove = ["format", "request_id", "video_source", "video_path", "last_frame"]
-        if not is_img2img:
-            remove.extend(["latent_power", "latent_power_last", "latent_scale", "latent_scale_last"])
+        preserve = ["model", "enable", "video_length", "fps", "loop_number", "closed_loop", "batch_size", "stride", "overlap", "format", "interp", "interp_x"]
+        if is_img2img:
+            preserve.extend(["latent_power", "latent_power_last", "latent_scale", "latent_scale_last"])
         
-        return [
-            field 
-            for field in self.__dict__ 
-            if field not in remove and not callable(getattr(self, field)) and not field.startswith("__")
-        ]
+        return preserve
 
 
     def _check(self):

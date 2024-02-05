@@ -1,3 +1,4 @@
+from re import A
 import numpy as np
 import torch
 
@@ -6,8 +7,6 @@ from scripts.animatediff_logger import logger_animatediff as logger
 
 
 class AnimateDiffInfV2V:
-    cached_ad_params = None
-
 
     # Returns fraction that has denominator that is a power of 2
     @staticmethod
@@ -27,7 +26,7 @@ class AnimateDiffInfV2V:
     # Generator that returns lists of latent indeces to diffuse on
     @staticmethod
     def uniform(
-        step: int = ...,
+        step: int,
         video_length: int = 0,
         batch_size: int = 16,
         stride: int = 1,
@@ -76,22 +75,35 @@ class AnimateDiffInfV2V:
 
     @staticmethod
     def animatediff_on_cfg_denoiser(cfg_params: CFGDenoiserParams):
-        AnimateDiffInfV2V.cached_ad_params.step = cfg_params.denoiser.step
+        from scripts.animatediff_mm import mm_animatediff as motion_module
+        ad_params = motion_module.ad_params
+        if ad_params is None or not ad_params.enable:
+            return
+        ad_params.step = cfg_params.denoiser.step
+        if getattr(ad_params, "text_cond", None) is None:
+            prompt_closed_loop = (ad_params.video_length > ad_params.batch_size) and (ad_params.closed_loop in ['R+P', 'A'])
+            ad_params.text_cond = ad_params.prompt_scheduler.multi_cond(cfg_params.text_cond, prompt_closed_loop)
 
-
-    @staticmethod
-    def mm_sd_prompt_travel(model, x, timestep, uncond, cond, cond_scale, model_options, seed):
-        ad_params = AnimateDiffInfV2V.cached_ad_params
-        prompt_closed_loop = (ad_params.video_length > ad_params.batch_size) and (ad_params.closed_loop in ['R+P', 'A'])
-        cond = ad_params.prompt_scheduler.multi_cond(cond, prompt_closed_loop)
-        return model, x, timestep, uncond, cond, cond_scale, model_options, seed
+        #TODO: move this to cond modifier patch
+        from modules import shared
+        from modules.sd_samplers_cfg_denoiser import pad_cond
+        def pad_cond_uncond(cond, uncond):
+            empty = shared.sd_model.cond_stage_model_empty_prompt
+            num_repeats = (cond.shape[1] - uncond.shape[1]) // empty.shape[1]
+            if num_repeats < 0:
+                cond = pad_cond(cond, -num_repeats, empty)
+            elif num_repeats > 0:
+                uncond = pad_cond(uncond, num_repeats, empty)
+            return cond, uncond
+        cfg_params.text_cond, cfg_params.text_uncond = pad_cond_uncond(ad_params.text_cond, cfg_params.text_uncond)
 
 
     @staticmethod
     def mm_sd_forward(apply_model, info):
         logger.debug("Running special forward for AnimateDiff")
         x_out = torch.zeros_like(info["input"])
-        ad_params = AnimateDiffInfV2V.cached_ad_params
+        from scripts.animatediff_mm import mm_animatediff as motion_module
+        ad_params = motion_module.ad_params
         for context in AnimateDiffInfV2V.uniform(ad_params.step, ad_params.video_length, ad_params.batch_size, ad_params.stride, ad_params.overlap, ad_params.closed_loop):
             if x_out.shape[0] == 2 * ad_params.video_length:
                 _context = context + [c + ad_params.video_length for c in context]
