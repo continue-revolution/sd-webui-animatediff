@@ -52,7 +52,7 @@ I thank researchers from [Shanghai AI Lab](https://www.shlab.org.cn/), especiall
 I also thank community developers, especially
 - [@zappityzap](https://github.com/zappityzap) who developed the majority of the [output features](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_output.py)
 - [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance
-- [#lllyasviel](https://github.com/lllyasviel) for providing technical support of forge
+- [@lllyasviel](https://github.com/lllyasviel) for providing technical support of forge
 
 and many others who have contributed to this extension.
 
@@ -70,7 +70,7 @@ I also thank community users, especially [@streamline](https://twitter.com/kaizi
 
 
 ## Sponsor
-You can sponsor me via WeChat, AliPay or [PayPal](https://paypal.me/conrevo). You can also support me via [patreon](https://www.patreon.com/conrevo), [ko-fi](https://ko-fi.com/conrevo) or [afdian](https://afdian.net/a/conrevo).
+You can sponsor me via WeChat, AliPay or [PayPal](https://paypal.me/conrevo). You can also support me via [ko-fi](https://ko-fi.com/conrevo) or [afdian](https://afdian.net/a/conrevo).
 
 | WeChat | AliPay | PayPal |
 | --- | --- | --- |
