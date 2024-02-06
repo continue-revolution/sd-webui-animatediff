@@ -5,7 +5,7 @@ This extension implements AnimateDiff in a different way. It does not require yo
 
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything).
 
-[Forge[(https://github.com/lllyasviel/stable-diffusion-webui-forge) users should either checkout branch [forge/master](https://github.com/continue-revolution/sd-webui-animatediff/tree/forge/master) in this repository or use [sd-forge-animatediff](https://github.com/continue-revolution/sd-forge-animatediff). They will be in sync.
+[Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge) users should either checkout branch [forge/master](https://github.com/continue-revolution/sd-webui-animatediff/tree/forge/master) in this repository or use [sd-forge-animatediff](https://github.com/continue-revolution/sd-forge-animatediff). They will be in sync.
 
 [TusiArt](https://tusiart.com/) (for users physically inside P.R.China mainland) and [TensorArt](https://tusiart.com/) (for users outside P.R.China mainland) offers online service of this extension.
 
