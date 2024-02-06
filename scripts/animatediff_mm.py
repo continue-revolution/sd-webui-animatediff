@@ -53,7 +53,6 @@ class AnimateDiffMM:
         input_block_map = {block_idx: mm_idx for mm_idx, block_idx in enumerate([1, 2, 4, 5, 7, 8, 10, 11])}
 
         # TODO: What's the best way to do GroupNorm32 forward function hack?
-        # TODO: What's the best way to change memory calculation?
         if self.mm.enable_gn_hack():
             logger.warning(f"{sd_ver} GroupNorm32 forward function is NOT hacked. Performance will be degraded. Please use newer motion module")
             # from ldm_patched.ldm.modules.diffusionmodules import model as diffmodel
