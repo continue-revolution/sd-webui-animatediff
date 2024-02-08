@@ -12,7 +12,7 @@ from scripts.animatediff_lora import AnimateDiffLora
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
-from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
+from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup, supportedSaveFormats
 from scripts.animatediff_infotext import update_infotext, infotext_pasted
 
 script_dir = scripts.basedir()
@@ -214,6 +214,16 @@ def on_ui_settings():
             {"choices": ["Optimize attention layers with xformers",
                          "Optimize attention layers with sdp (torch >= 2.0.0 required)",
                          "Do not optimize attention layers"]},
+            section=section
+        )
+    )
+    shared.opts.add_option(
+        "animatediff_default_save_formats",
+        shared.OptionInfo(
+            ["GIF", "PNG"],
+            "Default Save Formats",
+            gr.CheckboxGroup,
+            {"choices": supportedSaveFormats},
             section=section
         )
     )
