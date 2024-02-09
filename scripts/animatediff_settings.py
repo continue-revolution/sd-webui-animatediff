@@ -1,6 +1,7 @@
 import gradio as gr
 
 from modules import shared
+from scripts.animatediff_ui import supported_save_formats
 
 
 def on_ui_settings():
@@ -14,6 +15,16 @@ def on_ui_settings():
             gr.Textbox,
             section=section,
         ),
+    )
+    shared.opts.add_option(
+        "animatediff_default_save_formats",
+        shared.OptionInfo(
+            ["GIF", "PNG"],
+            "Default Save Formats",
+            gr.CheckboxGroup,
+            {"choices": supported_save_formats},
+            section=section
+        ).needs_restart()
     )
     shared.opts.add_option(
         "animatediff_optimize_gif_palette",
