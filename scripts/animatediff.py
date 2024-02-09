@@ -117,6 +117,16 @@ def on_ui_settings():
         ),
     )
     shared.opts.add_option(
+        "animatediff_default_save_formats",
+        shared.OptionInfo(
+            ["GIF", "PNG"],
+            "Default Save Formats",
+            gr.CheckboxGroup,
+            {"choices": supportedSaveFormats},
+            section=section
+        ).needs_restart()
+    )
+    shared.opts.add_option(
         "animatediff_optimize_gif_palette",
         shared.OptionInfo(
             False,
@@ -214,16 +224,6 @@ def on_ui_settings():
             {"choices": ["Optimize attention layers with xformers",
                          "Optimize attention layers with sdp (torch >= 2.0.0 required)",
                          "Do not optimize attention layers"]},
-            section=section
-        )
-    )
-    shared.opts.add_option(
-        "animatediff_default_save_formats",
-        shared.OptionInfo(
-            ["GIF", "PNG"],
-            "Default Save Formats",
-            gr.CheckboxGroup,
-            {"choices": supportedSaveFormats},
             section=section
         )
     )
