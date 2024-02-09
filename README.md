@@ -18,7 +18,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 ## Update
 - [v2.0.0-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.0-f) in `02/05/2023`: t2i, prompt travel, infinite generation, all kinds of optimizations have been proven to be working properly and elegantly.
-- [v2.0.1-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.1-f) in `02/09/2023`: ControlNet V2V in t2i panel is working properly and elegantly
+- [v2.0.1-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.1-f) in `02/09/2023`: ControlNet V2V in t2i panel is working properly and elegantly.
 
 
 ## TODO
@@ -27,7 +27,7 @@ You might also be interested in another extension I created: [Segment Anything f
 - [ ] An official video tutorial will be available on YouTube and bilibili.
 - [ ] A bunch of new models / advanced parameters / new features may be implented soon.
 - [ ] All problems in master branch will be fixed, but new feature updates for OG A1111 + Mikubill ControlNet extension may be postponded to some time when I have time to rewrite ControlNet extension.
-- [ ] I will try to make later updates will occur in both WebUIs if possible. But due to the significant diffuculty in maintaining [Mikubill/sd-webui-controlnet](https://github.com/Mikubill/sd-webui-controlnet), I will not be able to bring some features to original A1111 WebUI. Such updates will be clearly documented.
+- [ ] I will try to make later updates available in both WebUIs if possible. But due to the significant diffuculty in maintaining [Mikubill/sd-webui-controlnet](https://github.com/Mikubill/sd-webui-controlnet), I will not be able to bring some features to original A1111 WebUI. Such updates will be clearly documented.
 
 
 ## Model Zoo
