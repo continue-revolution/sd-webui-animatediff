@@ -17,13 +17,17 @@ You might also be interested in another extension I created: [Segment Anything f
 
 
 ## Update
-- `v2.0.0-f` in `02/05/2023`: t2i, prompt travel, infinite generation, all kinds of optimizations have been proven to be working properly and elegantly.
+- [v2.0.0-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.0-f) in `02/05/2023`: t2i, prompt travel, infinite generation, all kinds of optimizations have been proven to be working properly and elegantly.
+- [v2.0.1-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.1-f) in `02/09/2023`: ControlNet V2V in t2i panel is working properly and elegantly
 
 
 ## TODO
-- [ ] Motion lora and ControlNet V2V are still under heavy construction, but I expect to release a working version soon in this week. - When all previous features are working properly, I will soon release SparseCtrl, Magic Animate and Moore Animate Anyone. 
-- [ ] Then this documentation will be completely refactored and an official video tutorial will be available in YouTube and bilibili.
-- [ ] Later updates will occur in both WebUIs if possible. But due to the significant diffuculty in maintaining [Mikubill/sd-webui-controlnet](https://github.com/Mikubill/sd-webui-controlnet), I will not be able to bring some features to original A1111 WebUI. Such updates will be clearly documented.
+- [ ] MotionLoRA and i2i batch are still under heavy construction, but I expect to release a working version soon in this week.
+- [ ] When all previous features are working properly, I will soon release SparseCtrl, Magic Animate and Moore Animate Anyone.
+- [ ] An official video tutorial will be available on YouTube and bilibili.
+- [ ] A bunch of new models / advanced parameters / new features may be implented soon.
+- [ ] All problems in master branch will be fixed, but new feature updates for OG A1111 + Mikubill ControlNet extension may be postponded to some time when I have time to rewrite ControlNet extension.
+- [ ] I will try to make later updates will occur in both WebUIs if possible. But due to the significant diffuculty in maintaining [Mikubill/sd-webui-controlnet](https://github.com/Mikubill/sd-webui-controlnet), I will not be able to bring some features to original A1111 WebUI. Such updates will be clearly documented.
 
 
 ## Model Zoo
