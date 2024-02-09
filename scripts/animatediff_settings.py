@@ -97,7 +97,7 @@ def on_ui_settings():
     shared.opts.add_option(
         "animatediff_save_to_custom",
         shared.OptionInfo(
-            False,
+            True,
             "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/{date} "
             "instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
             gr.Checkbox,

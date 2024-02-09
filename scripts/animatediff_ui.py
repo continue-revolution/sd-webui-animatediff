@@ -1,5 +1,6 @@
-import os
+from typing import List
 
+import os
 import cv2
 import gradio as gr
 
@@ -7,6 +8,7 @@ from modules import shared
 from modules.processing import StableDiffusionProcessing, StableDiffusionProcessingImg2Img
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
+from scripts.animatediff_utils import get_controlnet_units
 
 
 class ToolButton(gr.Button, gr.components.FormComponent):
@@ -133,6 +135,26 @@ class AnimateDiffProcess:
         if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", False):
             p.do_not_save_samples = True
 
+        cn_units = get_controlnet_units(p)
+        if cn_units:
+            from scripts.lib_controlnet import external_code
+            min_batch_in_cn = -1
+            for cn_unit in cn_units:
+                if cn_unit.input_mode == external_code.InputMode.BATCH:
+                    cn_unit_batch_num = len(shared.listfiles(cn_unit.batch_image_dir))
+                    if min_batch_in_cn == -1 or cn_unit_batch_num < min_batch_in_cn:
+                        min_batch_in_cn = cn_unit_batch_num
+            if min_batch_in_cn != -1:
+                self.video_length = self.fix_video_length(p, min_batch_in_cn)
+                def cn_batch_modifler(batch_image_files: List[str], p: StableDiffusionProcessing):
+                    return batch_image_files[:self.video_length]
+                for cn_unit in cn_units:
+                    if cn_unit.input_mode == external_code.InputMode.BATCH:
+                        cur_batch_modifier = getattr(cn_unit, "batch_modifier", [])
+                        cur_batch_modifier.append(cn_batch_modifler)
+                        cn_unit.batch_modifier = cur_batch_modifier
+                self.post_setup_cn_batches(p)
+
 
     def fix_video_length(self, p: StableDiffusionProcessing, min_batch_in_cn: int):
         # ensure that params.video_length <= video_length and params.batch_size <= video_length
@@ -158,9 +180,6 @@ class AnimateDiffProcess:
                 p.batch_size = len(p.init_images)
             if len(p.init_images) < self.batch_size:
                 self.batch_size = len(p.init_images)
-        from scripts.animatediff_infotext import update_infotext
-        self.prompt_scheduler.parse_prompt(p)
-        update_infotext(p, self)
 
 
 class AnimateDiffUiGroup:
