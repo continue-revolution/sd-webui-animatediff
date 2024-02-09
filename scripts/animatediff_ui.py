@@ -10,6 +10,7 @@ from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_i2ibatch import animatediff_i2ibatch
 from scripts.animatediff_lcm import AnimateDiffLCM
 
+supported_save_formats = ["GIF", "MP4", "WEBP", "WEBM", "PNG", "TXT"]
 
 class ToolButton(gr.Button, gr.components.FormComponent):
     """Small button with single emoji as text, fits inside gradio forms"""
@@ -35,7 +36,7 @@ class AnimateDiffProcess:
         batch_size=16,
         stride=1,
         overlap=-1,
-        format=["GIF", "PNG"],
+        format=shared.opts.data.get("animatediff_default_save_formats", ["GIF", "PNG"]),
         interp='Off',
         interp_x=10,
         video_source=None,
@@ -187,7 +188,7 @@ class AnimateDiffUiGroup:
                     refresh_model.click(refresh_models, self.params.model, self.params.model)
 
                 self.params.format = gr.CheckboxGroup(
-                    choices=["GIF", "MP4", "WEBP", "WEBM", "PNG", "TXT"],
+                    choices=supported_save_formats,
                     label="Save format",
                     type="value",
                     elem_id=f"{elemid_prefix}save-format",
