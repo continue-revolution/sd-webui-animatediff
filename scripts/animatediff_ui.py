@@ -8,6 +8,7 @@ from modules import shared
 from modules.processing import StableDiffusionProcessing, StableDiffusionProcessingImg2Img
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
+from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_utils import get_controlnet_units
 
 supported_save_formats = ["GIF", "MP4", "WEBP", "WEBM", "PNG", "TXT"]
@@ -138,10 +139,9 @@ class AnimateDiffProcess:
 
         cn_units = get_controlnet_units(p)
         if cn_units:
-            from scripts.lib_controlnet import external_code
             min_batch_in_cn = -1
             for cn_unit in cn_units:
-                if cn_unit.input_mode == external_code.InputMode.BATCH:
+                if cn_unit.input_mode.name == 'BATCH':
                     cn_unit_batch_num = len(shared.listfiles(cn_unit.batch_image_dir))
                     if min_batch_in_cn == -1 or cn_unit_batch_num < min_batch_in_cn:
                         min_batch_in_cn = cn_unit_batch_num
@@ -150,11 +150,12 @@ class AnimateDiffProcess:
                 def cn_batch_modifler(batch_image_files: List[str], p: StableDiffusionProcessing):
                     return batch_image_files[:self.video_length]
                 for cn_unit in cn_units:
-                    if cn_unit.input_mode == external_code.InputMode.BATCH:
-                        cur_batch_modifier = getattr(cn_unit, "batch_modifier", [])
+                    if cn_unit.input_mode.name == 'BATCH':
+                        cur_batch_modifier = getattr(cn_unit, "batch_modifiers", [])
                         cur_batch_modifier.append(cn_batch_modifler)
-                        cn_unit.batch_modifier = cur_batch_modifier
+                        cn_unit.batch_modifiers = cur_batch_modifier
                 self.post_setup_cn_batches(p)
+            logger.info(f"AnimateDiff will generate {self.video_length} frames.")
 
 
     def fix_video_length(self, p: StableDiffusionProcessing, min_batch_in_cn: int):

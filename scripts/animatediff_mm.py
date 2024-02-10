@@ -92,8 +92,9 @@ class AnimateDiffMM:
         def mm_cn_forward(model, inner_model, hint, **kwargs):
             controls = []
             for i in range(0, hint.shape[0], 2 * self.ad_params.batch_size):
-                current_kwargs = {k: v[i:i + 2 * self.ad_params.batch_size].to(get_torch_device())
-                                if type(v) == torch.Tensor else v for k, v in kwargs}
+                current_kwargs = {k: (v[i:i + 2 * self.ad_params.batch_size].to(get_torch_device())
+                                  if type(v) == torch.Tensor else v) for k, v in kwargs.items()}
+                current_kwargs["hint"] = hint[i:i + 2 * self.ad_params.batch_size].to(get_torch_device())
                 current_ctrl = inner_model(**current_kwargs)
                 if len(controls) == 0:
                     controls = [[c.cpu() if type(c) == torch.Tensor else c] for c in current_ctrl]
@@ -107,6 +108,7 @@ class AnimateDiffMM:
                 else:
                     controls[i] = controls[i][0] # should be None for T2I Adapters
 
+            model.transformer_options["cond_mark"] = model.transformer_options["cond_mark"].cpu()
             return controls
 
         from scripts.animatediff_infv2v import AnimateDiffInfV2V
