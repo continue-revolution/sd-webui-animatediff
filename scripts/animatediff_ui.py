@@ -117,7 +117,7 @@ class AnimateDiffProcess:
         assert (
             self.video_length >= 0 and self.fps > 0
         ), "Video length and FPS should be positive."
-        assert not set(["GIF", "MP4", "PNG", "WEBP", "WEBM"]).isdisjoint(
+        assert not set(supported_save_formats[:-1]).isdisjoint(
             self.format
         ), "At least one saving format should be selected."
 
