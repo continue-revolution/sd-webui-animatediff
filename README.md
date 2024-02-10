@@ -4,12 +4,12 @@ This branch is specifically designed for [Stable Diffusion WebUI Forge](https://
 
 This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) w/ [CLI](https://github.com/s9roll7/animatediff-cli-prompt-travel) into [lllyasviel's Forge Adaption of AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/lllyasviel/stable-diffusion-webui-forge) and form the most easy-to-use AI video toolkit. You can generate GIFs in exactly the same way as generating images after enabling this extension.
 
-This extension implements AnimateDiff in a different way. It makes heavy use of [Unet Patcher](https://github.com/lllyasviel/stable-diffusion-webui-forge?tab=readme-ov-file#unet-patcher), so that you do not need to reload your model weights if you don't want to, and I do not have to monkey patch anything.
+This extension implements AnimateDiff in a different way. It makes heavy use of [Unet Patcher](https://github.com/lllyasviel/stable-diffusion-webui-forge?tab=readme-ov-file#unet-patcher), so that you do not need to reload your model weights if you don't want to, and I can almostly get rif of monkey-patching WebUI and ControlNet.
 
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything). This extension will also be redesigned for forge later.
 
 
-[TusiArt](https://tusiart.com/) (for users physically inside P.R.China mainland) and [TensorArt](https://tusiart.com/) (for users outside P.R.China mainland) offers online service of this extension.
+[TusiArt](https://tusiart.com/) (for users physically inside P.R.China mainland) and [TensorArt](https://tusiart.com/) (for others) offers online service of this extension.
 
 
 ## Table of Contents
@@ -17,17 +17,16 @@ You might also be interested in another extension I created: [Segment Anything f
 
 
 ## Update
-- [v2.0.0-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.0-f) in `02/05/2023`: t2i, prompt travel, infinite generation, all kinds of optimizations have been proven to be working properly and elegantly.
-- [v2.0.1-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.1-f) in `02/09/2023`: ControlNet V2V in t2i panel is working properly and elegantly.
+- [v2.0.0-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.0-f) in `02/05/2023`: txt2img, prompt travel, infinite generation, all kinds of optimizations have been proven to be working properly and elegantly.
+- [v2.0.1-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.1-f) in `02/09/2023`: ControlNet V2V in txt2img panel is working properly and elegantly. You can also try adding mask and inpaint.
 
 
 ## TODO
-- [ ] MotionLoRA and i2i batch are still under heavy construction, but I expect to release a working version soon in this week.
+- [ ] MotionLoRA and i2i batch are still under heavy construction, but I expect to release a working version soon in a week.
 - [ ] When all previous features are working properly, I will soon release SparseCtrl, Magic Animate and Moore Animate Anyone.
 - [ ] An official video tutorial will be available on YouTube and bilibili.
 - [ ] A bunch of new models / advanced parameters / new features may be implented soon.
-- [ ] All problems in master branch will be fixed, but new feature updates for OG A1111 + Mikubill ControlNet extension may be postponded to some time when I have time to rewrite ControlNet extension.
-- [ ] I will try to make later updates available in both WebUIs if possible. But due to the significant diffuculty in maintaining [Mikubill/sd-webui-controlnet](https://github.com/Mikubill/sd-webui-controlnet), I will not be able to bring some features to original A1111 WebUI. Such updates will be clearly documented.
+- [ ] All problems in master branch will be fixed soon, but new feature updates for OG A1111 + Mikubill ControlNet extension may be postponded to some time when I have time to rewrite ControlNet extension.
 
 
 ## Model Zoo
@@ -56,7 +55,7 @@ I thank researchers from [Shanghai AI Lab](https://www.shlab.org.cn/), especiall
 I also thank community developers, especially
 - [@zappityzap](https://github.com/zappityzap) who developed the majority of the [output features](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_output.py)
 - [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance
-- [@lllyasviel](https://github.com/lllyasviel) for providing technical support of forge
+- [@lllyasviel](https://github.com/lllyasviel) for offering forge technical support
 
 and many others who have contributed to this extension.
 
