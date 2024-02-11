@@ -2,9 +2,11 @@ from typing import List
 
 import os
 import cv2
+import subprocess
 import gradio as gr
 
 from modules import shared
+from modules.launch_utils import git
 from modules.processing import StableDiffusionProcessing, StableDiffusionProcessingImg2Img
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
@@ -106,6 +108,15 @@ class AnimateDiffProcess:
                 "latent_power_last": self.latent_power_last,
                 "latent_scale_last": self.latent_scale_last,
             })
+
+        try:
+            ad_git_tag = subprocess.check_output(
+                [git, "-C", motion_module.get_model_dir(), "describe", "--tags"],
+                shell=False, encoding='utf8').strip()
+            infotext['version'] = ad_git_tag
+        except Exception as e:
+            logger.warning(f"Failed to get git tag for AnimateDiff: {e}")
+
         infotext_str = ', '.join(f"{k}: {v}" for k, v in infotext.items())
         return infotext_str
 
