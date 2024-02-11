@@ -70,6 +70,8 @@ class AnimateDiffProcess:
         self.last_frame = last_frame
         self.latent_power_last = latent_power_last
         self.latent_scale_last = latent_scale_last
+
+        # non-ui states
         self.request_id = request_id
         self.video_default = False
         self.is_i2i_batch = False
@@ -145,10 +147,7 @@ class AnimateDiffProcess:
 
         min_batch_in_cn = -1
         for cn_unit in cn_units:
-            if cn_unit.input_mode.name == 'BATCH':
-                cn_unit_batch_num = len(shared.listfiles(cn_unit.batch_image_dir))
-                if min_batch_in_cn == -1 or cn_unit_batch_num < min_batch_in_cn:
-                    min_batch_in_cn = cn_unit_batch_num
+            # batch path broadcast
             if (cn_unit.input_mode.name == 'SIMPLE' and cn_unit.image is None) or \
                (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_image_dir) or \
                (cn_unit.input_mode.name == 'MERGE' and not cn_unit.batch_input_gallery):
@@ -156,8 +155,16 @@ class AnimateDiffProcess:
                     extract_frames_from_video(self)
                 cn_unit.input_mode = cn_unit.input_mode.__class__.BATCH
                 cn_unit.batch_image_dir = self.video_path
+
+            # mask path broadcast
             if cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_mask_dir and self.mask_path:
                 cn_unit.batch_mask_dir = self.mask_path
+
+            # find minimun control images in CN batch
+            if cn_unit.input_mode.name == 'BATCH':
+                cn_unit_batch_num = len(shared.listfiles(cn_unit.batch_image_dir))
+                if min_batch_in_cn == -1 or cn_unit_batch_num < min_batch_in_cn:
+                    min_batch_in_cn = cn_unit_batch_num
 
         if min_batch_in_cn != -1:
             self.fix_video_length(p, min_batch_in_cn)

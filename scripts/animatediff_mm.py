@@ -46,7 +46,7 @@ class AnimateDiffMM:
             logger.warn(f"Missing keys {missed_keys}")
 
 
-    def inject(self, sd_model, model_name="mm_sd_v3.safetensors"):
+    def inject(self, sd_model, model_name="mm_sd15_v3.safetensors"):
         unet: UnetPatcher = sd_model.forge_objects.unet.clone()
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         assert sd_model.is_sdxl == self.mm.is_xl, f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."

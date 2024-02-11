@@ -38,6 +38,7 @@ def on_ui_settings():
             {"placeholder": "Leave empty to use default path: tmp/animatediff-frames"},
             section=section
         )
+    )
     shared.opts.add_option(
         "animatediff_save_to_custom",
         shared.OptionInfo(
