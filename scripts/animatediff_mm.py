@@ -55,7 +55,6 @@ class AnimateDiffMM:
         unet: UnetPatcher = sd_model.forge_objects.unet.clone()
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         assert sd_model.is_sdxl == self.mm.is_xl, f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."
-        input_block_map = {block_idx: mm_idx for mm_idx, block_idx in enumerate([1, 2, 4, 5, 7, 8, 10, 11])}
 
         # TODO: What's the best way to do GroupNorm32 forward function hack?
         if self.mm.enable_gn_hack():
@@ -74,20 +73,23 @@ class AnimateDiffMM:
 
         logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet.")
 
+        input_block_map = {block_idx: mm_idx for mm_idx, block_idx in enumerate([1, 2, 4, 5, 7, 8, 10, 11])}
         def mm_block_modifier(x, identifier, layer, layer_index, ts, transformer_options):
-            from ldm_patched.ldm.modules.attention import SpatialTransformer
-            if identifier == "after" and isinstance(layer, SpatialTransformer):
-                block_type, block_idx  = transformer_options["block"]
-                if block_type == "middle":
-                    if getattr(self.mm, "mid_block", None) is not None:
-                        return self.mm.mid_block(x)
-                elif block_type == "input":
-                    block_idx = input_block_map[block_idx]
-                    mm_idx0, mm_idx1 = block_idx // 2, block_idx % 2
+            block_type, block_idx  = transformer_options["block"]
+            if layer_index == len(ts) - 1: # we only do motion module injection on the last layer
+                if block_type == "middle" and getattr(self.mm, "mid_block", None) is not None and identifier == "before":
+                    return self.mm.mid_block(x) # between SpatialTransformer and ResBlock
+                elif block_type == "input" and block_idx in input_block_map and identifier == "after":
+                    block_idx_ = input_block_map[block_idx]
+                    mm_idx0, mm_idx1 = block_idx_ // 2, block_idx_ % 2
+                    logger.debug(f"Injecting motion module {mm_idx0} block {mm_idx1} after input block {block_idx}.")
                     return self.mm.down_blocks[mm_idx0].motion_modules[mm_idx1](x)
                 elif block_type == "output":
-                    mm_idx0, mm_idx1 = block_idx // 3, block_idx % 3
-                    return self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1](x)
+                    apply_before = block_idx % 3 == 2 and block_idx != (8 if sd_model.is_sdxl else 11)
+                    if identifier == ("before" if apply_before else "after"):
+                        mm_idx0, mm_idx1 = block_idx // 3, block_idx % 3
+                        logger.debug(f"Injecting motion module {mm_idx0} block {mm_idx1} {'before' if apply_before else 'after'} output block {block_idx}.")
+                        return self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1](x)
             return x
 
         def mm_memory_estimator(input_shape):

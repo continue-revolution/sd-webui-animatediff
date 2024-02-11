@@ -49,7 +49,7 @@ class MotionWrapper(nn.Module):
         self.mm_name = mm_name
         self.mm_type = mm_type
         self.mm_hash = mm_hash
-        max_len = 24 if (mm_type in [MotionModuleType.AnimateDiffV1, MotionModuleType.HotShotXL]) else 32
+        max_len = 24 if self.enable_gn_hack() else 32
         in_channels = (320, 640, 1280) if self.is_xl else (320, 640, 1280, 1280)
         self.down_blocks = nn.ModuleList([])
         self.up_blocks = nn.ModuleList([])
