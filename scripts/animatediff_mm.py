@@ -82,13 +82,11 @@ class AnimateDiffMM:
                 elif block_type == "input" and block_idx in input_block_map and identifier == "after":
                     block_idx_ = input_block_map[block_idx]
                     mm_idx0, mm_idx1 = block_idx_ // 2, block_idx_ % 2
-                    logger.debug(f"Injecting motion module {mm_idx0} block {mm_idx1} after input block {block_idx}.")
                     return self.mm.down_blocks[mm_idx0].motion_modules[mm_idx1](x)
                 elif block_type == "output":
                     apply_before = block_idx % 3 == 2 and block_idx != (8 if sd_model.is_sdxl else 11)
                     if identifier == ("before" if apply_before else "after"):
                         mm_idx0, mm_idx1 = block_idx // 3, block_idx % 3
-                        logger.debug(f"Injecting motion module {mm_idx0} block {mm_idx1} {'before' if apply_before else 'after'} output block {block_idx}.")
                         return self.mm.up_blocks[mm_idx0].motion_modules[mm_idx1](x)
             return x
 
