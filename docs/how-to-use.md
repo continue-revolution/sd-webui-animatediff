@@ -14,7 +14,7 @@ git pull
 Then you can `cd extensions/sd-webui-animatediff` and `git checkout forge/master`
 
 ### You don't have A1111 or you don't know Git
-Otherwise, download zip package from [here](https://github.com/lllyasviel/stable-diffusion-webui-forge?tab=readme-ov-file#installing-forge). I believe for users in P.R.China, [Akegarasu](https://github.com/Akegarasu) will soom provide support for this software in his launcher.
+Otherwise, download zip package from [here](https://github.com/lllyasviel/stable-diffusion-webui-forge?tab=readme-ov-file#installing-forge). I believe for users in P.R.China, [Akegarasu](https://github.com/Akegarasu) will soon provide support for this software in his launcher.
 
 Then install this extension like any other extensions you use, and download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save model weights, please go to `Settings/AnimateDiff`. See [model zoo](../README.md#model-zoo) for a list of available motion modules.
 

@@ -79,7 +79,7 @@ class AnimateDiffProcess:
 
 
     def get_list(self, is_img2img: bool):
-        return list(vars(self).values())[:(19 if is_img2img else 14)]
+        return list(vars(self).values())[:(20 if is_img2img else 15)]
 
 
     def get_dict(self, is_img2img: bool):
