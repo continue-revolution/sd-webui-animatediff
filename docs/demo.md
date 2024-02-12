@@ -14,7 +14,7 @@
 ## Prompt Travel
 ![00201-2296305953](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/881f317c-f1d2-4635-b84b-b4c4881650f6)
 
-The prompt is similar to [above](#prompt-travel).
+The prompt is similar to [here](features.md#prompt-travel).
 
 ## AnimateDiff V3
 You should be able to read infotext to understand how I generated this sample.
