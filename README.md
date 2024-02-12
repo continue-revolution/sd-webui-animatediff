@@ -1,13 +1,11 @@
 # AnimateDiff for Stable Diffusion WebUI Forge
 This branch is specifically designed for [Stable Diffusion WebUI Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge) by lllyasviel. See [here](docs/how-to-use.md#preparation) for how to install forge and this extension. See [Update](#update) for current status.
 
-
 This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) w/ [CLI](https://github.com/s9roll7/animatediff-cli-prompt-travel) into [lllyasviel's Forge Adaption of AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/lllyasviel/stable-diffusion-webui-forge) and form the most easy-to-use AI video toolkit. You can generate GIFs in exactly the same way as generating images after enabling this extension.
 
 This extension implements AnimateDiff in a different way. It makes heavy use of [Unet Patcher](https://github.com/lllyasviel/stable-diffusion-webui-forge?tab=readme-ov-file#unet-patcher), so that you do not need to reload your model weights if you don't want to, and I can almostly get rif of monkey-patching WebUI and ControlNet.
 
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything). This extension will also be redesigned for forge later.
-
 
 [TusiArt](https://tusiart.com/) (for users physically inside P.R.China mainland) and [TensorArt](https://tusiart.com/) (for others) offers online service of this extension.
 
@@ -18,7 +16,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 ## Update
 - [v2.0.0-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.0-f) in `02/05/2023`: txt2img, prompt travel, infinite generation, all kinds of optimizations have been proven to be working properly and elegantly.
-- [v2.0.1-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.1-f) in `02/09/2023`: ControlNet V2V in txt2img panel is working properly and elegantly. You can also try adding mask and inpaint.
+- [v2.0.1-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.1-f) in `02/11/2023`: [ControlNet V2V](docs/features.md#controlnet-v2v) in txt2img panel is working properly and elegantly. You can also try adding mask and inpaint.
 
 
 ## TODO
