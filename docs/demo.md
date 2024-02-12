@@ -1,4 +1,5 @@
 # Demo
+> Unfortunaly, due to unknown reason, you will NOT be able to reproduce videos here (created by OG A1111) to Forge.
 
 ## Basic Usage
 | AnimateDiff | Extension | img2img |
@@ -20,9 +21,10 @@ You should be able to read infotext to understand how I generated this sample.
 ![00024-3973810345](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/5f3e3858-8033-4a16-94b0-4dbc0d0a67fc)
 
 
-## AnimateDiff SDXL
+## AnimateDiff XL
 You should be able to read infotext to understand how I generated this sample.
-![00025-1668075705](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/6d32daf9-51c6-490f-a942-db36f84f23cf)
+
+<img height='512px' src='https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/6d32daf9-51c6-490f-a942-db36f84f23cf'>
 
 ## ControlNet V2V
-TODO
+See [here](features.md#controlnet-v2v)
