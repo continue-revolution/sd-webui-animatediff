@@ -144,7 +144,7 @@ class AnimateDiffOutput:
         infotext = res.infotexts[index]
         s3_enable =shared.opts.data.get("animatediff_s3_enable", False) 
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
-        if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", False) or getattr(params, "force_save_to_custom", False)):
+        if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", True) or getattr(params, "force_save_to_custom", False)):
             video_path_prefix.mkdir(exist_ok=True, parents=True)
             for i, frame in enumerate(frame_list):
                 png_filename = video_path_prefix/f"{i:05}.png"

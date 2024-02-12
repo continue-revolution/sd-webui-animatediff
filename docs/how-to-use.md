@@ -14,12 +14,12 @@ git pull
 Then you can `cd extensions/sd-webui-animatediff` and `git checkout forge/master`
 
 ### You don't have A1111 or you don't know Git
-Otherwise, download zip package from [here](https://github.com/lllyasviel/stable-diffusion-webui-forge?tab=readme-ov-file#installing-forge). I believe for users in P.R.China, [Akegarasu](https://github.com/Akegarasu) will soom provide support for this software in his launcher.
+Download zip package from [here](https://github.com/lllyasviel/stable-diffusion-webui-forge?tab=readme-ov-file#installing-forge).
 
-Then install this extension like any other extensions you use, and download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save model weights, please go to `Settings/AnimateDiff`. See [model zoo](../README.md#model-zoo) for a list of available motion modules.
+Then install [sd-forge-animatediff](https://github.com/continue-revolution/sd-forge-animatediff) like any other extensions you use, and download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save model weights, please go to `Settings/AnimateDiff`. See [model zoo](../README.md#model-zoo) for a list of available motion modules.
 
 ## WebUI
-1. Go to txt2img if you want to try txt2gif and img2img if you want to try img2gif.
+1. Go to txt2img if you want to try txt2vid and img2img if you want to try img2vid.
 1. Choose an SD checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please [change batch number, instead of batch size](performance.md#batch-size).
 1. Enable AnimateDiff extension, set up [each parameter](#parameters), then click `Generate`.
 1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff/{yy-mm-dd}`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{yy-mm-dd}`. You may choose to save frames for each generation into separate directories in `Settings/AnimateDiff`.
@@ -44,6 +44,7 @@ It is quite similar to the way you use ControlNet. API will return a video in ba
       'interp_x': 10          # Interp X
       'video_source': 'path/to/video.mp4',  # Video source
       'video_path': 'path/to/frames',       # Video path
+      'mask_path': 'path/to/frame_masks',   # Mask path
       'latent_power': 1,      # Latent power
       'latent_scale': 32,     # Latent scale
       'last_frame': None,     # Optional last frame
@@ -93,6 +94,8 @@ It is quite similar to the way you use ControlNet. API will return a video in ba
     1. Due to the limitation of the infinite context generator, this parameter is effective only when `Number of frames` > `Context batch size`, including when ControlNet is enabled and the source video frame number > `Context batch size` and `Number of frames` is 0.
 1. **Frame Interpolation** — Interpolate between frames with Deforum's FILM implementation. Requires Deforum extension. [#128](https://github.com/continue-revolution/sd-webui-animatediff/pull/128)
 1. **Interp X** — Replace each input frame with X interpolated output frames. [#128](https://github.com/continue-revolution/sd-webui-animatediff/pull/128).
-1. **Video source** — [Optional] Video source file for [ControlNet V2V](features.md#controlnet-v2v). You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel. You can of course submit one control image via `Single Image` tab or an input directory via `Batch` tab, which will override this video source input and work as usual.
-1. **Video path** — [Optional] Folder for source frames for [ControlNet V2V](features.md#controlnet-v2v), but lower priority than `Video source`. You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet. You can of course submit one control image via `Single Image` tab or an input directory via `Batch` tab, which will override this video path input and work as usual.
-    - For people who want to inpaint videos: enter a folder which contains two sub-folders `image` and `mask` on ControlNet inpainting unit. These two sub-folders should contain the same number of images. This extension will match them according to the same sequence. Using my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) extension can make your life much easier.
+1. **Video source** — [Optional] Video source file for [ControlNet V2V](features.md#controlnet-v2v). You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a single control image to `Single Image` tab or a path to `Batch Folder` tab in ControlNet panel. You can of course submit one control image via `Single Image` tab or an input directory via `Batch Folder` tab, which will override this video source input and work as usual.
+1. **Video path** — [Optional] Folder for source frames for [ControlNet V2V](features.md#controlnet-v2v), but higher priority than `Video source`. You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet. You can of course submit one control image via `Single Image` tab or an input directory via `Batch Folder` tab, which will override this video path input and work as usual.
+1. **Mask path** — [Optional] Folder for source masks for [ControlNet V2V](features.md#controlnet-v2v). It will fill in ALL ControlNets that you did not specify a mask folder. Forge ControlNet will match your masks according to the same sequence as your input images. Using my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) extension can automatically generate masks for you. You can choose to submit 1 global mask for all control images or 1 mask for each control image. You can also specify different mask folder for different ControlNet units, which will override this parameter.
+
+See [ControlNet V2V](features.md#controlnet-v2v) for an example parameter fill-in and more explanation.

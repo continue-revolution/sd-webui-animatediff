@@ -100,9 +100,12 @@ class AnimateDiffInfV2V:
 
     @staticmethod
     def mm_sd_forward(apply_model, info):
+        from scripts.animatediff_mm import mm_animatediff as motion_module
+        from ldm_patched.modules.model_management import get_torch_device, soft_empty_cache
+        import gc
+
         logger.debug("Running special forward for AnimateDiff")
         x_out = torch.zeros_like(info["input"])
-        from scripts.animatediff_mm import mm_animatediff as motion_module
         ad_params = motion_module.ad_params
         for context in AnimateDiffInfV2V.uniform(ad_params.step, ad_params.video_length, ad_params.batch_size, ad_params.stride, ad_params.overlap, ad_params.closed_loop):
             if x_out.shape[0] == 2 * ad_params.video_length:
@@ -127,13 +130,27 @@ class AnimateDiffInfV2V:
                     else:
                         info_c[k] = v
                 else:
-                    info_c[k] = v
+                    if k == "control":
+                        current_control = {}
+                        for c_k, c_v in v.items(): # c_k: "input" | "middle" | "output"
+                            current_control[c_k] = []
+                            for c_tensor in c_v:
+                                if c_tensor.shape[0] == 2 * ad_params.video_length:
+                                    current_control[c_k].append(c_tensor[_context].to(get_torch_device()))
+                                elif c_tensor.shape[0] == ad_params.video_length:
+                                    current_control[c_k].append(c_tensor[context].to(get_torch_device()))
+                                else:
+                                    current_control[c_k].append(c_tensor.to(get_torch_device()))
+                        info_c[k] = current_control
+                    else:          
+                        info_c[k] = v
 
-            out = apply_model(
-                info["input"][_context],
-                info["timestep"][_context],
-                **info_c,
-            )
+            out = apply_model(info["input"][_context], info["timestep"][_context], **info_c)
             x_out = x_out.to(dtype=out.dtype)
             x_out[_context] = out
+
+            del info_c
+            soft_empty_cache(True)
+            gc.collect()
+
         return x_out

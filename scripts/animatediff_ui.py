@@ -1,12 +1,17 @@
-import os
+from typing import List
 
+import os
 import cv2
+import subprocess
 import gradio as gr
 
 from modules import shared
+from modules.launch_utils import git
 from modules.processing import StableDiffusionProcessing, StableDiffusionProcessingImg2Img
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
+from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_utils import get_controlnet_units, extract_frames_from_video
 
 supported_save_formats = ["GIF", "MP4", "WEBP", "WEBM", "PNG", "TXT"]
 
@@ -39,6 +44,7 @@ class AnimateDiffProcess:
         interp_x=10,
         video_source=None,
         video_path='',
+        mask_path='',
         latent_power=1,
         latent_scale=32,
         last_frame=None,
@@ -60,11 +66,14 @@ class AnimateDiffProcess:
         self.interp_x = interp_x
         self.video_source = video_source
         self.video_path = video_path
+        self.mask_path = mask_path
         self.latent_power = latent_power
         self.latent_scale = latent_scale
         self.last_frame = last_frame
         self.latent_power_last = latent_power_last
         self.latent_scale_last = latent_scale_last
+
+        # non-ui states
         self.request_id = request_id
         self.video_default = False
         self.is_i2i_batch = False
@@ -72,7 +81,7 @@ class AnimateDiffProcess:
 
 
     def get_list(self, is_img2img: bool):
-        return list(vars(self).values())[:(19 if is_img2img else 14)]
+        return list(vars(self).values())[:(20 if is_img2img else 15)]
 
 
     def get_dict(self, is_img2img: bool):
@@ -99,6 +108,15 @@ class AnimateDiffProcess:
                 "latent_power_last": self.latent_power_last,
                 "latent_scale_last": self.latent_scale_last,
             })
+
+        try:
+            ad_git_tag = subprocess.check_output(
+                [git, "-C", motion_module.get_model_dir(), "describe", "--tags"],
+                shell=False, encoding='utf8').strip()
+            infotext['version'] = ad_git_tag
+        except Exception as e:
+            logger.warning(f"Failed to get git tag for AnimateDiff: {e}")
+
         infotext_str = ', '.join(f"{k}: {v}" for k, v in infotext.items())
         return infotext_str
 
@@ -115,7 +133,7 @@ class AnimateDiffProcess:
         assert (
             self.video_length >= 0 and self.fps > 0
         ), "Video length and FPS should be positive."
-        assert not set(["GIF", "MP4", "PNG", "WEBP", "WEBM"]).isdisjoint(
+        assert not set(supported_save_formats[:-1]).isdisjoint(
             self.format
         ), "At least one saving format should be selected."
 
@@ -131,8 +149,45 @@ class AnimateDiffProcess:
             self.video_default = True
         if self.overlap == -1:
             self.overlap = self.batch_size // 4
-        if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", False):
+        if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", True):
             p.do_not_save_samples = True
+
+        cn_units = get_controlnet_units(p)
+        if not cn_units:
+            return
+
+        min_batch_in_cn = -1
+        for cn_unit in cn_units:
+            # batch path broadcast
+            if (cn_unit.input_mode.name == 'SIMPLE' and cn_unit.image is None) or \
+               (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_image_dir) or \
+               (cn_unit.input_mode.name == 'MERGE' and not cn_unit.batch_input_gallery):
+                if not self.video_path:
+                    extract_frames_from_video(self)
+                cn_unit.input_mode = cn_unit.input_mode.__class__.BATCH
+                cn_unit.batch_image_dir = self.video_path
+
+            # mask path broadcast
+            if cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_mask_dir and self.mask_path:
+                cn_unit.batch_mask_dir = self.mask_path
+
+            # find minimun control images in CN batch
+            if cn_unit.input_mode.name == 'BATCH':
+                cn_unit_batch_num = len(shared.listfiles(cn_unit.batch_image_dir))
+                if min_batch_in_cn == -1 or cn_unit_batch_num < min_batch_in_cn:
+                    min_batch_in_cn = cn_unit_batch_num
+
+        if min_batch_in_cn != -1:
+            self.fix_video_length(p, min_batch_in_cn)
+            def cn_batch_modifler(batch_image_files: List[str], p: StableDiffusionProcessing):
+                return batch_image_files[:self.video_length]
+            for cn_unit in cn_units:
+                if cn_unit.input_mode.name == 'BATCH':
+                    cur_batch_modifier = getattr(cn_unit, "batch_modifiers", [])
+                    cur_batch_modifier.append(cn_batch_modifler)
+                    cn_unit.batch_modifiers = cur_batch_modifier
+            self.post_setup_cn_for_i2i_batch(p)
+        logger.info(f"AnimateDiff + ControlNet will generate {self.video_length} frames.")
 
 
     def fix_video_length(self, p: StableDiffusionProcessing, min_batch_in_cn: int):
@@ -145,23 +200,21 @@ class AnimateDiffProcess:
         if self.video_default:
             self.video_length = min_batch_in_cn
             p.batch_size = min_batch_in_cn
-        return self.video_length
 
 
-    def post_setup_cn_batches(self, p: StableDiffusionProcessing):
-        if self.is_i2i_batch and isinstance(p, StableDiffusionProcessingImg2Img):
-            if len(p.init_images) > self.video_length:
-                p.init_images = p.init_images[:self.video_length]
-                if p.image_mask and isinstance(p.image_mask, list) and len(p.image_mask) > self.video_length:
-                    p.image_mask = p.image_mask[:self.video_length]
-            if len(p.init_images) < self.video_length:
-                self.video_length = len(p.init_images)
-                p.batch_size = len(p.init_images)
-            if len(p.init_images) < self.batch_size:
-                self.batch_size = len(p.init_images)
-        from scripts.animatediff_infotext import update_infotext
-        self.prompt_scheduler.parse_prompt(p)
-        update_infotext(p, self)
+    def post_setup_cn_for_i2i_batch(self, p: StableDiffusionProcessing):
+        if not (self.is_i2i_batch and isinstance(p, StableDiffusionProcessingImg2Img)):
+            return
+
+        if len(p.init_images) > self.video_length:
+            p.init_images = p.init_images[:self.video_length]
+            if p.image_mask and isinstance(p.image_mask, list) and len(p.image_mask) > self.video_length:
+                p.image_mask = p.image_mask[:self.video_length]
+        if len(p.init_images) < self.video_length:
+            self.video_length = len(p.init_images)
+            p.batch_size = len(p.init_images)
+        if len(p.init_images) < self.batch_size:
+            self.batch_size = len(p.init_images)
 
 
 class AnimateDiffUiGroup:
@@ -178,7 +231,7 @@ class AnimateDiffUiGroup:
         elemid_prefix = "img2img-ad-" if is_img2img else "txt2img-ad-"
         model_list = [f for f in os.listdir(model_dir) if f != ".gitkeep"]
         with gr.Accordion("AnimateDiff", open=False):
-            gr.Markdown(value="Please click [this link](https://github.com/continue-revolution/sd-webui-animatediff#webui-parameters) to read the documentation of each parameter.")
+            gr.Markdown(value="Please click [this link](https://github.com/continue-revolution/sd-webui-animatediff/blob/forge/master/docs/how-to-use.md#parameters) to read the documentation of each parameter.")
             with gr.Row():
 
                 def refresh_models(*inputs):
@@ -298,11 +351,17 @@ class AnimateDiffUiGroup:
                 else:
                     return int(self.params.video_length.value)
             self.params.video_source.change(update_frames, inputs=self.params.video_source, outputs=self.params.video_length)
-            self.params.video_path = gr.Textbox(
-                value=self.params.video_path,
-                label="Video path",
-                elem_id=f"{elemid_prefix}video-path"
-            )
+            with gr.Row():
+                self.params.video_path = gr.Textbox(
+                    value=self.params.video_path,
+                    label="Video path",
+                    elem_id=f"{elemid_prefix}video-path"
+                )
+                self.params.mask_path = gr.Textbox(
+                    value=self.params.mask_path,
+                    label="Mask path",
+                    elem_id=f"{elemid_prefix}mask-path"
+                )
             if is_img2img:
                 with gr.Accordion("I2V Traditional", open=False):
                     with gr.Row():

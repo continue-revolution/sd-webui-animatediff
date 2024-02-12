@@ -55,7 +55,6 @@ class AnimateDiffScript(scripts.Script):
             logger.info("AnimateDiff process start.")
             motion_module.load(params.model)
             params.set_p(p)
-            # TODO: fix batch size and video length
             params.prompt_scheduler = AnimateDiffPromptSchedule(p, params)
             update_infotext(p, params)
 
