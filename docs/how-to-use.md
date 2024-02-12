@@ -7,11 +7,14 @@ If you have already had OG A1111 and you are familiar with git, I highly recomme
 ```bash
 git remote add forge https://github.com/lllyasviel/stable-diffusion-webui-forge
 git branch lllyasviel/main
+git checkout lllyasviel/main
+git fetch forge
 git branch -u forge/main
 git pull
 ```
+To go back to OG A1111, just do `git checkout master` or `git checkout dev`.
 
-Then you can `cd extensions/sd-webui-animatediff` and `git checkout forge/master`
+Then you can `cd extensions/sd-webui-animatediff` and `git checkout forge/master`.
 
 ### You don't have A1111 or you don't know Git
 Download zip package from [here](https://github.com/lllyasviel/stable-diffusion-webui-forge?tab=readme-ov-file#installing-forge).
