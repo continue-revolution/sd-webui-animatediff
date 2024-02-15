@@ -125,7 +125,7 @@ class AnimateDiffMM:
         unet.set_model_unet_function_wrapper(AnimateDiffInfV2V.mm_sd_forward)
         unet.add_block_inner_modifier(mm_block_modifier)
         unet.set_memory_peak_estimation_modifier(mm_memory_estimator)
-        if shared.opts.data.get("animatediff_disable_control_wrapper", False):
+        if not shared.opts.data.get("animatediff_disable_control_wrapper", False):
             logger.warning("ControlNet wrapper is disabled. Be cautious that you may run out of VRAM.")
             unet.set_controlnet_model_function_wrapper(mm_cn_forward)
         sd_model.forge_objects.unet = unet
