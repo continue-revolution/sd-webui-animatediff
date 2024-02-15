@@ -96,10 +96,13 @@ class AnimateDiffMM:
 
         def mm_cn_forward(model, inner_model, hint, **kwargs):
             controls = []
-            for i in range(0, hint.shape[0], 2 * self.ad_params.batch_size):
-                current_kwargs = {k: (v[i:i + 2 * self.ad_params.batch_size].to(get_torch_device())
+            control_batch_size = shared.opts.data.get("animatediff_control_batch_size", 0)
+            if control_batch_size == 0:
+                control_batch_size = 2 * self.ad_params.batch_size
+            for i in range(0, hint.shape[0], control_batch_size):
+                current_kwargs = {k: (v[i:i + control_batch_size].to(get_torch_device())
                                   if type(v) == torch.Tensor else v) for k, v in kwargs.items()}
-                current_kwargs["hint"] = hint[i:i + 2 * self.ad_params.batch_size].to(get_torch_device())
+                current_kwargs["hint"] = hint[i:i + control_batch_size].to(get_torch_device())
                 current_ctrl = inner_model(**current_kwargs)
                 if len(controls) == 0:
                     controls = [[c.cpu() if type(c) == torch.Tensor else c] for c in current_ctrl]
@@ -122,7 +125,9 @@ class AnimateDiffMM:
         unet.set_model_unet_function_wrapper(AnimateDiffInfV2V.mm_sd_forward)
         unet.add_block_inner_modifier(mm_block_modifier)
         unet.set_memory_peak_estimation_modifier(mm_memory_estimator)
-        unet.set_controlnet_model_function_wrapper(mm_cn_forward)
+        if shared.opts.data.get("animatediff_disable_control_wrapper", False):
+            logger.warning("ControlNet wrapper is disabled. Be cautious that you may run out of VRAM.")
+            unet.set_controlnet_model_function_wrapper(mm_cn_forward)
         sd_model.forge_objects.unet = unet
 
 

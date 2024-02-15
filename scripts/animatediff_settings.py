@@ -10,6 +10,25 @@ def on_ui_settings():
 
     # default option specification
     shared.opts.add_option(
+        "animatediff_disable_control_wrapper",
+        shared.OptionInfo(
+            False,
+            "Disable ControlNet wrapper for AnimateDiff (this requires a large VRAM)",
+            gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
+        "animatediff_control_batch_size",
+        shared.OptionInfo(
+            0,
+            "ControlNet batch size for AnimateDiff (default: 2 * context_batch_size)",
+            gr.Slider,
+            {"minimum": 0, "maximum": 128, "step": 4},
+            section=section,
+        ),
+    )
+    shared.opts.add_option(
         "animatediff_model_path",
         shared.OptionInfo(
             None,
