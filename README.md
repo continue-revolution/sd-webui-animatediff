@@ -7,7 +7,7 @@ This extension implements AnimateDiff in a different way. It makes heavy use of 
 
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything). This extension will also be redesigned for forge later.
 
-[TusiArt](https://tusiart.com/) (for users physically inside P.R.China mainland) and [TensorArt](https://tusiart.com/) (for others) offers online service of this extension.
+[TusiArt](https://tusiart.com/) (for users physically inside P.R.China mainland) and [TensorArt](https://tensor.art/) (for others) offers online service of this extension.
 
 
 ## Table of Contents
