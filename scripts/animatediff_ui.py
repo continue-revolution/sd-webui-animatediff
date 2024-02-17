@@ -9,6 +9,8 @@ from modules.processing import StableDiffusionProcessing
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_i2ibatch import animatediff_i2ibatch
 from scripts.animatediff_lcm import AnimateDiffLCM
+from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_xyz import xyz_attrs
 
 supported_save_formats = ["GIF", "MP4", "WEBP", "WEBM", "PNG", "TXT"]
 
@@ -144,6 +146,10 @@ class AnimateDiffProcess:
             self.overlap = self.batch_size // 4
         if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", False):
             p.do_not_save_samples = True
+
+    def apply_xyz(self):
+        for k, v in xyz_attrs.items():
+            setattr(self, k, v)
 
 
 class AnimateDiffUiGroup:

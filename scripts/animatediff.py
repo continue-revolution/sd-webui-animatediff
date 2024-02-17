@@ -14,6 +14,7 @@ from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup, supported_save_formats
 from scripts.animatediff_infotext import update_infotext, infotext_pasted
+from scripts.animatediff_xyz import patch_xyz, xyz_attrs
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
@@ -52,6 +53,11 @@ class AnimateDiffScript(scripts.Script):
         if p.is_api and isinstance(params, dict):
             self.ad_params = AnimateDiffProcess(**params)
             params = self.ad_params
+
+        # apply XYZ settings
+        params.apply_xyz()
+        xyz_attrs.clear()
+
         if params.enable:
             logger.info("AnimateDiff process start.")
             params.set_p(p)
@@ -290,7 +296,9 @@ def on_ui_settings():
             section=s3_selection,
         ),
     )    
-    
+
+patch_xyz()
+
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)
 script_callbacks.on_before_ui(AnimateDiffUiGroup.on_before_ui)
