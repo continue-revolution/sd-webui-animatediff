@@ -244,7 +244,8 @@ class AnimateDiffControl:
                 if unit.module in model_free_preprocessors:
                     model_net = None
                 else:
-                    model_net = cn_script.load_control_model(p, unet, unit.model)
+                    control_model = cn_script.load_control_model(p, unet, unit.model)
+                    model_net = control_model.model if isinstance(control_model, tuple) else control_model
                     model_net.reset()
                     if model_net is not None and getattr(devices, "fp8", False) and not isinstance(model_net, PlugableIPAdapter):
                         for _module in model_net.modules():
