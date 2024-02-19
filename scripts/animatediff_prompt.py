@@ -9,9 +9,10 @@ from scripts.animatediff_ui import AnimateDiffProcess
 
 class AnimateDiffPromptSchedule:
 
-    def __init__(self):
+    def __init__(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
         self.prompt_map = None
         self.original_prompt = None
+        self.parse_prompt(p, params)
 
 
     def save_infotext_img(self, p: StableDiffusionProcessing):
