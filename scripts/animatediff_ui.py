@@ -10,6 +10,7 @@ from modules.launch_utils import git
 from modules.processing import StableDiffusionProcessing, StableDiffusionProcessingImg2Img
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
+from scripts.animatediff_xyz import xyz_attrs
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_utils import get_controlnet_units, extract_frames_from_video
 
@@ -136,6 +137,11 @@ class AnimateDiffProcess:
         assert not set(supported_save_formats[:-1]).isdisjoint(
             self.format
         ), "At least one saving format should be selected."
+
+
+    def apply_xyz(self):
+        for k, v in xyz_attrs.items():
+            setattr(self, k, v)
 
 
     def set_p(self, p: StableDiffusionProcessing):

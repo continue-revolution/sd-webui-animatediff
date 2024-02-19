@@ -13,6 +13,7 @@ from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
+from scripts.animatediff_xyz import patch_xyz, xyz_attrs
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_settings import on_ui_settings
 from scripts.animatediff_infotext import update_infotext, infotext_pasted
@@ -51,6 +52,11 @@ class AnimateDiffScript(scripts.Script):
         if p.is_api:
             params = get_animatediff_arg(p)
         motion_module.set_ad_params(params)
+
+        # apply XYZ settings
+        params.apply_xyz()
+        xyz_attrs.clear()
+
         if params.enable:
             logger.info("AnimateDiff process start.")
             motion_module.load(params.model)
@@ -85,6 +91,8 @@ class AnimateDiffScript(scripts.Script):
             AnimateDiffOutput().output(p, res, params)
             logger.info("AnimateDiff process end.")
 
+
+patch_xyz()
 
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)

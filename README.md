@@ -9,6 +9,9 @@ You might also be interested in another extension I created: [Segment Anything f
 
 [TusiArt](https://tusiart.com/) (for users physically inside P.R.China mainland) and [TensorArt](https://tensor.art/) (for others) offers online service of this extension.
 
+[Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge) users should either checkout branch [forge/master](https://github.com/continue-revolution/sd-webui-animatediff/tree/forge/master) in this repository or use [sd-forge-animatediff](https://github.com/continue-revolution/sd-forge-animatediff). They will be in sync.
+
+[TusiArt](https://tusiart.com/) (for users physically inside P.R.China mainland) and [TensorArt](https://tusiart.com/) (for users outside P.R.China mainland) offers online service of this extension.
 
 ## Table of Contents
 [Update](#update) | [TODO](#todo) | [Model Zoo](#model-zoo) | [Documentation](#documentation) | [Tutorial](#tutorial) | [Thanks](#thanks) | [Star History](#star-history) | [Sponsor](#sponsor)
