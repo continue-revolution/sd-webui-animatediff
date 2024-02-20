@@ -47,8 +47,7 @@ class AnimateDiffMM:
             if unet_manual_cast(unet_dtype(), get_torch_device()) is not None:
                 mm_config["operations"] = manual_cast
             self.mm = MotionWrapper(**mm_config)
-            missed_keys = self.mm.load_state_dict(mm_state_dict)
-            logger.warn(f"Missing keys {missed_keys}")
+            self.mm.load_state_dict(mm_state_dict)
 
 
     def inject(self, sd_model, model_name="mm_sd15_v3.safetensors"):
