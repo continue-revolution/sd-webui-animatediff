@@ -8,8 +8,6 @@ from modules.processing import StableDiffusionProcessing
 
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_i2ibatch import animatediff_i2ibatch
-from scripts.animatediff_lcm import AnimateDiffLCM
-from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_xyz import xyz_attrs
 
 supported_save_formats = ["GIF", "MP4", "WEBP", "WEBM", "PNG", "TXT"]
@@ -368,7 +366,3 @@ class AnimateDiffUiGroup:
             AnimateDiffUiGroup.img2img_submit_button = component
             return
 
-
-    @staticmethod
-    def on_before_ui():
-        AnimateDiffLCM.hack_kdiff_ui()
