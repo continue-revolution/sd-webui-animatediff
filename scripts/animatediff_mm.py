@@ -16,12 +16,17 @@ class AnimateDiffMM:
     def __init__(self):
         self.mm: MotionWrapper = None
         self.script_dir = None
+        self.ad_params = None
         self.prev_alpha_cumprod = None
         self.gn32_original_forward = None
 
 
     def set_script_dir(self, script_dir):
         self.script_dir = script_dir
+
+
+    def set_ad_params(self, ad_params):
+        self.ad_params = ad_params
 
 
     def get_model_dir(self):
@@ -31,7 +36,7 @@ class AnimateDiffMM:
         return model_dir
 
 
-    def _load(self, model_name):
+    def load(self, model_name: str):
         model_path = os.path.join(self.get_model_dir(), model_name)
         if not os.path.isfile(model_path):
             raise RuntimeError("Please download models manually.")
@@ -41,9 +46,9 @@ class AnimateDiffMM:
             mm_state_dict = sd_models.read_state_dict(model_path)
             model_type = MotionModuleType.get_mm_type(mm_state_dict)
             logger.info(f"Guessed {model_name} architecture: {model_type}")
-            self.mm = MotionWrapper(model_name, model_hash, model_type)
-            missed_keys = self.mm.load_state_dict(mm_state_dict)
-            logger.warn(f"Missing keys {missed_keys}")
+            mm_config = dict(mm_name=model_name, mm_hash=model_hash, mm_type=model_type)
+            self.mm = MotionWrapper(**mm_config)
+            self.mm.load_state_dict(mm_state_dict)
         self.mm.to(device).eval()
         if not shared.cmd_opts.no_half:
             self.mm.half()

@@ -110,4 +110,5 @@ patch_xyz()
 
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)
+script_callbacks.on_cfg_denoiser(AnimateDiffInfV2V.animatediff_on_cfg_denoiser)
 script_callbacks.on_infotext_pasted(infotext_pasted)
