@@ -38,6 +38,15 @@ def on_ui_settings():
         )
     )
     shared.opts.add_option(
+        "animatediff_frame_extract_remove",
+        shared.OptionInfo(
+            False,
+            "Always remove extracted frames after processing",
+            gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
         "animatediff_save_to_custom",
         shared.OptionInfo(
             True,
