@@ -52,8 +52,12 @@ class AnimateDiffOutput:
         if from_xyz:
             res.images = first_frames
 
+        if shared.opts.data.get("animatediff_frame_extract_remove", False):
+            self._remove_frame_extract(params)
+
+
     def _remove_frame_extract(self, params: AnimateDiffProcess):
-        if params.video_source and params.video_path and not shared.opts.data.get("animatediff_frame_extract_path", None) and Path(params.video_path).exists():
+        if params.video_source and params.video_path and Path(params.video_path).exists():
             logger.info(f"Removing extracted frames from {params.video_path}")
             import shutil
             shutil.rmtree(params.video_path)
