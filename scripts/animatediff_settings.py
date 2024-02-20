@@ -13,6 +13,7 @@ def on_ui_settings():
             None,
             "Path to save AnimateDiff motion modules",
             gr.Textbox,
+            {"placeholder": "Leave empty to use default path: extensions/sd-webui-animatediff/model"},
             section=section,
         ),
     )
@@ -26,6 +27,28 @@ def on_ui_settings():
             section=section
         ).needs_restart()
     )
+    shared.opts.add_option(
+        "animatediff_frame_extract_path",
+        shared.OptionInfo(
+            "GIF",
+            "Path to save extracted frames",
+            gr.Textbox,
+            {"placeholder": "Leave empty to use default path: tmp/animatediff-frames"},
+            section=section
+        )
+    )
+    shared.opts.add_option(
+        "animatediff_save_to_custom",
+        shared.OptionInfo(
+            True,
+            "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/{date} "
+            "instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
+            gr.Checkbox,
+            section=section
+        )
+    )
+
+    # traditional video optimization specification
     shared.opts.add_option(
         "animatediff_optimize_gif_palette",
         shared.OptionInfo(
@@ -105,16 +128,8 @@ def on_ui_settings():
             section=section
         )
     )
-    shared.opts.add_option(
-        "animatediff_save_to_custom",
-        shared.OptionInfo(
-            True,
-            "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/{date} "
-            "instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
-            gr.Checkbox,
-            section=section
-        )
-    )
+
+    # s3 storage specification, most likely for some startup
     shared.opts.add_option(
         "animatediff_s3_enable",
         shared.OptionInfo(

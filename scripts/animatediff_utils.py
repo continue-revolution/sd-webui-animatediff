@@ -9,6 +9,23 @@ from modules.processing import StableDiffusionProcessing
 from scripts.animatediff_logger import logger_animatediff as logger
 
 
+def generate_random_hash(length=8):
+    import hashlib
+    import secrets
+
+    # Generate a random number or string
+    random_data = secrets.token_bytes(32)  # 32 bytes of random data
+
+    # Create a SHA-256 hash of the random data
+    hash_object = hashlib.sha256(random_data)
+    hash_hex = hash_object.hexdigest()
+
+    # Get the first 10 characters
+    if length > len(hash_hex):
+        length = len(hash_hex)
+    return hash_hex[:length]
+
+
 def get_animatediff_arg(p: StableDiffusionProcessing):
     """
     Get AnimateDiff argument from `p`. If it's a dict, convert it to AnimateDiffProcess.

@@ -18,8 +18,6 @@ from modules.processing import (StableDiffusionProcessing,
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
-from scripts.animatediff_infotext import update_infotext
-from scripts.animatediff_i2ibatch import animatediff_i2ibatch
 
 
 class AnimateDiffControl:
@@ -27,112 +25,12 @@ class AnimateDiffControl:
     original_controlnet_main_entry = None
     original_postprocess_batch = None
 
-    def __init__(self, p: StableDiffusionProcessing, prompt_scheduler: AnimateDiffPromptSchedule):
+    def __init__(self, p: StableDiffusionProcessing):
         try:
             from scripts.external_code import find_cn_script
             self.cn_script = find_cn_script(p.scripts)
         except:
             self.cn_script = None
-        self.prompt_scheduler = prompt_scheduler
-
-
-    def hack_batchhijack(self, params: AnimateDiffProcess):
-        cn_script = self.cn_script
-        prompt_scheduler = self.prompt_scheduler
-
-        def get_input_frames():
-            if params.video_source is not None and params.video_source != '':
-                cap = cv2.VideoCapture(params.video_source)
-                frame_count = 0
-                tmp_frame_dir = Path(f'{data_path}/tmp/animatediff-frames/')
-                tmp_frame_dir.mkdir(parents=True, exist_ok=True)
-                while cap.isOpened():
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
-                    cv2.imwrite(f"{tmp_frame_dir}/{frame_count}.png", frame)
-                    frame_count += 1
-                cap.release()
-                return str(tmp_frame_dir)
-            elif params.video_path is not None and params.video_path != '':
-                return params.video_path
-            return ''
-
-        from scripts.batch_hijack import BatchHijack, instance
-        def hacked_processing_process_images_hijack(self, p: StableDiffusionProcessing, *args, **kwargs):
-            from scripts import external_code
-            from scripts.batch_hijack import InputMode
-
-            units = external_code.get_all_units_in_processing(p)
-            units = [unit for unit in units if getattr(unit, 'enabled', False)]
-
-            if len(units) > 0:
-                global_input_frames = get_input_frames()
-                for idx, unit in enumerate(units):
-                    # i2i-batch mode
-                    if getattr(p, '_animatediff_i2i_batch', None) and not unit.image:
-                        unit.input_mode = InputMode.BATCH
-                    # if no input given for this unit, use global input
-                    if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
-                        if not unit.batch_images:
-                            assert global_input_frames, 'No input images found for ControlNet module'
-                            unit.batch_images = global_input_frames
-                    elif not unit.image:
-                        try:
-                            cn_script.choose_input_image(p, unit, idx)
-                        except:
-                            assert global_input_frames != '', 'No input images found for ControlNet module'
-                            unit.batch_images = global_input_frames
-                            unit.input_mode = InputMode.BATCH
-
-                    if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
-                        if 'inpaint' in unit.module:
-                            images = shared.listfiles(f'{unit.batch_images}/image')
-                            masks = shared.listfiles(f'{unit.batch_images}/mask')
-                            assert len(images) == len(masks), 'Inpainting image mask count mismatch'
-                            unit.batch_images = [{'image': images[i], 'mask': masks[i]} for i in range(len(images))]
-                        else:
-                            unit.batch_images = shared.listfiles(unit.batch_images)
-
-                unit_batch_list = [len(unit.batch_images) for unit in units
-                                   if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH]
-                if getattr(p, '_animatediff_i2i_batch', None):
-                    unit_batch_list.append(len(p.init_images))
-
-                if len(unit_batch_list) > 0:
-                    video_length = min(unit_batch_list)
-                    # ensure that params.video_length <= video_length and params.batch_size <= video_length
-                    if params.video_length > video_length:
-                        params.video_length = video_length
-                    if params.batch_size > video_length:
-                        params.batch_size = video_length
-                    if params.video_default:
-                        params.video_length = video_length
-                        p.batch_size = video_length
-                    for unit in units:
-                        if getattr(unit, 'input_mode', InputMode.SIMPLE) == InputMode.BATCH:
-                            unit.batch_images = unit.batch_images[:params.video_length]
-
-            animatediff_i2ibatch.cap_init_image(p, params)
-            prompt_scheduler.parse_prompt(p, params)
-            update_infotext(p, params)
-            return getattr(processing, '__controlnet_original_process_images_inner')(p, *args, **kwargs)
-        
-        if AnimateDiffControl.original_processing_process_images_hijack is not None:
-            logger.info('BatchHijack already hacked.')
-            return
-
-        AnimateDiffControl.original_processing_process_images_hijack = BatchHijack.processing_process_images_hijack
-        BatchHijack.processing_process_images_hijack = hacked_processing_process_images_hijack
-        processing.process_images_inner = instance.processing_process_images_hijack
-
-
-    def restore_batchhijack(self):
-        if AnimateDiffControl.original_processing_process_images_hijack is not None:
-            from scripts.batch_hijack import BatchHijack, instance
-            BatchHijack.processing_process_images_hijack = AnimateDiffControl.original_processing_process_images_hijack
-            AnimateDiffControl.original_processing_process_images_hijack = None
-            processing.process_images_inner = instance.processing_process_images_hijack
 
 
     def hack_cn(self):
@@ -631,12 +529,14 @@ class AnimateDiffControl:
     def hack(self, params: AnimateDiffProcess):
         if self.cn_script is not None:
             logger.info(f"Hacking ControlNet.")
-            self.hack_batchhijack(params)
+            from scripts.batch_hijack import instance
+            instance.undo_hijack()
             self.hack_cn()
 
 
     def restore(self):
         if self.cn_script is not None:
             logger.info(f"Restoring ControlNet.")
-            self.restore_batchhijack()
+            from scripts.batch_hijack import instance
+            instance.do_hijack()
             self.restore_cn()

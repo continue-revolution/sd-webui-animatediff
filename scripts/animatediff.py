@@ -14,10 +14,11 @@ from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
+from scripts.animatediff_xyz import patch_xyz, xyz_attrs
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_settings import on_ui_settings
 from scripts.animatediff_infotext import update_infotext, infotext_pasted
-from scripts.animatediff_xyz import patch_xyz, xyz_attrs
+from scripts.animatediff_utils import get_animatediff_arg
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
@@ -51,10 +52,11 @@ class AnimateDiffScript(scripts.Script):
         )
         return (unit,)
 
+
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
-        if p.is_api and isinstance(params, dict):
-            self.ad_params = AnimateDiffProcess(**params)
-            params = self.ad_params
+        if p.is_api:
+            params = get_animatediff_arg(p)
+        motion_module.set_ad_params(params)
 
         # apply XYZ settings
         params.apply_xyz()
@@ -64,50 +66,45 @@ class AnimateDiffScript(scripts.Script):
             logger.info("AnimateDiff process start.")
             params.set_p(p)
             motion_module.inject(p.sd_model, params.model)
-            self.prompt_scheduler = AnimateDiffPromptSchedule()
-            self.cfg_hacker = AnimateDiffInfV2V(p, self.prompt_scheduler)
+            params.prompt_scheduler = AnimateDiffPromptSchedule(p, params)
+            self.cfg_hacker = AnimateDiffInfV2V(p)
             self.cfg_hacker.hack(params)
-            self.cn_hacker = AnimateDiffControl(p, self.prompt_scheduler)
+            self.cn_hacker = AnimateDiffControl(p)
             self.cn_hacker.hack(params)
             update_infotext(p, params)
             self.hacked = True
         elif self.hacked:
             self.cn_hacker.restore()
             self.cfg_hacker.restore()
-            self.lora_hacker.restore()
             motion_module.restore(p.sd_model)
             self.hacked = False
 
 
     def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
-        if p.is_api and isinstance(params, dict): params = self.ad_params
-        if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and not hasattr(p, '_animatediff_i2i_batch'):
+        if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and not params.is_i2i_batch:
             AnimateDiffI2VLatent().randomize(p, params)
 
 
     def postprocess_batch_list(self, p: StableDiffusionProcessing, pp: PostprocessBatchListArgs, params: AnimateDiffProcess, **kwargs):
-        if p.is_api and isinstance(params, dict): params = self.ad_params
         if params.enable:
-            self.prompt_scheduler.save_infotext_img(p)
+            params.prompt_scheduler.save_infotext_img(p)
 
 
     def postprocess_image(self, p: StableDiffusionProcessing, pp: PostprocessImageArgs, params: AnimateDiffProcess, *args):
-        if p.is_api and isinstance(params, dict): params = self.ad_params
         if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and hasattr(p, '_animatediff_paste_to_full'):
             p.paste_to = p._animatediff_paste_to_full[p.batch_index]
 
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
-        if p.is_api and isinstance(params, dict): params = self.ad_params
         if params.enable:
-            self.prompt_scheduler.save_infotext_txt(res)
+            params.prompt_scheduler.save_infotext_txt(res)
             self.cn_hacker.restore()
             self.cfg_hacker.restore()
             motion_module.restore(p.sd_model)
             self.hacked = False
             AnimateDiffOutput().output(p, res, params)
             logger.info("AnimateDiff process end.")
- 
+
 
 patch_xyz()
 
