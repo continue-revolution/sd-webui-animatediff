@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from fastapi import params
+
 import gradio as gr
 
 from modules import script_callbacks, scripts
