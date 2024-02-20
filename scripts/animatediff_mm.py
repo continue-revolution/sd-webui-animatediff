@@ -18,6 +18,7 @@ class AnimateDiffMM:
         self.script_dir = None
         self.ad_params = None
         self.prev_alpha_cumprod = None
+        self.prev_alpha_cumprod_original = None
         self.gn32_original_forward = None
 
 
@@ -58,13 +59,13 @@ class AnimateDiffMM:
                         module.to(torch.float8_e4m3fn)
 
 
-    def inject(self, sd_model, model_name="mm_sd_v15.ckpt"):
+    def inject(self, sd_model, model_name="mm_sd15_v3.safetensors"):
         if AnimateDiffMM.mm_injected:
             logger.info("Motion module already injected. Trying to restore.")
             self.restore(sd_model)
 
         unet = sd_model.model.diffusion_model
-        self._load(model_name)
+        self.load(model_name)
         inject_sdxl = sd_model.is_sdxl or self.mm.is_xl
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         assert sd_model.is_sdxl == self.mm.is_xl, f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."
@@ -94,7 +95,7 @@ class AnimateDiffMM:
             if inject_sdxl and mm_idx >= 6:
                 break
             mm_idx0, mm_idx1 = mm_idx // 2, mm_idx % 2
-            mm_inject = getattr(self.mm.down_blocks[mm_idx0], "temporal_attentions" if self.mm.is_hotshot else "motion_modules")[mm_idx1]
+            mm_inject = getattr(self.mm.down_blocks[mm_idx0], "motion_modules")[mm_idx1]
             unet.input_blocks[unet_idx].append(mm_inject)
 
         logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet output blocks.")
@@ -102,7 +103,7 @@ class AnimateDiffMM:
             if inject_sdxl and unet_idx >= 9:
                 break
             mm_idx0, mm_idx1 = unet_idx // 3, unet_idx % 3
-            mm_inject = getattr(self.mm.up_blocks[mm_idx0], "temporal_attentions" if self.mm.is_hotshot else "motion_modules")[mm_idx1]
+            mm_inject = getattr(self.mm.up_blocks[mm_idx0], "motion_modules")[mm_idx1]
             if unet_idx % 3 == 2 and unet_idx != (8 if self.mm.is_xl else 11):
                 unet.output_blocks[unet_idx].insert(-1, mm_inject)
             else:
@@ -174,20 +175,25 @@ class AnimateDiffMM:
         alphas = 1.0 - betas
         alphas_cumprod = torch.cumprod(alphas, dim=0)
         self.prev_alpha_cumprod = sd_model.alphas_cumprod
+        self.prev_alpha_cumprod_original = sd_model.alphas_cumprod_original
         sd_model.alphas_cumprod = alphas_cumprod
+        sd_model.alphas_cumprod_original = alphas_cumprod
     
 
     def _set_layer_mapping(self, sd_model):
         if hasattr(sd_model, 'network_layer_mapping'):
             for name, module in self.mm.named_modules():
-                sd_model.network_layer_mapping[name] = module
-                module.network_layer_name = name
+                network_name = name.replace(".", "_")
+                sd_model.network_layer_mapping[network_name] = module
+                module.network_layer_name = network_name
 
 
     def _restore_ddim_alpha(self, sd_model):
         logger.info(f"Restoring DDIM alpha.")
         sd_model.alphas_cumprod = self.prev_alpha_cumprod
+        sd_model.alphas_cumprod_original = self.prev_alpha_cumprod_original
         self.prev_alpha_cumprod = None
+        self.prev_alpha_cumprod_original = None
 
 
     def unload(self):

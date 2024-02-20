@@ -294,16 +294,4 @@ class AnimateDiffI2IBatch:
         img2img.process_batch = hacked_img2img_process_batch_hijack
 
 
-    def cap_init_image(self, p: StableDiffusionProcessingImg2Img, params):
-        if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and hasattr(p, '_animatediff_i2i_batch'):
-            if len(p.init_images) > params.video_length:
-                p.init_images = p.init_images[:params.video_length]
-                if p.image_mask and isinstance(p.image_mask, list) and len(p.image_mask) > params.video_length:
-                    p.image_mask = p.image_mask[:params.video_length]
-            if len(p.init_images) < params.video_length:
-                params.video_length = len(p.init_images)
-            if len(p.init_images) < params.batch_size:
-                params.batch_size = len(p.init_images)
-
-
 animatediff_i2ibatch = AnimateDiffI2IBatch()
