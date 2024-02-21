@@ -1,9 +1,11 @@
-from re import A
+import gc
 import numpy as np
 import torch
 
 from modules.script_callbacks import CFGDenoiserParams
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_mm import mm_animatediff as motion_module
+from ldm_patched.modules.model_management import get_torch_device, soft_empty_cache
 
 
 class AnimateDiffInfV2V:
@@ -100,10 +102,6 @@ class AnimateDiffInfV2V:
 
     @staticmethod
     def mm_sd_forward(apply_model, info):
-        from scripts.animatediff_mm import mm_animatediff as motion_module
-        from ldm_patched.modules.model_management import get_torch_device, soft_empty_cache
-        import gc
-
         logger.debug("Running special forward for AnimateDiff")
         x_out = torch.zeros_like(info["input"])
         ad_params = motion_module.ad_params
