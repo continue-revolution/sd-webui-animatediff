@@ -7,7 +7,6 @@ from modules.processing import (Processed, StableDiffusionProcessing,
                                 StableDiffusionProcessingImg2Img)
 from modules.scripts import PostprocessBatchListArgs, PostprocessImageArgs
 
-from scripts.animatediff_cn import AnimateDiffControl
 from scripts.animatediff_infv2v import AnimateDiffInfV2V
 from scripts.animatediff_latent import AnimateDiffI2VLatent
 from scripts.animatediff_logger import logger_animatediff as logger
@@ -27,9 +26,6 @@ motion_module.set_script_dir(script_dir)
 class AnimateDiffScript(scripts.Script):
 
     def __init__(self):
-        self.cfg_hacker = None
-        self.cn_hacker = None
-        self.prompt_scheduler = None
         self.hacked = False
         self.infotext_fields: List[Tuple[gr.components.IOComponent, str]] = []
         self.paste_field_names: List[str] = []
@@ -64,18 +60,12 @@ class AnimateDiffScript(scripts.Script):
 
         if params.enable:
             logger.info("AnimateDiff process start.")
-            params.set_p(p)
             motion_module.inject(p.sd_model, params.model)
+            params.set_p(p)
             params.prompt_scheduler = AnimateDiffPromptSchedule(p, params)
-            self.cfg_hacker = AnimateDiffInfV2V(p)
-            self.cfg_hacker.hack(params)
-            self.cn_hacker = AnimateDiffControl(p)
-            self.cn_hacker.hack(params)
             update_infotext(p, params)
             self.hacked = True
         elif self.hacked:
-            self.cn_hacker.restore()
-            self.cfg_hacker.restore()
             motion_module.restore(p.sd_model)
             self.hacked = False
 
@@ -98,8 +88,6 @@ class AnimateDiffScript(scripts.Script):
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if params.enable:
             params.prompt_scheduler.save_infotext_txt(res)
-            self.cn_hacker.restore()
-            self.cfg_hacker.restore()
             motion_module.restore(p.sd_model)
             self.hacked = False
             AnimateDiffOutput().output(p, res, params)
