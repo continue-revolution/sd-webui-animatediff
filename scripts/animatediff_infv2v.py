@@ -12,8 +12,6 @@ from scripts.animatediff_utils import get_controlnet_units
 
 
 class AnimateDiffInfV2V:
-    cached_text_cond = None
-
 
     # Returns fraction that has denominator that is a power of 2
     @staticmethod
@@ -83,7 +81,7 @@ class AnimateDiffInfV2V:
     @staticmethod
     def animatediff_on_cfg_denoiser(cfg_params: CFGDenoiserParams):
         ad_params = motion_module.ad_params
-        if not ad_params.enable:
+        if ad_params is None or not ad_params.enable:
             return
 
         cn_script = get_controlnet_units(cfg_params.denoiser.p.scripts)
@@ -91,7 +89,7 @@ class AnimateDiffInfV2V:
         if cfg_params.denoiser.step == 0:
             # prompt travel
             prompt_closed_loop = (ad_params.video_length > ad_params.batch_size) and (ad_params.closed_loop in ['R+P', 'A'])
-            AnimateDiffInfV2V.cached_text_cond = ad_params.prompt_scheduler.multi_cond(cfg_params.text_cond, prompt_closed_loop)
+            ad_params.text_cond = ad_params.prompt_scheduler.multi_cond(cfg_params.text_cond, prompt_closed_loop)
 
             # infinite generation
             def mm_cn_select(context: List[int]):
@@ -162,4 +160,4 @@ class AnimateDiffInfV2V:
             cfg_params.denoiser.inner_model.original_forward = cfg_params.denoiser.inner_model.forward
             cfg_params.denoiser.inner_model.forward = MethodType(mm_sd_forward, cfg_params.denoiser.inner_model)
 
-        cfg_params.text_cond = AnimateDiffInfV2V.cached_text_cond
+        cfg_params.text_cond = ad_params.text_cond
