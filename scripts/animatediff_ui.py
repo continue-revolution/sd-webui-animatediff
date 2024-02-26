@@ -166,12 +166,12 @@ class AnimateDiffProcess:
         for cn_unit in cn_units:
             # batch path broadcast
             if (cn_unit.input_mode.name == 'SIMPLE' and cn_unit.image is None) or \
-               (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_image_dir) or \
+               (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_images) or \
                (cn_unit.input_mode.name == 'MERGE' and not cn_unit.batch_input_gallery):
                 if not self.video_path:
                     extract_frames_from_video(self)
                 cn_unit.input_mode = cn_unit.input_mode.__class__.BATCH
-                cn_unit.batch_image_dir = self.video_path
+                cn_unit.batch_images = self.video_path
 
             # mask path broadcast
             if cn_unit.input_mode.name == 'BATCH' and self.mask_path and not cn_unit.batch_mask_dir:
@@ -179,7 +179,8 @@ class AnimateDiffProcess:
 
             # find minimun control images in CN batch
             if cn_unit.input_mode.name == 'BATCH':
-                cn_unit_batch_num = len(shared.listfiles(cn_unit.batch_image_dir))
+                cn_unit.animatediff_batch = True # for A1111 sd-webui-controlnet
+                cn_unit_batch_num = len(shared.listfiles(cn_unit.batch_images))
                 if min_batch_in_cn == -1 or cn_unit_batch_num < min_batch_in_cn:
                     min_batch_in_cn = cn_unit_batch_num
 

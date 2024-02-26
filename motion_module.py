@@ -77,6 +77,11 @@ class MotionWrapper(nn.Module):
         return self.mm_type == MotionModuleType.AnimateDiffXL
 
 
+    @property
+    def is_v2(self):
+        return self.mm_type == MotionModuleType.AnimateDiffV2
+
+
 class MotionModule(nn.Module):
     def __init__(self, in_channels, num_mm, max_len, attention_block_types=("Temporal_Self", "Temporal_Self"), operations = disable_weight_init):
         super().__init__()
@@ -229,7 +234,7 @@ class TemporalTransformerBlock(nn.Module):
         self.attention_blocks = nn.ModuleList(attention_blocks)
         self.norms = nn.ModuleList(norms)
 
-        self.ff = FeedForward(dim, dropout=dropout, glu=(activation_fn=='geglu'), operations=operations)
+        self.ff = FeedForward(dim, dropout=dropout, glu=(activation_fn=='geglu'))
         self.ff_norm = operations.LayerNorm(dim)
 
 
@@ -261,7 +266,7 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        x = x + self.pe[:, :x.size(1)].type(x.dtype)
+        x = x + self.pe[:, :x.size(1)].to(x)
         return self.dropout(x)
 
 

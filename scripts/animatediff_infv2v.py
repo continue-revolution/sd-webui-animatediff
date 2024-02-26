@@ -1,3 +1,4 @@
+from calendar import c
 from typing import List
 from types import MethodType
 
@@ -84,12 +85,15 @@ class AnimateDiffInfV2V:
         if ad_params is None or not ad_params.enable:
             return
 
-        cn_script = get_controlnet_units(cfg_params.denoiser.p.scripts)
-
-        if cfg_params.denoiser.step == 0:
+        if cfg_params.denoiser.step == 0 and getattr(ad_params, "step", -1) != 0:
             # prompt travel
             prompt_closed_loop = (ad_params.video_length > ad_params.batch_size) and (ad_params.closed_loop in ['R+P', 'A'])
             ad_params.text_cond = ad_params.prompt_scheduler.multi_cond(cfg_params.text_cond, prompt_closed_loop)
+            try:
+                from scripts.external_code import find_cn_script
+                cn_script = find_cn_script(cfg_params.denoiser.p.scripts)
+            except:
+                cn_script = None
 
             # infinite generation
             def mm_cn_select(context: List[int]):
@@ -99,25 +103,29 @@ class AnimateDiffInfV2V:
                     for control in cn_script.latest_network.control_params:
                         if control.control_model_type not in [ControlModelType.IPAdapter, ControlModelType.Controlllite]:
                             if control.hint_cond.shape[0] > len(context):
-                                control.hint_cond_backup = control.hint_cond
-                                control.hint_cond = control.hint_cond[context]
+                                if getattr(control, "hint_cond_backup", None) is None:
+                                    control.hint_cond_backup = control.hint_cond
+                                control.hint_cond = control.hint_cond_backup[context]
                             control.hint_cond = control.hint_cond.to(device=devices.get_device_for("controlnet"))
                             if control.hr_hint_cond is not None:
                                 if control.hr_hint_cond.shape[0] > len(context):
-                                    control.hr_hint_cond_backup = control.hr_hint_cond
-                                    control.hr_hint_cond = control.hr_hint_cond[context]
+                                    if getattr(control, "hr_hint_cond_backup", None) is None:
+                                        control.hr_hint_cond_backup = control.hr_hint_cond
+                                    control.hr_hint_cond = control.hr_hint_cond_backup[context]
                                 control.hr_hint_cond = control.hr_hint_cond.to(device=devices.get_device_for("controlnet"))
                         # IPAdapter and Controlllite are always on CPU.
                         elif control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
-                            control.control_model.image_emb_backup = control.control_model.image_emb
-                            control.control_model.image_emb = control.control_model.image_emb[context]
-                            control.control_model.uncond_image_emb_backup = control.control_model.uncond_image_emb
-                            control.control_model.uncond_image_emb = control.control_model.uncond_image_emb[context]
+                            if getattr(control.control_model, "image_emb_backup", None) is None:
+                                control.control_model.image_emb_backup = control.control_model.image_emb
+                                control.control_model.uncond_image_emb_backup = control.control_model.uncond_image_emb
+                            control.control_model.image_emb = control.control_model.image_emb_backup[context]
+                            control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup[context]
                         elif control.control_model_type == ControlModelType.Controlllite:
                             for module in control.control_model.modules.values():
                                 if module.cond_image.shape[0] > len(context):
-                                    module.cond_image_backup = module.cond_image
-                                    module.set_cond_image(module.cond_image[context])
+                                    if getattr(module, "cond_image_backup", None) is None:
+                                        module.cond_image_backup = module.cond_image
+                                    module.set_cond_image(module.cond_image_backup[context])
 
             def mm_cn_restore(context: List[int]):
                 # restore control images for next context
@@ -127,22 +135,13 @@ class AnimateDiffInfV2V:
                         if control.control_model_type not in [ControlModelType.IPAdapter, ControlModelType.Controlllite]:
                             if getattr(control, "hint_cond_backup", None) is not None:
                                 control.hint_cond_backup[context] = control.hint_cond.to(device="cpu")
-                                control.hint_cond = control.hint_cond_backup
                             if control.hr_hint_cond is not None and getattr(control, "hr_hint_cond_backup", None) is not None:
                                 control.hr_hint_cond_backup[context] = control.hr_hint_cond.to(device="cpu")
-                                control.hr_hint_cond = control.hr_hint_cond_backup
-                        elif control.control_model_type == ControlModelType.IPAdapter and getattr(control.control_model, "image_emb_backup", None) is not None:
-                            control.control_model.image_emb = control.control_model.image_emb_backup
-                            control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
-                        elif control.control_model_type == ControlModelType.Controlllite:
-                            for module in control.control_model.modules.values():
-                                if getattr(module, "cond_image_backup", None) is not None:
-                                    module.set_cond_image(module.cond_image_backup)
 
             def mm_sd_forward(self, x_in, sigma_in, cond):
                 logger.debug("Running special forward for AnimateDiff")
                 x_out = torch.zeros_like(x_in)
-                for context in AnimateDiffInfV2V.uniform(cfg_params.denoiser.step, ad_params.video_length, ad_params.batch_size, ad_params.stride, ad_params.overlap, ad_params.closed_loop):
+                for context in AnimateDiffInfV2V.uniform(ad_params.step, ad_params.video_length, ad_params.batch_size, ad_params.stride, ad_params.overlap, ad_params.closed_loop):
                     if shared.opts.batch_cond_uncond:
                         _context = context + [c + ad_params.video_length for c in context]
                     else:
@@ -156,8 +155,9 @@ class AnimateDiffInfV2V:
                     mm_cn_restore(_context)
                 return x_out
 
-            logger.debug("inner model forward hooked")
+            logger.info("inner model forward hooked")
             cfg_params.denoiser.inner_model.original_forward = cfg_params.denoiser.inner_model.forward
             cfg_params.denoiser.inner_model.forward = MethodType(mm_sd_forward, cfg_params.denoiser.inner_model)
 
         cfg_params.text_cond = ad_params.text_cond
+        ad_params.step = cfg_params.denoiser.step
