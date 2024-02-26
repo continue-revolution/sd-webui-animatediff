@@ -103,30 +103,26 @@ class AnimateDiffInfV2V:
                     for control in cn_script.latest_network.control_params:
                         if control.control_model_type not in [ControlModelType.IPAdapter, ControlModelType.Controlllite]:
                             if control.hint_cond.shape[0] > len(context):
-                                if getattr(control, "hint_cond_backup", None) is None:
-                                    control.hint_cond_backup = control.hint_cond
-                                control.hint_cond = control.hint_cond_backup[context]
+                                control.hint_cond_backup = control.hint_cond
+                                control.hint_cond = control.hint_cond[context]
                             control.hint_cond = control.hint_cond.to(device=devices.get_device_for("controlnet"))
                             if control.hr_hint_cond is not None:
                                 if control.hr_hint_cond.shape[0] > len(context):
-                                    if getattr(control, "hr_hint_cond_backup", None) is None:
-                                        control.hr_hint_cond_backup = control.hr_hint_cond
-                                    control.hr_hint_cond = control.hr_hint_cond_backup[context]
+                                    control.hr_hint_cond_backup = control.hr_hint_cond
+                                    control.hr_hint_cond = control.hr_hint_cond[context]
                                 control.hr_hint_cond = control.hr_hint_cond.to(device=devices.get_device_for("controlnet"))
                         # IPAdapter and Controlllite are always on CPU.
                         elif control.control_model_type == ControlModelType.IPAdapter and control.control_model.image_emb.shape[0] > len(context):
-                            if getattr(control.control_model, "image_emb_backup", None) is None:
-                                control.control_model.image_emb_backup = control.control_model.image_emb
-                                control.control_model.uncond_image_emb_backup = control.control_model.uncond_image_emb
-                            control.control_model.image_emb = control.control_model.image_emb_backup[context]
-                            control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup[context]
+                            control.control_model.image_emb_backup = control.control_model.image_emb
+                            control.control_model.image_emb = control.control_model.image_emb[context]
+                            control.control_model.uncond_image_emb_backup = control.control_model.uncond_image_emb
+                            control.control_model.uncond_image_emb = control.control_model.uncond_image_emb[context]
                         elif control.control_model_type == ControlModelType.Controlllite:
                             for module in control.control_model.modules.values():
                                 if module.cond_image.shape[0] > len(context):
-                                    if getattr(module, "cond_image_backup", None) is None:
-                                        module.cond_image_backup = module.cond_image
-                                    module.set_cond_image(module.cond_image_backup[context])
-
+                                    module.cond_image_backup = module.cond_image
+                                    module.set_cond_image(module.cond_image[context])
+            
             def mm_cn_restore(context: List[int]):
                 # restore control images for next context
                 if cn_script and cn_script.latest_network:
@@ -135,8 +131,17 @@ class AnimateDiffInfV2V:
                         if control.control_model_type not in [ControlModelType.IPAdapter, ControlModelType.Controlllite]:
                             if getattr(control, "hint_cond_backup", None) is not None:
                                 control.hint_cond_backup[context] = control.hint_cond.to(device="cpu")
+                                control.hint_cond = control.hint_cond_backup
                             if control.hr_hint_cond is not None and getattr(control, "hr_hint_cond_backup", None) is not None:
                                 control.hr_hint_cond_backup[context] = control.hr_hint_cond.to(device="cpu")
+                                control.hr_hint_cond = control.hr_hint_cond_backup
+                        elif control.control_model_type == ControlModelType.IPAdapter and getattr(control.control_model, "image_emb_backup", None) is not None:
+                            control.control_model.image_emb = control.control_model.image_emb_backup
+                            control.control_model.uncond_image_emb = control.control_model.uncond_image_emb_backup
+                        elif control.control_model_type == ControlModelType.Controlllite:
+                            for module in control.control_model.modules.values():
+                                if getattr(module, "cond_image_backup", None) is not None:
+                                    module.set_cond_image(module.cond_image_backup)
 
             def mm_sd_forward(self, x_in, sigma_in, cond):
                 logger.debug("Running special forward for AnimateDiff")
