@@ -178,11 +178,13 @@ class AnimateDiffProcess:
                 cn_unit.batch_mask_dir = self.mask_path
 
             # find minimun control images in CN batch
+            cn_unit_batch_params = cn_unit.batch_images.split('\n')
             if cn_unit.input_mode.name == 'BATCH':
                 cn_unit.animatediff_batch = True # for A1111 sd-webui-controlnet
-                cn_unit_batch_num = len(shared.listfiles(cn_unit.batch_images.split('\n')[0]))
-                if min_batch_in_cn == -1 or cn_unit_batch_num < min_batch_in_cn:
-                    min_batch_in_cn = cn_unit_batch_num
+                if not any([cn_param.startswith("keyframe:") for cn_param in cn_unit_batch_params[1:]]):
+                    cn_unit_batch_num = len(shared.listfiles(cn_unit_batch_params[0]))
+                    if min_batch_in_cn == -1 or cn_unit_batch_num < min_batch_in_cn:
+                        min_batch_in_cn = cn_unit_batch_num
 
         if min_batch_in_cn != -1:
             self.fix_video_length(p, min_batch_in_cn)
