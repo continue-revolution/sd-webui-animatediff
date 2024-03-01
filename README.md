@@ -11,7 +11,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 
 ## Table of Contents
-[Update](#update) | [Model Zoo](#model-zoo) | [Documentation](#documentation) | [Tutorial](#tutorial) | [Thanks](#thanks) | [Star History](#star-history) | [Sponsor](#sponsor)
+[Update](#update) | [Future Plan](#future-plan) | [Model Zoo](#model-zoo) | [Documentation](#documentation) | [Tutorial](#tutorial) | [Thanks](#thanks) | [Star History](#star-history) | [Sponsor](#sponsor)
 
 
 ## Update
