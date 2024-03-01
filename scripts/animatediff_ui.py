@@ -229,43 +229,58 @@ class AnimateDiffProcess:
 class AnimateDiffUiGroup:
     txt2img_submit_button = None
     img2img_submit_button = None
+    setting_sd_model_checkpoint = None
+    animatediff_ui_group = []
 
     def __init__(self):
         self.params = AnimateDiffProcess()
+        AnimateDiffUiGroup.animatediff_ui_group.append(self)
 
 
-    def render(self, is_img2img: bool, model_dir: str, infotext_fields, paste_field_names):
+    def get_model_list(self):
+        model_dir = motion_module.get_model_dir()
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
+        def get_sd_rm_tag():
+            if shared.sd_model.is_sdxl:
+                return ["sd1"]
+            elif shared.sd_model.is_sd2:
+                return ["sd1, xl"]
+            elif shared.sd_model.is_sd1:
+                return ["xl"]
+            else:
+                return []
+        return [f for f in os.listdir(model_dir) if f != ".gitkeep" and not any(tag in f for tag in get_sd_rm_tag())]
+
+
+    def refresh_models(self, *inputs):
+        new_model_list = self.get_model_list()
+        dd = inputs[0]
+        if dd in new_model_list:
+            selected = dd
+        elif len(new_model_list) > 0:
+            selected = new_model_list[0]
+        else:
+            selected = None
+        return gr.Dropdown.update(choices=new_model_list, value=selected)
+
+
+    def render(self, is_img2img: bool, infotext_fields, paste_field_names):
         elemid_prefix = "img2img-ad-" if is_img2img else "txt2img-ad-"
-        model_list = [f for f in os.listdir(model_dir) if f != ".gitkeep"]
         with gr.Accordion("AnimateDiff", open=False):
             gr.Markdown(value="Please click [this link](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/docs/how-to-use.md#parameters) to read the documentation of each parameter.")
             with gr.Row():
-
-                def refresh_models(*inputs):
-                    new_model_list = [
-                        f for f in os.listdir(model_dir) if f != ".gitkeep"
-                    ]
-                    dd = inputs[0]
-                    if dd in new_model_list:
-                        selected = dd
-                    elif len(new_model_list) > 0:
-                        selected = new_model_list[0]
-                    else:
-                        selected = None
-                    return gr.Dropdown.update(choices=new_model_list, value=selected)
-
                 with gr.Row():
+                    model_list = self.get_model_list()
                     self.params.model = gr.Dropdown(
                         choices=model_list,
-                        value=(self.params.model if self.params.model in model_list else None),
+                        value=(self.params.model if self.params.model in model_list else (model_list[0] if len(model_list) > 0 else None)),
                         label="Motion module",
                         type="value",
                         elem_id=f"{elemid_prefix}motion-module",
                     )
                     refresh_model = ToolButton(value="\U0001f504")
-                    refresh_model.click(refresh_models, self.params.model, self.params.model)
+                    refresh_model.click(self.refresh_models, self.params.model, self.params.model)
 
                 self.params.format = gr.CheckboxGroup(
                     choices=supported_save_formats,
@@ -448,5 +463,15 @@ class AnimateDiffUiGroup:
 
         if elem_id == "img2img_generate":
             AnimateDiffUiGroup.img2img_submit_button = component
+            return
+
+        if elem_id == "setting_sd_model_checkpoint":
+            for group in AnimateDiffUiGroup.animatediff_ui_group:
+                component.change( # this step cannot success. I don't know why.
+                    fn=group.refresh_models,
+                    inputs=[group.params.model],
+                    outputs=[group.params.model],
+                    queue=False,
+                )
             return
 
