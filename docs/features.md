@@ -32,8 +32,6 @@ smile
 
 
 ## ControlNet V2V
-> TODO: keyframe and mask demo, including ControlNet / IP-Adapter / SparseCtrl. We also need a better demo.
-
 You need to go to txt2img / img2img-batch and submit source video or path to frames. Each ControlNet will find control images according to this priority:
 1. ControlNet `Single Image` tab or `Batch Folder` tab. Simply upload a control image or a path to folder of control frames is enough.
 1. Img2img Batch tab `Input directory` if you are using img2img batch. If you upload a directory of control frames, it will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel.
@@ -58,10 +56,10 @@ There are a lot of amazing demo online. Here I provide a very simple demo. The d
 
 
 ## Model Spec
-> BREAKING CHANGE: You need to use Motion LoRA, HotShot-XL and V3 Motion Adapter from my HuggingFace repository instead of the original one.
+> BREAKING CHANGE: You need to use Motion LoRA, HotShot-XL and AnimateDiff V3 Motion Adapter from [my HuggingFace repository](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main/lora) instead of the original one.
 
 ### Motion LoRA
-[Download](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main/lora) and use them like any other LoRA you use (example: download Motion LoRA to `stable-diffusion-webui/models/Lora` and add `<lora:mm_sd15_v2_lora_PanLeft:0.8>` to your positive prompt). **Motion LoRAs cam only be applied to V2 motion modules**.
+[Download](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main/lora) and use them like any other LoRA you use (example: download Motion LoRA to `stable-diffusion-webui/models/Lora` and add `<lora:mm_sd15_v2_lora_PanLeft:0.8>` to your positive prompt). **Motion LoRAs can only be applied to V2 motion module**.
 
 ### V3
 V3 has identical state dict keys as V1 but slightly different inference logic (GroupNorm is not hacked for V3). You may optionally use [adapter](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/lora/mm_sd15_v3_adapter.safetensors?download=true) for V3, in the same way as how you apply LoRA. You MUST use [my link](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/lora/mm_sd15_v3_adapter.safetensors?download=true) instead of the [official link](https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_adapter.ckpt?download=true). The official adapter won't work for A1111 due to state dict incompatibility.
@@ -69,7 +67,7 @@ V3 has identical state dict keys as V1 but slightly different inference logic (G
 ### SDXL
 [AnimateDiff-XL](https://github.com/guoyww/AnimateDiff/tree/sdxl) and [HotShot-XL](https://github.com/hotshotco/Hotshot-XL) have identical architecture to AnimateDiff-SD1.5. The only difference are
 - HotShot-XL is trained with 8 frames instead of 16 frames. You are recommended to set `Context batch size` to 8 for HotShot-XL.
-- AnimateDiff-XL is still trained with 16 frames. You do not need to change `Context batch size` for AnimateDiffXL.
+- AnimateDiff-XL is still trained with 16 frames. You do not need to change `Context batch size` for AnimateDiff-XL.
 - AnimateDiff-XL & HotShot-XL have fewer layers compared to AnimateDiff-SD1.5 because of SDXL.
 - AnimateDiff-XL is trained with higher resolution compared to HotShot-XL.
 
@@ -77,4 +75,4 @@ Although AnimateDiff-XL & HotShot-XL have identical structure as AnimateDiff-SD1
 
 Technically all features available for AnimateDiff + SD1.5 are also available for (AnimateDiff / HotShot) + SDXL. However, I have not tested all of them. I have tested infinite context generation and prompt travel; I have not tested ControlNet. If you find any bug, please report it to me.
 
-Unfortunately, neither of these 2 motion modules are as good as those for SD1.5, and there is NOTHING I can do about it (they are just poorly trained). I strongly discourage anyone from applying SDXL for video generation. You will be VERY disappointed if you do that.
+Unfortunately, neither of these 2 motion modules are as good as those for SD1.5, and there is NOTHING I can do about it (they are just poorly trained). Also, there seem to be no ControlNets comparable to what [@lllyasviel](https://github.com/lllyasviel) had trained for Sd1.5. I strongly discourage anyone from applying SDXL for video generation. You will be VERY disappointed if you do that.

@@ -1,14 +1,15 @@
 # How to Use
 
 ## Preparation
-
-Install this extension like any other extensions you use, and download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save model weights, please go to `Settings/AnimateDiff`. See [model zoo](../README.md#model-zoo) for a list of available motion modules.
+1. Update WebUI to 1.8.0 and ControlNet to v1.1.441, then install this extension via link. I do not plan to support older version.
+1. Download motion modules and put the model weights under `stable-diffusion-webui/extensions/sd-webui-animatediff/model/`. If you want to use another directory to save model weights, please go to `Settings/AnimateDiff`. See [model zoo](../README.md#model-zoo) for a list of available motion modules.
+1. Enable `Pad prompt/negative prompt to be same length` in Settings/Optimization and click Apply settings. You must do this to prevent generating two separate unrelated GIFs. Checking `Batch cond/uncond` is optional, which can improve speed but increase VRAM usage.
 
 ## WebUI
 1. Go to txt2img if you want to try txt2vid and img2img if you want to try img2vid.
 1. Choose an SD checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please [change batch number, instead of batch size](performance.md#batch-size).
 1. Enable AnimateDiff extension, set up [each parameter](#parameters), then click `Generate`.
-1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff/{yy-mm-dd}`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{yy-mm-dd}`. You may choose to save frames for each generation into separate directories in `Settings/AnimateDiff`.
+1. You should see the output GIF on the output gallery. You can access GIF output and image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff/{yy-mm-dd}`. You may choose to save frames for each generation into the original txt2img / img2img output directory by uncheck a checkbox inside `Settings/AnimateDiff`.
 
 ## API
 It is quite similar to the way you use ControlNet. API will return a video in base64 format. In `format`, `PNG` means to save frames to your file system without returning all the frames. If you want your API to return all frames, please add `Frame` to `format` list. For most up-to-date parameters, please read [here](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_ui.py#L26).

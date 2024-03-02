@@ -17,9 +17,9 @@ You might also be interested in another extension I created: [Segment Anything f
 ## Update
 - [v2.0.0-a](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.0-a) in `03/02/2023`: The whole extension has been reworked to make it easier to maintain.
   - Prerequisite: WebUI >= 1.8.0 & ControlNet >=1.1.441
-  - New feature: ControlNet inpaint / IP-Adapter prompt travel / SparseCtrl / ControlNet keyframe
-  - Minor: mm filter based on sd version / display extension version in infotext
-  - Breaking change: You must use my Motion LoRA, my HotshotXL motion module, my V3 Motion Adapter from my [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main).
+  - New feature: ControlNet inpaint / IP-Adapter prompt travel / SparseCtrl / ControlNet keyframe, see [ControlNet V2V](docs/features.md#controlnet-v2v)
+  - Minor: mm filter based on sd version (click refresh button if you switch between SD1.5 and SDXL) / display extension version in infotext
+  - Breaking change: You must use my Motion LoRA, my Hotshot-XL, my AnimateDiff V3 Motion Adapter from my [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main).
 
 ## Future Plan
 Although [OpenAI Sora](https://openai.com/sora) is far better at following complex text prompts and generating complex scenes, we believe that OpenAI will NOT open source Sora or any other other products they released recently. My current plan is to continue developing this extension until when an open-sourced video model is released, with strong ability to generate complex scenes, easy customization and good ecosystem like SD1.5.
