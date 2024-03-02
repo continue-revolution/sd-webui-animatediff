@@ -18,6 +18,7 @@ from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_settings import on_ui_settings
 from scripts.animatediff_infotext import update_infotext, infotext_pasted
 from scripts.animatediff_utils import get_animatediff_arg
+from scripts.animatediff_i2ibatch import * # this is necessary for CN to find the function
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)

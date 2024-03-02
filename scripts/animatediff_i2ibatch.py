@@ -20,6 +20,7 @@ from modules.sd_samplers_common import images_tensor_to_samples, approximation_i
 from modules.sd_models import get_closet_checkpoint_match
 
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_utils import get_animatediff_arg, get_controlnet_units
 
 
 def animatediff_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack this when i2i-batch with batch mask
@@ -177,6 +178,11 @@ def animatediff_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hac
 def animatediff_i2i_batch(
         p: StableDiffusionProcessingImg2Img, input_dir: str, output_dir: str, inpaint_mask_dir: str,
         args, to_scale=False, scale_by=1.0, use_png_info=False, png_info_props=None, png_info_dir=None):
+    ad_params = get_animatediff_arg(p)
+    assert ad_params.enable, "AnimateDiff is not enabled."
+    if not ad_params.video_path and not ad_params.video_source:
+        ad_params.video_path = input_dir
+
     output_dir = output_dir.strip()
     processing.fix_seed(p)
 
@@ -189,9 +195,22 @@ def animatediff_i2i_batch(
 
         if is_inpaint_batch:
             assert len(inpaint_masks) == 1 or len(inpaint_masks) == len(images), 'The number of masks must be 1 or equal to the number of images.'
-            logger.info(f"\n[i2i batch] Inpaint batch is enabled. {len(inpaint_masks)} masks found.")
+            logger.info(f"[i2i batch] Inpaint batch is enabled. {len(inpaint_masks)} masks found.")
             if len(inpaint_masks) > 1: # batch mask
                 p.init = MethodType(animatediff_i2i_init, p)
+
+            cn_units = get_controlnet_units(p)
+            for idx, cn_unit in enumerate(cn_units):
+                # batch path broadcast
+                if (cn_unit.input_mode.name == 'SIMPLE' and cn_unit.image is None) or \
+                   (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_images) or \
+                   (cn_unit.input_mode.name == 'MERGE' and not cn_unit.batch_input_gallery):
+                    cn_unit.input_mode = cn_unit.input_mode.__class__.BATCH
+                    # Assume batch image dir has been automatlcally filled by input_dir
+                    assert cn_unit.batch_images == input_dir, f"Batch image dir is not set to {input_dir}."
+                    if "inpaint" in cn_unit.module:
+                        cn_unit.batch_images = f"{cn_unit.batch_images}\nmask:{inpaint_mask_dir}"
+                        logger.info(f"ControlNetUnit-{idx} is an inpaint unit without cond_hint specification. We have set batch_images = {cn_unit.batch_images}.")
 
     logger.info(f"[i2i batch] Will process {len(images)} images, creating {p.n_iter} new videos.")
 
