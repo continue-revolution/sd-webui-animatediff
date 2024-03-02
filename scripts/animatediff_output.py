@@ -52,6 +52,17 @@ class AnimateDiffOutput:
         if from_xyz:
             res.images = first_frames
 
+        if shared.opts.data.get("animatediff_frame_extract_remove", False):
+            self._remove_frame_extract(params)
+
+
+    def _remove_frame_extract(self, params: AnimateDiffProcess):
+        if params.video_source and params.video_path and Path(params.video_path).exists():
+            logger.info(f"Removing extracted frames from {params.video_path}")
+            import shutil
+            shutil.rmtree(params.video_path)
+
+
     def _add_reverse(self, params: AnimateDiffProcess, frame_list: list):
         if params.video_length <= params.batch_size and params.closed_loop in ['A']:
             frame_list_reverse = frame_list[::-1]
@@ -145,7 +156,7 @@ class AnimateDiffOutput:
         infotext = res.infotexts[index]
         s3_enable =shared.opts.data.get("animatediff_s3_enable", False) 
         use_infotext = shared.opts.enable_pnginfo and infotext is not None
-        if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", False) or getattr(params, "force_save_to_custom", False)):
+        if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", True) or getattr(params, "force_save_to_custom", False)):
             video_path_prefix.mkdir(exist_ok=True, parents=True)
             for i, frame in enumerate(frame_list):
                 png_filename = video_path_prefix/f"{i:05}.png"
@@ -317,10 +328,12 @@ class AnimateDiffOutput:
                 videos.append(base64.b64encode(video_file.read()).decode("utf-8"))
         return videos
 
+
     def _install_requirement_if_absent(self,lib):
         import launch
         if not launch.is_installed(lib):
             launch.run_pip(f"install {lib}", f"animatediff requirement: {lib}")
+
 
     def _exist_bucket(self,s3_client,bucketname):
         try:
@@ -331,6 +344,7 @@ class AnimateDiffOutput:
                 return False
             else:
                 raise
+
 
     def _save_to_s3_stroge(self ,file_path):
         """
@@ -366,4 +380,3 @@ class AnimateDiffOutput:
         client.upload_file(file_path, bucket,  targetpath)
         logger.info(f"{file_path} saved to s3 in bucket: {bucket}")
         return f"http://{host}:{port}/{bucket}/{targetpath}"
-        
