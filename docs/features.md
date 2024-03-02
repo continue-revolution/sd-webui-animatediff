@@ -32,6 +32,8 @@ smile
 
 
 ## ControlNet V2V
+> Sample configuration for ControlNet V2V, ControlNet inpaint, IP-Adapter prompt travel, SparseCtrl, ControlNet keyframe, img2img batch will be updated in a day.
+
 You need to go to txt2img / img2img-batch and submit source video or path to frames. Each ControlNet will find control images according to this priority:
 1. ControlNet `Single Image` tab or `Batch Folder` tab. Simply upload a control image or a path to folder of control frames is enough.
 1. Img2img Batch tab `Input directory` if you are using img2img batch. If you upload a directory of control frames, it will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel.
