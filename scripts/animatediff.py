@@ -64,6 +64,9 @@ class AnimateDiffScript(scripts.Script):
             params.set_p(p)
             params.prompt_scheduler = AnimateDiffPromptSchedule(p, params)
             update_infotext(p, params)
+            if params.freeinit_enable:
+                self.freeinit_hacker = AnimateDiffFreeInit(params)
+                self.freeinit_hacker.hack(p, params)
             self.hacked = True
         elif self.hacked:
             motion_module.restore(p.sd_model)
