@@ -49,14 +49,14 @@ def get_controlnet_units(p: StableDiffusionProcessing):
     Get controlnet arguments from `p`.
     """
     if not p.scripts:
-        return None
+        return []
 
     for script in p.scripts.alwayson_scripts:
         if script.title().lower() == "controlnet":
             cn_units = p.script_args[script.args_from:script.args_to]
             return [x for x in cn_units if x.enabled]
 
-    return None
+    return []
 
 
 def ffmpeg_extract_frames(source_video: str, output_dir: str, extract_key: bool = False):
