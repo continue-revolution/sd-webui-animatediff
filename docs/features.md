@@ -40,21 +40,56 @@ You need to go to txt2img / img2img-batch and submit source video or path to fra
 1. AnimateDiff `Video Path`. If you upload a path to frames through `Video Path`, it will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel.
 1. AnimateDiff `Video Source`. If you upload a video through `Video Source`, it will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet panel.
 
-`Number of frames` will be capped to the minimum number of images among all **folders** you provide. Each control image in each folder will be applied to one single frame. If you upload one single image for a ControlNet unit, that image will control **ALL** frames.
+`Number of frames` will be capped to the minimum number of images among all **folders** you provide, unless it has a "keyframe" parameter.
+
+**SparseCtrl**: Sparse ControlNet is for video generation with key frames. If you upload one image in "single image" tab, it will control the following frames to follow your first frame (a **probably** better way to do img2vid). If you upload a path in "batch" tab, with "keyframe" parameter in a new line (see below), it will attempt to do video frame interpolation. Note that I don't think this ControlNet has a comparable performance to those trained by [@lllyasviel](https://github.com/lllyasviel). Use at your own risk.
 
 Example input parameter fill-in:
-1. Specify different `Input Directory` and `Mask Directory` for different individual ControlNet Units.
-![cn1](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c1e0e04d-d2c7-4150-89e1-3befe2f3c750)
+1. Fill-in seperate control inputs for different ControlNet units.
+   1. Control all frames with a single control input. Exception: SparseCtrl will only control the first frame in this way.
+      | IP-Adapter | Output |
+      | --- | --- |
+      | ![ipadapter-single](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/82ef7455-168a-40a5-95a7-e7b22cf86dc8) | ![ipadapter-single](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/2539c84f-8775-4697-a0ec-006c9fafef1c) |
+   1. Control each frame with a seperate control input. You are encouraged to try multi-ControlNet.
+      | Canny | Output |
+      | --- | --- |
+      | ![controlnet-batch](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/71ed300d-5c3e-42d8-aed1-6d8d4c442941) | ![00005-1961300716](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/8e7d8f92-2816-47be-baad-8dd63e0cc1a1) |
+   1. ControlNet inpaint unit: You are encouraged to use my [Segment Anything](https://github.com/continue-revolution/sd-webui-segment-anything) extension to automatically draw mask / generate masks in batch.
+      - specify a global image and draw mask on it, or upload a mask. White region is where changes will apply.
+      - "mask" parameter for ControlNet inpaint in batch. Type "ctrl + enter" to start a new line and fill in "mask" parameter in format `mask:/path/to/mask/frames/`.
+
+      | single image | batch |
+      | --- | --- |
+      | ![inpaint-single](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/c0804da5-b2fb-4669-bd09-fb9fb3f2782b) | ![inpaint-batch](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/db5e09d9-d192-4a38-b56c-402407232eb1) |
+   1. "keyframe" parameter.
+      - **IP-Adapter**: this parameter means "IP-Adapter prompt travel". See image below for explanation.
+        ![ipadapter-keyframe](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/51a625cf-0ad5-4dfd-be71-644cc53764eb)
+        You will see terminal log like
+        ```bash
+        ControlNet - INFO - AnimateDiff + ControlNet ip-adapter_clip_sd15 receive the following parameters:
+        ControlNet - INFO -   batch control images: /home/conrevo/SD/dataset/upperbodydataset/mask/key-ipadapter/
+        ControlNet - INFO -   batch control keyframe index: [0, 6, 12, 18]
+        ```
+        ```bash
+        ControlNet - INFO - IP-Adapter: control prompts will be traveled in the following way:
+        ControlNet - INFO -   0: /home/conrevo/SD/dataset/upperbodydataset/mask/key-ipadapter/anime_girl_head_1.png
+        ControlNet - INFO -   6: /home/conrevo/SD/dataset/upperbodydataset/mask/key-ipadapter/anime_girl_head_2.png
+        ControlNet - INFO -   12: /home/conrevo/SD/dataset/upperbodydataset/mask/key-ipadapter/anime_girl_head_3.png
+        ControlNet - INFO -   18: /home/conrevo/SD/dataset/upperbodydataset/mask/key-ipadapter/anime_girl_head_4.png
+        ```
+      - **SparseCtrl**: this parameter means keyframe. SparseCtrl has its special processing for keyframe logic. Specify this parameter in the same way as IP-Adapter above.
+      - All other ControlNets: we insert blank control image for you, and the control latent for that frame will be purely zero. Specify this parameter in the same way as IP-Adapter above.
 1. Specify a global `Videl path` and `Mask path` and leave ControlNet Unit `Input Directory` input blank.
     - You can arbitratily change ControlNet Unit tab to `Single Image` / `Batch Folder` / `Batch Upload` as long as you leave it blank.
     - If you specify a global mask path, all ControlNet Units that you do not give a `Mask Directory` will use this path.
     - Please only have one of `Video source` and `Video path`. They cannot be applied at the same time.
-![cn2](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/dc8d71df-60ea-4dd9-a040-b7bd35161587)
+    ![cn2](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/dc8d71df-60ea-4dd9-a040-b7bd35161587)
+1. img2img batch. See the screenshot below.![i2i-batch](https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/58110cfe-ac57-4403-817b-82e9126b938a)
 
 There are a lot of amazing demo online. Here I provide a very simple demo. The dataset is from [streamline](https://twitter.com/kaizirod), but the workflow is an arbitrary setup by me. You can find a lot more much more amazing examples (and potentially available workflows / infotexts) on Reddit, Twitter, YouTube and Bilibili. The easiest way to share your workflow created by my software is to share one output frame with infotext.
 | input | output |
 | --- | --- |
-| <img height='512px' src='https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/ff066808-fc00-43e1-a2a6-b16e41dad603'> | <img height='512px' src='https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/dc3d833b-a113-4278-9e48-5f2a8ee06704'> |
+| <img height='512px' src='https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/ff066808-fc00-43e1-a2a6-b16e41dad603'> | <img height='512px' src='https://github.com/continue-revolution/sd-webui-animatediff/assets/63914308/5aab1f9f-245d-45e9-ba71-1b902bc6ea40'> |
 
 
 ## Model Spec
