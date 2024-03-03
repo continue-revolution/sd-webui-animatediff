@@ -1,5 +1,5 @@
 # AnimateDiff for Stable Diffusion WebUI
-This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) w/ [CLI](https://github.com/s9roll7/animatediff-cli-prompt-travel) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) w/ [ControlNet](https://github.com/Mikubill/sd-webui-controlnet), and form the most easy-to-use AI video toolkit. You can generate GIFs in exactly the same way as generating images after enabling this extension.
+This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) with [CLI](https://github.com/s9roll7/animatediff-cli-prompt-travel) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) with [ControlNet](https://github.com/Mikubill/sd-webui-controlnet), and form the most easy-to-use AI video toolkit. You can generate GIFs in exactly the same way as generating images after enabling this extension.
 
 This extension implements AnimateDiff in a different way. It inserts motion modules into UNet at runtime, so that you do not need to reload your model weights if you don't want to.
 
@@ -7,7 +7,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 [Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge) users should either checkout branch [forge/master](https://github.com/continue-revolution/sd-webui-animatediff/tree/forge/master) in this repository or use [sd-forge-animatediff](https://github.com/continue-revolution/sd-forge-animatediff). They will be in sync.
 
-[TusiArt](https://tusiart.com/) (for users physically inside P.R.China mainland) and [TensorArt](https://tensor.art/) (for others) offers online service of this extension.
+[TusiArt](https://tusiart.com/) (for users inside P.R.China mainland) and [TensorArt](https://tensor.art/) (for others) offers online service of this extension.
 
 
 ## Table of Contents
@@ -19,7 +19,7 @@ You might also be interested in another extension I created: [Segment Anything f
   - Prerequisite: WebUI >= 1.8.0 & ControlNet >=1.1.441
   - New feature: ControlNet inpaint / IP-Adapter prompt travel / SparseCtrl / ControlNet keyframe, see [ControlNet V2V](docs/features.md#controlnet-v2v)
   - Minor: mm filter based on sd version (click refresh button if you switch between SD1.5 and SDXL) / display extension version in infotext
-  - Breaking change: You must use my Motion LoRA, my Hotshot-XL, my AnimateDiff V3 Motion Adapter from my [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main).
+  - Breaking change: You must use Motion LoRA, Hotshot-XL, AnimateDiff V3 Motion Adapter from my [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main).
 
 ## Future Plan
 Although [OpenAI Sora](https://openai.com/sora) is far better at following complex text prompts and generating complex scenes, we believe that OpenAI will NOT open source Sora or any other other products they released recently. My current plan is to continue developing this extension until when an open-sourced video model is released, with strong ability to generate complex scenes, easy customization and good ecosystem like SD1.5.
@@ -30,7 +30,7 @@ That said, due to the notorious difficulty in maintaining [sd-webui-controlnet](
 
 
 ## Model Zoo
-I am maintaining a [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main) to provide all official models in fp16 & safetensors format. You are highly recommended to use my link. You MUST use my link to download AnimateDiff V3 Motion Adapter, SparseCtrl and HotShot-XL. You may still use the old links if you want, for all other models
+I am maintaining a [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main) to provide all official models in fp16 & safetensors format. You are highly recommended to use my link. You MUST use my link to download Motion LoRA, Hotshot-XL, AnimateDiff V3 Motion Adapter. You may still use the old links if you want, for all other models
 
 - "Official" models by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff/tree/main) | [CivitAI](https://civitai.com/models/108836)
 - "Stabilized" community models by [@manshoety](https://huggingface.co/manshoety): [HuggingFace](https://huggingface.co/manshoety/AD_Stabilized_Motion/tree/main)
@@ -54,7 +54,7 @@ We thank all developers and community users who contribute to this repository in
 - [@limbo0000](https://github.com/limbo0000) for responding to my questions about AnimateDiff
 - [@neggles](https://github.com/neggles) and [@s9roll7](https://github.com/s9roll7) for developing [AnimateDiff CLI Prompt Travel](https://github.com/s9roll7/animatediff-cli-prompt-travel)
 - [@zappityzap](https://github.com/zappityzap) for developing the majority of the [output features](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_output.py)
-- [@lllyasvlel](https://github.com/lllyasviel) for adding me as a collaborator of sd-webui-controlnet and offering technical support for Forge
+- [@lllyasviel](https://github.com/lllyasviel) for adding me as a collaborator of sd-webui-controlnet and offering technical support for Forge
 - [@KohakuBlueleaf](https://github.com/KohakuBlueleaf) for helping with FP8 and LCM development
 - [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance
 - [@streamline](https://twitter.com/kaizirod) for providing ControlNet V2V dataset and workflow. His workflow is extremely amazing and definitely worth checking out.
