@@ -159,9 +159,6 @@ class AnimateDiffProcess:
             p.do_not_save_samples = True
 
         cn_units = get_controlnet_units(p)
-        if not cn_units:
-            return
-
         min_batch_in_cn = -1
         for cn_unit in cn_units:
             # batch path broadcast
@@ -195,7 +192,7 @@ class AnimateDiffProcess:
                     cur_batch_modifier = getattr(cn_unit, "batch_modifiers", [])
                     cur_batch_modifier.append(cn_batch_modifler)
                     cn_unit.batch_modifiers = cur_batch_modifier
-            self.post_setup_cn_for_i2i_batch(p)
+        self.post_setup_cn_for_i2i_batch(p)
         logger.info(f"AnimateDiff + ControlNet will generate {self.video_length} frames.")
 
 
