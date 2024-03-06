@@ -38,11 +38,6 @@ class AnimateDiffProcess:
         interp_x=10,
         video_source=None,
         video_path='',
-        freeinit_enable=False,
-        freeinit_filter="butterworth",
-        freeinit_ds=0.25,
-        freeinit_dt=0.25,
-        freeinit_iters=3,
         latent_power=1,
         latent_scale=32,
         last_frame=None,
@@ -64,11 +59,6 @@ class AnimateDiffProcess:
         self.interp_x = interp_x
         self.video_source = video_source
         self.video_path = video_path
-        self.freeinit_enable = freeinit_enable
-        self.freeinit_filter = freeinit_filter
-        self.freeinit_ds = freeinit_ds
-        self.freeinit_dt = freeinit_dt
-        self.freeinit_iters = freeinit_iters
         self.latent_power = latent_power
         self.latent_scale = latent_scale
         self.last_frame = last_frame
@@ -81,7 +71,7 @@ class AnimateDiffProcess:
 
 
     def get_list(self, is_img2img: bool):
-        return list(vars(self).values())[:(24 if is_img2img else 19)]
+        return list(vars(self).values())[:(19 if is_img2img else 14)]
 
 
     def get_dict(self, is_img2img: bool):
@@ -97,7 +87,6 @@ class AnimateDiffProcess:
             "overlap": self.overlap,
             "interp": self.interp,
             "interp_x": self.interp_x,
-            "freeinit_enable": self.freeinit_enable,
         }
         if self.request_id:
             infotext['request_id'] = self.request_id
@@ -173,12 +162,7 @@ class AnimateDiffUiGroup:
 
     def __init__(self):
         self.params = AnimateDiffProcess()
-        self.filter_type_list = [
-            "butterworth",
-            "gaussian",
-            "box",
-            "ideal"
-        ]
+
 
     def render(self, is_img2img: bool, model_dir: str):
         if not os.path.isdir(model_dir):
@@ -283,52 +267,6 @@ class AnimateDiffUiGroup:
                 self.params.interp_x = gr.Number(
                     value=self.params.interp_x, label="Interp X", precision=0, 
                     elem_id=f"{elemid_prefix}interp-x"
-                )
-            with gr.Accordion("FreeInit Params", open=False):
-                gr.Markdown(
-                    """
-                    Adjust to control the smoothness.
-                    """
-                )
-                self.params.freeinit_enable = gr.Checkbox(
-                    value=self.params.freeinit_enable, 
-                    label="Enable FreeInit", 
-                    elem_id=f"{elemid_prefix}freeinit-enable"
-                )
-                self.params.freeinit_filter = gr.Dropdown(
-                    value=self.params.freeinit_filter, 
-                    label="Filter Type", 
-                    info="Default as Butterworth. To fix large inconsistencies, consider using Gaussian.",
-                    choices=self.filter_type_list,
-                    interactive=True, 
-                    elem_id=f"{elemid_prefix}freeinit-filter"
-                )
-                self.params.freeinit_ds = gr.Slider( 
-                    value=self.params.freeinit_ds, 
-                    minimum=0, 
-                    maximum=1, 
-                    step=0.125, 
-                    label="d_s", 
-                    info="Stop frequency for spatial dimensions (0.0-1.0)", 
-                    elem_id=f"{elemid_prefix}freeinit-ds"
-                )
-                self.params.freeinit_dt = gr.Slider(
-                    value=self.params.freeinit_dt, 
-                    minimum=0, 
-                    maximum=1, 
-                    step=0.125, 
-                    label="d_t", 
-                    info="Stop frequency for temporal dimension (0.0-1.0)", 
-                    elem_id=f"{elemid_prefix}freeinit-dt"
-                )
-                self.params.freeinit_iters = gr.Slider(
-                    value=self.params.freeinit_iters, 
-                    minimum=2, 
-                    maximum=5, 
-                    step=1, 
-                    label="FreeInit Iterations", 
-                    info="Larger value leads to smoother results & longer inference time.", 
-                    elem_id=f"{elemid_prefix}freeinit-dt",
                 )
             self.params.video_source = gr.Video(
                 value=self.params.video_source,
