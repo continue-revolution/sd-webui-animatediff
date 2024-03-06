@@ -1,3 +1,4 @@
+import os
 import cv2
 import subprocess
 from pathlib import Path
@@ -97,7 +98,9 @@ def extract_frames_from_video(params):
     params.video_path = shared.opts.data.get(
         "animatediff_frame_extract_path",
         f"{data_path}/tmp/animatediff-frames")
-    params.video_path += f"{params.video_source}-{generate_random_hash()}"
+    if not params.video_path:
+        params.video_path = f"{data_path}/tmp/animatediff-frames"
+    params.video_path = os.path.join(params.video_path, f"{Path(params.video_source).stem}-{generate_random_hash()}")
     try:
         ffmpeg_extract_frames(params.video_source, params.video_path)
     except Exception as e:
