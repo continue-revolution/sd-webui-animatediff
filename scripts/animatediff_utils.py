@@ -55,7 +55,7 @@ def get_controlnet_units(p: StableDiffusionProcessing):
     for script in p.scripts.alwayson_scripts:
         if script.title().lower() == "controlnet":
             cn_units = p.script_args[script.args_from:script.args_to]
-            #print(cn_units)
+
             if p.is_api and len(cn_units) > 0 and isinstance(cn_units[0], dict):
                from scripts import external_code
                from scripts.batch_hijack import InputMode
