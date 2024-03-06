@@ -30,7 +30,7 @@ def on_ui_settings():
     shared.opts.add_option(
         "animatediff_frame_extract_path",
         shared.OptionInfo(
-            "GIF",
+            None,
             "Path to save extracted frames",
             gr.Textbox,
             {"placeholder": "Leave empty to use default path: tmp/animatediff-frames"},
