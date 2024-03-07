@@ -76,6 +76,10 @@ class MotionWrapper(nn.Module):
     def is_adxl(self):
         return self.mm_type == MotionModuleType.AnimateDiffXL
 
+    @property
+    def is_hotshot(self):
+        return self.mm_type == MotionModuleType.HotShotXL
+
 
     @property
     def is_v2(self):
