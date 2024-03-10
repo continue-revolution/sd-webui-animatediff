@@ -38,12 +38,19 @@ The default parameters provide satisfactory results for most use cases. Increasi
 
 | without FreeInit | with FreeInit (default params) |
 | --- | --- |
-| ![00003-1234](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/631e1f4e-5c7e-44b8-bffb-e9f3e95ee304) | ![00002-1234](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/f4ba7132-7daf-4e26-86cc-766353e79fec) |
+| ![wo_FreeInit](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/631e1f4e-5c7e-44b8-bffb-e9f3e95ee304) | ![w_FreeInit](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/f4ba7132-7daf-4e26-86cc-766353e79fec) |
 
 
 ## FreeNoise
 
-It allows you to generate longer videos with enhanced stability, effectively preventing characters or scenes from experiencing content drift. Due to the introduction of sliding window attention, the processing time may be slightly increased compared to not using it. For a detailed explanation of each parameter, please refer to the documentation in the [original repository](https://github.com/TianxingWu/FreeInit).
+It allows you to generate longer videos (more than 64 frames) with enhanced stability, effectively preventing characters or scenes from experiencing content drift. 
+
+Due to the introduction of sliding window attention, the processing time may be slightly increased compared to not using it. The "Size of sliding windows" parameter actually replaces "context batch size". To maintain consistency with the motion model training, it is recommended to set this value to 16. For a detailed explanation of each parameter, please refer to the documentation in the [original repository](https://github.com/TianxingWu/FreeInit).
+
+| without FreeNoise | with FreeNoise (default params) |
+| --- | --- |
+| ![wo_FreeNoise](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/a9d1f72a-31ae-4213-9e85-9de4450b4aed) | ![w_FreeNoise](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/68a0ff8f-28fa-4d54-95f7-e439802d13b4) |
+(Number of frames: 64; Context batch size / Size of Sliding windows:16)
 
 
 ## ControlNet V2V
