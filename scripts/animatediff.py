@@ -70,10 +70,12 @@ class AnimateDiffScript(scripts.Script):
                 self.freeinit_hacker = AnimateDiffFreeInit(params)
                 self.freeinit_hacker.hack(p, params)
 
-            if params.freenoise_enable:
+            if params.freenoise_enable and not params.freeinit_enable:
                 self.freenoise_hacker = AnimateDiffFreeNoise(params)
                 self.freenoise_hacker.hack(p, params)
             else:
+                if params.freenoise_enable and params.freeinit_enable:
+                    logger.info("FreeInit and FreeNoise can't be used together at present. Using FreeInit.")
                 self.freenoise_hacker = AnimateDiffFreeNoise(params)
                 self.freenoise_hacker.restore(p)
             self.hacked = True
