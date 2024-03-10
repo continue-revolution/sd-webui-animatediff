@@ -41,6 +41,11 @@ The default parameters provide satisfactory results for most use cases. Increasi
 | ![00003-1234](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/631e1f4e-5c7e-44b8-bffb-e9f3e95ee304) | ![00002-1234](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/f4ba7132-7daf-4e26-86cc-766353e79fec) |
 
 
+## FreeNoise
+
+It allows you to generate longer videos with enhanced stability, effectively preventing characters or scenes from experiencing content drift. Due to the introduction of sliding window attention, the processing time may be slightly increased compared to not using it. For a detailed explanation of each parameter, please refer to the documentation in the [original repository](https://github.com/TianxingWu/FreeInit).
+
+
 ## ControlNet V2V
 You need to go to txt2img / img2img-batch and submit source video or path to frames. Each ControlNet will find control images according to this priority:
 1. ControlNet `Single Image` tab or `Batch Folder` tab. Simply upload a control image or a path to folder of control frames is enough.

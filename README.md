@@ -20,6 +20,7 @@ You might also be interested in another extension I created: [Segment Anything f
   - New feature:
       - ControlNet inpaint / IP-Adapter prompt travel / SparseCtrl / ControlNet keyframe, see [ControlNet V2V](docs/features.md#controlnet-v2v)
       - FreeInit, see [FreeInit](docs/features.md#FreeInit)
+      - FreeNoise, see [FreeNoise](docs/features.md#FreeNoise)
   - Minor: mm filter based on sd version (click refresh button if you switch between SD1.5 and SDXL) / display extension version in infotext
   - Breaking change: You must use Motion LoRA, Hotshot-XL, AnimateDiff V3 Motion Adapter from my [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main).
 
