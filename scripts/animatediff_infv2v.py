@@ -156,9 +156,10 @@ class AnimateDiffInfV2V:
                     mm_cn_restore(_context)
                 return x_out
 
-            logger.info("inner model forward hooked")
-            cfg_params.denoiser.inner_model.original_forward = cfg_params.denoiser.inner_model.forward
-            cfg_params.denoiser.inner_model.forward = MethodType(mm_sd_forward, cfg_params.denoiser.inner_model)
+            if getattr(cfg_params.denoiser.inner_model, 'original_forward', None) is None:
+                logger.info("inner model forward hooked")
+                cfg_params.denoiser.inner_model.original_forward = cfg_params.denoiser.inner_model.forward
+                cfg_params.denoiser.inner_model.forward = MethodType(mm_sd_forward, cfg_params.denoiser.inner_model)
 
         cfg_params.text_cond = ad_params.text_cond
         ad_params.step = cfg_params.denoiser.step

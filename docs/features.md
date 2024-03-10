@@ -30,6 +30,16 @@ The last line is tail prompt, which is optional. You can write no/single/multipl
 smile
 ```
 
+## FreeInit
+
+It allows you to use more time to get more coherent and consistent video frames.
+
+The default parameters provide satisfactory results for most use cases. Increasing the number of iterations can yield better outcomes, but it also prolongs the processing time. If your video contains more intense or rapid motions, consider switching the filter to Gaussian. For a detailed explanation of each parameter, please refer to the documentation in the [original repository](https://github.com/TianxingWu/FreeInit).
+
+| without FreeInit | with FreeInit (default params) |
+| --- | --- |
+| ![00003-1234](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/631e1f4e-5c7e-44b8-bffb-e9f3e95ee304) | ![00002-1234](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/f4ba7132-7daf-4e26-86cc-766353e79fec) |
+
 
 ## ControlNet V2V
 You need to go to txt2img / img2img-batch and submit source video or path to frames. Each ControlNet will find control images according to this priority:
