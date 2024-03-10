@@ -206,8 +206,6 @@ def animatediff_i2i_batch(
                    (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_images) or \
                    (cn_unit.input_mode.name == 'MERGE' and not cn_unit.batch_input_gallery):
                     cn_unit.input_mode = cn_unit.input_mode.__class__.BATCH
-                    # Assume batch image dir has been automatlcally filled by input_dir
-                    assert cn_unit.batch_images == input_dir, f"Batch image dir is not set to {input_dir}."
                     if "inpaint" in cn_unit.module:
                         cn_unit.batch_images = f"{cn_unit.batch_images}\nmask:{inpaint_mask_dir}"
                         logger.info(f"ControlNetUnit-{idx} is an inpaint unit without cond_hint specification. We have set batch_images = {cn_unit.batch_images}.")
