@@ -51,6 +51,9 @@ class AnimateDiffProcess:
         freeinit_ds=0.25,
         freeinit_dt=0.25,
         freeinit_iters=3,
+        freenoise_enable=False,
+        freenoise_window_size=16,
+        freenoise_window_stride=4,
         latent_power=1,
         latent_scale=32,
         last_frame=None,
@@ -78,6 +81,9 @@ class AnimateDiffProcess:
         self.freeinit_ds = freeinit_ds
         self.freeinit_dt = freeinit_dt
         self.freeinit_iters = freeinit_iters
+        self.freenoise_enable = freenoise_enable
+        self.freenoise_window_size = freenoise_window_size
+        self.freenoise_window_stride = freenoise_window_stride
         self.latent_power = latent_power
         self.latent_scale = latent_scale
         self.last_frame = last_frame
@@ -92,7 +98,7 @@ class AnimateDiffProcess:
 
 
     def get_list(self, is_img2img: bool):
-        return list(vars(self).values())[:(25 if is_img2img else 20)]
+        return list(vars(self).values())[:(28 if is_img2img else 23)]
 
 
     def get_dict(self, is_img2img: bool):
@@ -108,6 +114,7 @@ class AnimateDiffProcess:
             "interp": self.interp,
             "interp_x": self.interp_x,
             "freeinit_enable": self.freeinit_enable,
+            "freenoise_enable": self.freeinit_enable,
         }
         if self.request_id:
             infotext['request_id'] = self.request_id
@@ -418,6 +425,30 @@ class AnimateDiffUiGroup:
                     info="Larger value leads to smoother results & longer inference time.", 
                     elem_id=f"{elemid_prefix}freeinit-dt",
                 )
+            
+            with gr.Accordion("FreeNoise Params", open=False):
+                gr.Markdown(
+                    """
+                    Adjust to control the consistency.
+                    """
+                )
+                self.params.freenoise_enable = gr.Checkbox(
+                    value=self.params.freenoise_enable, 
+                    label="Enable FreeNoise", 
+                    elem_id=f"{elemid_prefix}freenoise-enable"
+                )
+                self.params.freenoise_window_size = gr.Number(
+                    minimum=1,
+                    value=self.params.freenoise_window_size, 
+                    label="Size of Sliding Windows",
+                    elem_id=f"{elemid_prefix}freenoise-window-size",
+                ) 
+                self.params.freenoise_window_stride = gr.Number(
+                    minimum=1,
+                    value=self.params.freenoise_window_stride, 
+                    label="Stride of Sliding Windows",
+                    elem_id=f"{elemid_prefix}freenoise-window-stride",
+                ) 
             self.params.video_source = gr.Video(
                 value=self.params.video_source,
                 label="Video source",

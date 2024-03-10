@@ -83,9 +83,9 @@ It is quite similar to the way you use ControlNet. API will return a video in ba
 1. **Interp X** — Replace each input frame with X interpolated output frames. [#128](https://github.com/continue-revolution/sd-webui-animatediff/pull/128).
 1. **Video source** — [Optional] Video source file for [ControlNet V2V](features.md#controlnet-v2v). You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a single control image to `Single Image` tab or a path to `Batch Folder` tab in ControlNet panel. You can of course submit one control image via `Single Image` tab or an input directory via `Batch Folder` tab, which will override this video source input and work as usual.
 1. **Video path** — [Optional] Folder for source frames for [ControlNet V2V](features.md#controlnet-v2v), but higher priority than `Video source`. You MUST enable ControlNet. It will be the source control for ALL ControlNet units that you enable without submitting a control image or a path to ControlNet. You can of course submit one control image via `Single Image` tab or an input directory via `Batch Folder` tab, which will override this video path input and work as usual.
-2. **Free Init** - [Optional] Using Free-init to improve temporal consistency of your videos.
+2. **FreeInit** - [Optional] Using Free-init to improve temporal consistency of your videos.
    1. The default parameters provide satisfactory results for most use cases.
    2. Use "Gaussian" filter when your motion is intense.
-   3. See [original repo of Freeinit](https://github.com/TianxingWu/FreeInit) to for more parameter settings.
+   1. See [original repo of Freeinit](https://github.com/TianxingWu/FreeInit) to for more parameter settings.
 
 See [ControlNet V2V](features.md#controlnet-v2v) for an example parameter fill-in and more explanation.

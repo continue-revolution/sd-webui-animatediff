@@ -3,11 +3,36 @@ from typing import Optional
 
 import math
 import torch
+import torch.nn.functional as F
 from torch import nn
-from einops import rearrange
+from einops import rearrange, repeat
 
 import torch.nn as disable_weight_init
 from ldm.modules.attention import FeedForward
+
+from modules import sd_hijack, shared
+
+def get_views(video_length, window_size=16, stride=4):
+    """ used by freenoise """
+    num_blocks_time = (video_length - window_size) // stride + 1
+    views = []
+    for i in range(num_blocks_time):
+        t_start = int(i * stride)
+        t_end = t_start + window_size
+        views.append((t_start,t_end))
+    return views
+
+
+def generate_weight_sequence(n):
+    """ used by freenoise """
+    if n % 2 == 0:
+        max_weight = n // 2
+        weight_sequence = list(range(1, max_weight + 1, 1)) + list(range(max_weight, 0, -1))
+    else:
+        max_weight = (n + 1) // 2
+        weight_sequence = list(range(1, max_weight, 1)) + [max_weight] + list(range(max_weight - 1, 0, -1))
+    return weight_sequence
+
 
 
 class MotionModuleType(Enum):
@@ -210,6 +235,7 @@ class TemporalTransformerBlock(nn.Module):
         upcast_attention                   = False,
         temporal_position_encoding_max_len = 24,
         operations                         = disable_weight_init,
+        local_window                       = False,
     ):
         super().__init__()
 
@@ -237,11 +263,41 @@ class TemporalTransformerBlock(nn.Module):
         self.ff = FeedForward(dim, dropout=dropout, glu=(activation_fn=='geglu'))
         self.ff_norm = operations.LayerNorm(dim)
 
+        self.local_window = local_window
+
 
     def forward(self, hidden_states: torch.Tensor):
-        for attention_block, norm in zip(self.attention_blocks, self.norms):
-            norm_hidden_states = norm(hidden_states).type(hidden_states.dtype)
-            hidden_states = attention_block(norm_hidden_states) + hidden_states
+        if not self.local_window:
+            for attention_block, norm in zip(self.attention_blocks, self.norms):
+                norm_hidden_states = norm(hidden_states).type(hidden_states.dtype)
+                hidden_states = attention_block(norm_hidden_states) + hidden_states
+        else:
+            # Free-noise window attn
+            from scripts.animatediff_mm import mm_animatediff
+            video_length = mm_animatediff.ad_params.batch_size
+            views = get_views(video_length)
+            hidden_states = rearrange(hidden_states, "(b f) d c -> b f d c", f=video_length)
+            count = torch.zeros_like(hidden_states)
+            value = torch.zeros_like(hidden_states)
+            for t_start, t_end in views:
+                weight_sequence = generate_weight_sequence(t_end - t_start)
+                weight_tensor = torch.ones_like(count[:, t_start:t_end])
+                weight_tensor = weight_tensor * torch.Tensor(weight_sequence).to(hidden_states.device).unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
+
+                sub_hidden_states = rearrange(hidden_states[:, t_start:t_end], "b f d c -> (b f) d c")
+                for attention_block, norm in zip(self.attention_blocks, self.norms):
+                    norm_hidden_states = norm(sub_hidden_states)
+                    sub_hidden_states = attention_block(
+                        norm_hidden_states,
+                        video_length=t_end-t_start,
+                    ) + sub_hidden_states
+                sub_hidden_states = rearrange(sub_hidden_states, "(b f) d c -> b f d c", f=t_end-t_start)
+
+                value[:,t_start:t_end] += sub_hidden_states * weight_tensor
+                count[:,t_start:t_end] += weight_tensor
+
+            hidden_states = torch.where(count>0, value/count, value)
+            hidden_states = rearrange(hidden_states, "b f d c -> (b f) d c")
             
         hidden_states = self.ff(self.ff_norm(hidden_states).type(hidden_states.dtype)) + hidden_states
         
@@ -325,9 +381,10 @@ class VersatileAttention(CrossAttention):
             max_len=temporal_position_encoding_max_len)
 
 
-    def forward(self, x: torch.Tensor):
-        from scripts.animatediff_mm import mm_animatediff
-        video_length = mm_animatediff.ad_params.batch_size
+    def forward(self, x: torch.Tensor, video_length: int = None):
+        if video_length is None:
+            from scripts.animatediff_mm import mm_animatediff
+            video_length = mm_animatediff.ad_params.batch_size
 
         d = x.shape[1]
         x = rearrange(x, "(b f) d c -> (b d) f c", f=video_length)

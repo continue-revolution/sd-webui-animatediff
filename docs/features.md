@@ -30,7 +30,7 @@ The last line is tail prompt, which is optional. You can write no/single/multipl
 smile
 ```
 
-## Free-init
+## FreeInit
 
 It allows you to use more time to get more coherent and consistent video frames.
 
