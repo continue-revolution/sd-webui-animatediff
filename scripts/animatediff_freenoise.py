@@ -25,8 +25,6 @@ class AnimateDiffFreeNoise:
 
 
     def hack(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
-        logger.info(f"Enable FreeNoise.")
-        
         # set model to window attention
         for name, module in p.sd_model.named_modules():
             if name.endswith('temporal_transformer'):
@@ -121,4 +119,3 @@ class AnimateDiffFreeNoise:
             if name.endswith('temporal_transformer'):
                 for temporal_transformer_block in module.transformer_blocks:
                     temporal_transformer_block.local_window = False
-        logger.info(f"Disable FreeNoise.")
