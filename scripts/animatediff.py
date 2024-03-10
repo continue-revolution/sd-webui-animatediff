@@ -20,6 +20,7 @@ from scripts.animatediff_infotext import update_infotext, infotext_pasted
 from scripts.animatediff_utils import get_animatediff_arg
 from scripts.animatediff_i2ibatch import * # this is necessary for CN to find the function
 from scripts.animatediff_freeinit import AnimateDiffFreeInit
+from scripts.animatediff_freenoise import AnimateDiffFreeNoise
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
@@ -68,9 +69,19 @@ class AnimateDiffScript(scripts.Script):
             if params.freeinit_enable:
                 self.freeinit_hacker = AnimateDiffFreeInit(params)
                 self.freeinit_hacker.hack(p, params)
+
+            if params.freenoise_enable and not params.freeinit_enable:
+                self.freenoise_hacker = AnimateDiffFreeNoise(params)
+                self.freenoise_hacker.hack(p, params)
+            else:
+                if params.freenoise_enable and params.freeinit_enable:
+                    logger.info("FreeInit and FreeNoise can't be used together at present. Using FreeInit.")
+                self.freenoise_hacker = AnimateDiffFreeNoise(params)
+                self.freenoise_hacker.restore(p)
             self.hacked = True
         elif self.hacked:
             motion_module.restore(p.sd_model)
+            self.freenoise_hacker.restore(p)
             self.hacked = False
 
 

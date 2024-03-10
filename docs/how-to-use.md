@@ -87,5 +87,10 @@ It is quite similar to the way you use ControlNet. API will return a video in ba
    1. The default parameters provide satisfactory results for most use cases.
    1. Use "Gaussian" filter when your motion is intense.
    1. See [original repo of Freeinit](https://github.com/TianxingWu/FreeInit) to for more parameter settings.
+   1. **Cannot Use with FreeNoise** for now.
+1. **FreeNoise** - [Optional] Using FreeNoise to generate long videos with high consistency.
+   1. The default parameters provide satisfactory results for most use cases.
+   1. See [original repo of FreeNoise](https://github.com/AILab-CVC/FreeNoise) to for more parameter settings.
+   1. **Cannot Use with FreeInit** for now.
 
 See [ControlNet V2V](features.md#controlnet-v2v) for an example parameter fill-in and more explanation.
