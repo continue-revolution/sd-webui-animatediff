@@ -30,6 +30,12 @@ The last line is tail prompt, which is optional. You can write no/single/multipl
 smile
 ```
 
+## Free-init
+
+It allows you to use more time to get more coherent and consistent video frames.
+
+The default parameters provide satisfactory results for most use cases. Increasing the number of iterations can yield better outcomes, but it also prolongs the processing time. If your video contains more intense or rapid motions, consider switching the filter to Gaussian. For a detailed explanation of each parameter, please refer to the documentation in the [original repository](https://github.com/TianxingWu/FreeInit).
+
 
 ## ControlNet V2V
 > Sample configuration for ControlNet V2V, ControlNet inpaint, IP-Adapter prompt travel, SparseCtrl, ControlNet keyframe, img2img batch will be updated in a day.

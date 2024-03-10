@@ -9,7 +9,7 @@ import sys
 
 from modules import sd_models, shared, sd_samplers, devices
 from modules.paths import extensions_builtin_dir
-from modules.processing import StableDiffusionProcessing, opt_C, opt_f, StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img
+from modules.processing import StableDiffusionProcessing, opt_C, opt_f, StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img, decode_latent_batch
 from types import MethodType
 
 from scripts.animatediff_logger import logger_animatediff as logger
@@ -118,11 +118,15 @@ class AnimateDiffFreeInit:
                     x = x.to(x_dtype)
 
                 x = self.sampler.sample(self, x, conditioning, unconditional_conditioning, image_conditioning=self.txt2img_image_conditioning(x))
+                devices.torch_gc()
+
             samples = x
             del x
 
             if not self.enable_hr:
                 return samples
+
+            devices.torch_gc()
 
             if self.latent_scale_mode is None:
                 decoded_samples = torch.stack(decode_latent_batch(self.sd_model, samples, target_device=devices.cpu, check_for_nans=True)).to(dtype=torch.float32)
@@ -131,8 +135,6 @@ class AnimateDiffFreeInit:
 
             with sd_models.SkipWritingToConfig():
                 sd_models.reload_model_weights(info=self.hr_checkpoint_info)
-
-            devices.torch_gc()
 
             return self.sample_hr_pass(samples, decoded_samples, seeds, subseeds, subseed_strength, prompts)
 
