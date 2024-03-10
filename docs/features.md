@@ -50,6 +50,7 @@ Due to the introduction of sliding window attention, the processing time may be 
 | without FreeNoise | with FreeNoise (default params) |
 | --- | --- |
 | ![wo_FreeNoise](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/a9d1f72a-31ae-4213-9e85-9de4450b4aed) | ![w_FreeNoise](https://github.com/thiswinex/sd-webui-animatediff/assets/29111172/68a0ff8f-28fa-4d54-95f7-e439802d13b4) |
+
 (Number of frames: 64; Context batch size / Size of Sliding windows:16)
 
 
