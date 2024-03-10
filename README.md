@@ -58,6 +58,7 @@ We thank all developers and community users who contribute to this repository in
 - [@KohakuBlueleaf](https://github.com/KohakuBlueleaf) for helping with FP8 and LCM development
 - [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance
 - [@streamline](https://twitter.com/kaizirod) for providing ControlNet V2V dataset and workflow. His workflow is extremely amazing and definitely worth checking out.
+- [@thiswinex](https://github.com/thiswinex) for providing support on FreeInit
 
 
 ## Star History
