@@ -9,7 +9,6 @@ from modules import devices, shared
 from modules.script_callbacks import CFGDenoiserParams
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_mm import mm_animatediff as motion_module
-from scripts.animatediff_utils import get_controlnet_units
 
 
 class AnimateDiffInfV2V:
