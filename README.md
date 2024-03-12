@@ -17,7 +17,9 @@ You might also be interested in another extension I created: [Segment Anything f
 ## Update
 - [v2.0.0-a](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.0-a) in `03/02/2023`: The whole extension has been reworked to make it easier to maintain.
   - Prerequisite: WebUI >= 1.8.0 & ControlNet >=1.1.441
-  - New feature: ControlNet inpaint / IP-Adapter prompt travel / SparseCtrl / ControlNet keyframe, see [ControlNet V2V](docs/features.md#controlnet-v2v)
+  - New feature:
+      - ControlNet inpaint / IP-Adapter prompt travel / SparseCtrl / ControlNet keyframe, see [ControlNet V2V](docs/features.md#controlnet-v2v)
+      - FreeInit, see [FreeInit](docs/features.md#FreeInit)
   - Minor: mm filter based on sd version (click refresh button if you switch between SD1.5 and SDXL) / display extension version in infotext
   - Breaking change: You must use Motion LoRA, Hotshot-XL, AnimateDiff V3 Motion Adapter from my [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main).
 
@@ -54,6 +56,7 @@ We thank all developers and community users who contribute to this repository in
 - [@limbo0000](https://github.com/limbo0000) for responding to my questions about AnimateDiff
 - [@neggles](https://github.com/neggles) and [@s9roll7](https://github.com/s9roll7) for developing [AnimateDiff CLI Prompt Travel](https://github.com/s9roll7/animatediff-cli-prompt-travel)
 - [@zappityzap](https://github.com/zappityzap) for developing the majority of the [output features](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_output.py)
+- [@thiswinex](https://github.com/thiswinex) for developing FreeInit
 - [@lllyasviel](https://github.com/lllyasviel) for adding me as a collaborator of sd-webui-controlnet and offering technical support for Forge
 - [@KohakuBlueleaf](https://github.com/KohakuBlueleaf) for helping with FP8 and LCM development
 - [@TDS4874](https://github.com/TDS4874) and [@opparco](https://github.com/opparco) for resolving the grey issue which significantly improve the performance
