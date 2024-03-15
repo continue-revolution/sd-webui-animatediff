@@ -9,7 +9,6 @@ from modules.processing import StableDiffusionProcessing
 
 from scripts.animatediff_logger import logger_animatediff as logger
 
-
 def generate_random_hash(length=8):
     import hashlib
     import secrets
@@ -40,6 +39,7 @@ def get_animatediff_arg(p: StableDiffusionProcessing):
             if isinstance(animatediff_arg, dict):
                 from scripts.animatediff_ui import AnimateDiffProcess
                 animatediff_arg = AnimateDiffProcess(**animatediff_arg)
+                p.script_args = list(p.script_args)
                 p.script_args[script.args_from] = animatediff_arg
             return animatediff_arg
 
@@ -55,7 +55,20 @@ def get_controlnet_units(p: StableDiffusionProcessing):
     for script in p.scripts.alwayson_scripts:
         if script.title().lower() == "controlnet":
             cn_units = p.script_args[script.args_from:script.args_to]
-            return [x for x in cn_units if x.enabled]
+
+            if p.is_api and len(cn_units) > 0 and isinstance(cn_units[0], dict):
+               from scripts import external_code
+               from scripts.batch_hijack import InputMode
+               cn_units = external_code.get_all_units_in_processing(p)
+               for cn_unit in cn_units:
+                  setattr(cn_unit, "input_mode", InputMode.BATCH)
+                  setattr(cn_unit, "batch_images", None)
+                  setattr(cn_unit, "batch_mask_dir", None)
+                  setattr(cn_unit, "batch_input_gallery", None)
+                  setattr(cn_unit, "batch_modifiers", [])
+                  setattr(cn_unit, "animatediff_batch", True)
+               p.script_args[script.args_from:script.args_to] = cn_units
+            return [x for x in cn_units if x.enabled] if not p.is_api else cn_units
 
     return []
 
