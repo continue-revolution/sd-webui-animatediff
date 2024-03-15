@@ -44,6 +44,8 @@ It is quite similar to the way you use ControlNet. API will return a video in ba
 },
 ```
 
+If you wish to specify different conditional hints for different ControlNet units, the only additional thing you need to do is to specify `batch_images` parameter in your ControlNet JSON API parameters. The expected input format is exactly the same as [how to use ControlNet in WebUI](features.md#controlnet-v2v).
+
 
 ## Parameters
 1. **Save format** — Format of the output. Choose at least one of "GIF"|"MP4"|"WEBP"|"WEBM"|"PNG". Check "TXT" if you want infotext, which will live in the same directory as the output GIF. Infotext is also accessible via `stable-diffusion-webui/params.txt` and outputs in all formats.
