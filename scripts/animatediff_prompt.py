@@ -130,7 +130,8 @@ class AnimateDiffPromptSchedule:
         if isinstance(cond, torch.Tensor):
             return torch.stack(cond_list).to(cond.dtype).to(cond.device)
         else:
-            return {k: torch.stack(v).to(cond[k].dtype).to(cond[k].device) for k, v in cond_list.items()}
+            from modules.prompt_parser import DictWithShape
+            return DictWithShape({k: torch.stack(v).to(cond[k].dtype).to(cond[k].device) for k, v in cond_list.items()}, None)
 
 
     @staticmethod
