@@ -2,7 +2,6 @@ from calendar import c
 from typing import List
 from types import MethodType
 
-from httpx import get
 import numpy as np
 import torch
 
