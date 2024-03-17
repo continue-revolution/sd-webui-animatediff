@@ -1,4 +1,5 @@
 from pathlib import Path
+from re import L
 from types import MethodType
 
 import os
@@ -7,7 +8,7 @@ import numpy as np
 import torch
 import hashlib
 from PIL import Image, ImageOps, UnidentifiedImageError
-from modules import processing, shared, scripts, devices, masking, sd_samplers, images
+from modules import processing, shared, scripts, devices, masking, sd_samplers, images, img2img
 from modules.processing import (StableDiffusionProcessingImg2Img,
                                 process_images,
                                 create_binary_mask,
@@ -20,6 +21,7 @@ from modules.sd_samplers_common import images_tensor_to_samples, approximation_i
 from modules.sd_models import get_closet_checkpoint_match
 
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_utils import get_animatediff_arg, get_controlnet_units
 
 
 def animatediff_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack this when i2i-batch with batch mask
@@ -174,9 +176,15 @@ def animatediff_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hac
     self.image_conditioning = self.img2img_image_conditioning(image * 2 - 1, self.init_latent, image_masks) # let's ignore this image_masks which is related to inpaint model with different arch
 
 
-def amimatediff_i2i_batch(
+def animatediff_i2i_batch(
         p: StableDiffusionProcessingImg2Img, input_dir: str, output_dir: str, inpaint_mask_dir: str,
         args, to_scale=False, scale_by=1.0, use_png_info=False, png_info_props=None, png_info_dir=None):
+    ad_params = get_animatediff_arg(p)
+    if not ad_params.enable:
+        return img2img.original_i2i_batch(p, input_dir, output_dir, inpaint_mask_dir, args, to_scale, scale_by, use_png_info, png_info_props, png_info_dir)
+    if not ad_params.video_path and not ad_params.video_source:
+        ad_params.video_path = input_dir
+
     output_dir = output_dir.strip()
     processing.fix_seed(p)
 
@@ -189,9 +197,20 @@ def amimatediff_i2i_batch(
 
         if is_inpaint_batch:
             assert len(inpaint_masks) == 1 or len(inpaint_masks) == len(images), 'The number of masks must be 1 or equal to the number of images.'
-            logger.info(f"\n[i2i batch] Inpaint batch is enabled. {len(inpaint_masks)} masks found.")
+            logger.info(f"[i2i batch] Inpaint batch is enabled. {len(inpaint_masks)} masks found.")
             if len(inpaint_masks) > 1: # batch mask
                 p.init = MethodType(animatediff_i2i_init, p)
+
+            cn_units = get_controlnet_units(p)
+            for idx, cn_unit in enumerate(cn_units):
+                # batch path broadcast
+                if (cn_unit.input_mode.name == 'SIMPLE' and cn_unit.image is None) or \
+                   (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_image_dir) or \
+                   (cn_unit.input_mode.name == 'MERGE' and not cn_unit.batch_input_gallery):
+                    cn_unit.input_mode = cn_unit.input_mode.__class__.BATCH
+                    if "inpaint" in cn_unit.module:
+                        cn_unit.batch_mask_dir = inpaint_mask_dir
+                        logger.info(f"ControlNetUnit-{idx} is an inpaint unit without cond_hint specification. We have set batch_images = {cn_unit.batch_image_dir}.")
 
     logger.info(f"[i2i batch] Will process {len(images)} images, creating {p.n_iter} new videos.")
 
@@ -301,3 +320,17 @@ def amimatediff_i2i_batch(
             batch_results.infotexts = batch_results.infotexts[:int(shared.opts.img2img_batch_show_results_limit)]
 
     return batch_results
+
+
+def animatediff_hook_i2i_batch():
+    if getattr(img2img, "original_i2i_batch", None) is None:
+        logger.info("AnimateDiff Hooking i2i_batch")
+        img2img.original_i2i_batch = img2img.process_batch
+        img2img.process_batch = animatediff_i2i_batch
+
+
+def animatediff_unhook_i2i_batch():
+    if getattr(img2img, "original_i2i_batch", None) is not None:
+        logger.info("AnimateDiff Unhooking i2i_batch")
+        img2img.process_batch = img2img.original_i2i_batch
+        img2img.original_i2i_batch = None

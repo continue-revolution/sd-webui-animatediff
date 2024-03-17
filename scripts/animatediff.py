@@ -18,6 +18,7 @@ from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_settings import on_ui_settings
 from scripts.animatediff_infotext import update_infotext, infotext_pasted
 from scripts.animatediff_utils import get_animatediff_arg
+from scripts.animatediff_i2ibatch import animatediff_hook_i2i_batch, animatediff_unhook_i2i_batch
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
@@ -98,3 +99,5 @@ script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)
 script_callbacks.on_cfg_denoiser(AnimateDiffInfV2V.animatediff_on_cfg_denoiser)
 script_callbacks.on_infotext_pasted(infotext_pasted)
+script_callbacks.on_before_ui(animatediff_hook_i2i_batch)
+script_callbacks.on_script_unloaded(animatediff_unhook_i2i_batch)

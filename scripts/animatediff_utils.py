@@ -1,3 +1,4 @@
+import os
 import cv2
 import subprocess
 from pathlib import Path
@@ -7,7 +8,6 @@ from modules.paths import data_path
 from modules.processing import StableDiffusionProcessing
 
 from scripts.animatediff_logger import logger_animatediff as logger
-
 
 def generate_random_hash(length=8):
     import hashlib
@@ -39,6 +39,7 @@ def get_animatediff_arg(p: StableDiffusionProcessing):
             if isinstance(animatediff_arg, dict):
                 from scripts.animatediff_ui import AnimateDiffProcess
                 animatediff_arg = AnimateDiffProcess(**animatediff_arg)
+                p.script_args = list(p.script_args)
                 p.script_args[script.args_from] = animatediff_arg
             return animatediff_arg
 
@@ -49,14 +50,14 @@ def get_controlnet_units(p: StableDiffusionProcessing):
     Get controlnet arguments from `p`.
     """
     if not p.scripts:
-        return None
+        return []
 
     for script in p.scripts.alwayson_scripts:
         if script.title().lower() == "controlnet":
             cn_units = p.script_args[script.args_from:script.args_to]
-            return [x for x in cn_units if x.enabled]
+            return [x for x in cn_units if x.enabled] if not p.is_api else cn_units
 
-    return None
+    return []
 
 
 def ffmpeg_extract_frames(source_video: str, output_dir: str, extract_key: bool = False):
@@ -97,9 +98,14 @@ def extract_frames_from_video(params):
     params.video_path = shared.opts.data.get(
         "animatediff_frame_extract_path",
         f"{data_path}/tmp/animatediff-frames")
-    params.video_path += f"{params.video_source}-{generate_random_hash()}"
+    if not params.video_path:
+        params.video_path = f"{data_path}/tmp/animatediff-frames"
+    params.video_path = os.path.join(params.video_path, f"{Path(params.video_source).stem}-{generate_random_hash()}")
     try:
-        ffmpeg_extract_frames(params.video_source, params.video_path)
+        if shared.opts.data.get("animatediff_default_frame_extract_method", "ffmpeg") == "opencv":
+            cv2_extract_frames(params.video_source, params.video_path)
+        else:
+            ffmpeg_extract_frames(params.video_source, params.video_path)
     except Exception as e:
         logger.error(f"[AnimateDiff] Error extracting frames via ffmpeg: {e}, fall back to OpenCV.")
         cv2_extract_frames(params.video_source, params.video_path)
