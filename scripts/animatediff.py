@@ -42,7 +42,6 @@ class AnimateDiffScript(scripts.Script):
     def ui(self, is_img2img):
         unit = AnimateDiffUiGroup().render(
             is_img2img,
-            motion_module.get_model_dir(),
             self.infotext_fields,
             self.paste_field_names
         )
