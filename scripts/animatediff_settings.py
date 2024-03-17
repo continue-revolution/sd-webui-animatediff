@@ -49,9 +49,19 @@ def on_ui_settings():
         ).needs_restart()
     )
     shared.opts.add_option(
+        "animatediff_save_to_custom",
+        shared.OptionInfo(
+            True,
+            "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/{date} "
+            "instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
+            gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
         "animatediff_frame_extract_path",
         shared.OptionInfo(
-            "GIF",
+            None,
             "Path to save extracted frames",
             gr.Textbox,
             {"placeholder": "Leave empty to use default path: tmp/animatediff-frames"},
@@ -68,12 +78,12 @@ def on_ui_settings():
         )
     )
     shared.opts.add_option(
-        "animatediff_save_to_custom",
+        "animatediff_default_frame_extract_method",
         shared.OptionInfo(
-            True,
-            "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/{date} "
-            "instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
-            gr.Checkbox,
+            "ffmpeg",
+            "Default frame extraction method",
+            gr.Radio,
+            {"choices": ["ffmpeg", "opencv"]},
             section=section
         )
     )
