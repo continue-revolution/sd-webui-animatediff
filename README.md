@@ -16,7 +16,7 @@ You might also be interested in another extension I created: [Segment Anything f
 
 ## Update
 - [v2.0.0-a](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.0-a) in `03/02/2023`: The whole extension has been reworked to make it easier to maintain.
-  - Prerequisite: WebUI >= 1.8.0 & ControlNet >=1.1.441
+  - Prerequisite: WebUI >= 1.8.0 & ControlNet >=1.1.441 & PyTorch >= 2.0.0
   - New feature:
       - ControlNet inpaint / IP-Adapter prompt travel / SparseCtrl / ControlNet keyframe, see [ControlNet V2V](docs/features.md#controlnet-v2v)
       - FreeInit, see [FreeInit](docs/features.md#FreeInit)
@@ -47,7 +47,7 @@ I am maintaining a [huggingface repo](https://huggingface.co/conrevo/AnimateDiff
 
 
 ## Tutorial 
-TODO
+There are a lot of wonderful video tutorials on YouTube and bilibili, and you should check those out for now. For the time being, there are a series of updates on the way and I don't want to work on my own before I am satisfied. An official tutorial should come when I am satisfied with the available features.
 
 
 ## Thanks
