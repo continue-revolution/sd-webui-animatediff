@@ -1,9 +1,13 @@
-from re import A
+import gc
 import numpy as np
 import torch
 
+from ldm_patched.modules.model_management import get_torch_device, soft_empty_cache
+from modules import shared
+from modules.sd_samplers_cfg_denoiser import pad_cond
 from modules.script_callbacks import CFGDenoiserParams
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_mm import mm_animatediff as motion_module
 
 
 class AnimateDiffInfV2V:
@@ -75,18 +79,16 @@ class AnimateDiffInfV2V:
 
     @staticmethod
     def animatediff_on_cfg_denoiser(cfg_params: CFGDenoiserParams):
-        from scripts.animatediff_mm import mm_animatediff as motion_module
         ad_params = motion_module.ad_params
         if ad_params is None or not ad_params.enable:
             return
+
         ad_params.step = cfg_params.denoiser.step
-        if getattr(ad_params, "text_cond", None) is None:
+        if cfg_params.denoiser.step == 0:
             prompt_closed_loop = (ad_params.video_length > ad_params.batch_size) and (ad_params.closed_loop in ['R+P', 'A'])
             ad_params.text_cond = ad_params.prompt_scheduler.multi_cond(cfg_params.text_cond, prompt_closed_loop)
 
         #TODO: move this to cond modifier patch
-        from modules import shared
-        from modules.sd_samplers_cfg_denoiser import pad_cond
         def pad_cond_uncond(cond, uncond):
             empty = shared.sd_model.cond_stage_model_empty_prompt
             num_repeats = (cond.shape[1] - uncond.shape[1]) // empty.shape[1]
@@ -100,10 +102,6 @@ class AnimateDiffInfV2V:
 
     @staticmethod
     def mm_sd_forward(apply_model, info):
-        from scripts.animatediff_mm import mm_animatediff as motion_module
-        from ldm_patched.modules.model_management import get_torch_device, soft_empty_cache
-        import gc
-
         logger.debug("Running special forward for AnimateDiff")
         x_out = torch.zeros_like(info["input"])
         ad_params = motion_module.ad_params

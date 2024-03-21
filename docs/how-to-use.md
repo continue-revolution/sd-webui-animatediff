@@ -25,7 +25,7 @@ Then install [sd-forge-animatediff](https://github.com/continue-revolution/sd-fo
 1. Go to txt2img if you want to try txt2vid and img2img if you want to try img2vid.
 1. Choose an SD checkpoint, write prompts, set configurations such as image width/height. If you want to generate multiple GIFs at once, please [change batch number, instead of batch size](performance.md#batch-size).
 1. Enable AnimateDiff extension, set up [each parameter](#parameters), then click `Generate`.
-1. You should see the output GIF on the output gallery. You can access GIF output at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff/{yy-mm-dd}`. You can also access image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/{yy-mm-dd}`. You may choose to save frames for each generation into separate directories in `Settings/AnimateDiff`.
+1. You should see the output GIF on the output gallery. You can access GIF output and image frames at `stable-diffusion-webui/outputs/{txt2img or img2img}-images/AnimateDiff/{yy-mm-dd}`. You may choose to save frames for each generation into the original txt2img / img2img output directory by uncheck a checkbox inside `Settings/AnimateDiff`.
 
 ## API
 It is quite similar to the way you use ControlNet. API will return a video in base64 format. In `format`, `PNG` means to save frames to your file system without returning all the frames. If you want your API to return all frames, please add `Frame` to `format` list. For most up-to-date parameters, please read [here](https://github.com/continue-revolution/sd-webui-animatediff/blob/master/scripts/animatediff_ui.py#L26).
@@ -59,6 +59,8 @@ It is quite similar to the way you use ControlNet. API will return a video in ba
   }
 },
 ```
+
+If you wish to specify different conditional hints for different ControlNet units, the only additional thing you need to do is to specify `batch_image_dir` and `batch_mask_dir` parameters in your ControlNet JSON API parameters. The expected input format is exactly the same as [how to use ControlNet in WebUI](features.md#controlnet-v2v).
 
 
 ## Parameters

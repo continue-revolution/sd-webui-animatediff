@@ -47,8 +47,8 @@ class AnimateDiffMM:
             if unet_manual_cast(unet_dtype(), get_torch_device()) is not None:
                 mm_config["operations"] = manual_cast
             self.mm = MotionWrapper(**mm_config)
-            missed_keys = self.mm.load_state_dict(mm_state_dict)
-            logger.warn(f"Missing keys {missed_keys}")
+            self.mm.load_state_dict(mm_state_dict)
+        self.set_layer_mapping(shared.sd_model)
 
 
     def inject(self, sd_model, model_name="mm_sd15_v3.safetensors"):
@@ -56,20 +56,18 @@ class AnimateDiffMM:
         sd_ver = "SDXL" if sd_model.is_sdxl else "SD1.5"
         assert sd_model.is_sdxl == self.mm.is_xl, f"Motion module incompatible with SD. You are using {sd_ver} with {self.mm.mm_type}."
 
-        # TODO: What's the best way to do GroupNorm32 forward function hack?
         if self.mm.enable_gn_hack():
-            logger.warning(f"{sd_ver} GroupNorm32 forward function is NOT hacked. Performance will be degraded. Please use newer motion module")
-            # from ldm_patched.ldm.modules.diffusionmodules import model as diffmodel
-            # self.gn32_original_forward = diffmodel.Normalize
-            # gn32_original_forward = self.gn32_original_forward
-
-            # def groupnorm32_mm_forward(self, x):
-            #     x = rearrange(x, "(b f) c h w -> b c f h w", b=2)
-            #     x = gn32_original_forward(self, x)
-            #     x = rearrange(x, "b c f h w -> (b f) c h w", b=2)
-            #     return x
-
-            # diffmodel.Normalize = groupnorm32_mm_forward
+            try:
+                from einops import rearrange
+                def groupnorm32_mm_forward(gn32_original_forward, x, transformer_options={}):
+                    x = rearrange(x, "(b f) c h w -> b c f h w", f=self.ad_params.batch_size)
+                    x = gn32_original_forward(x)
+                    x = rearrange(x, "b c f h w -> (b f) c h w", f=self.ad_params.batch_size)
+                    return x
+                unet.set_groupnorm_wrapper(groupnorm32_mm_forward)
+                logger.info(f"{sd_ver} GroupNorm32 forward function is hacked.")
+            except:
+                logger.warning(f"{sd_ver} GroupNorm32 forward function is NOT hacked. Performance will be degraded. Please use newer motion module")
 
         logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet.")
 
@@ -96,10 +94,13 @@ class AnimateDiffMM:
 
         def mm_cn_forward(model, inner_model, hint, **kwargs):
             controls = []
-            for i in range(0, hint.shape[0], 2 * self.ad_params.batch_size):
-                current_kwargs = {k: (v[i:i + 2 * self.ad_params.batch_size].to(get_torch_device())
+            control_batch_size = shared.opts.data.get("animatediff_control_batch_size", 0)
+            if control_batch_size == 0:
+                control_batch_size = 2 * self.ad_params.batch_size
+            for i in range(0, hint.shape[0], control_batch_size):
+                current_kwargs = {k: (v[i:i + control_batch_size].to(get_torch_device())
                                   if type(v) == torch.Tensor else v) for k, v in kwargs.items()}
-                current_kwargs["hint"] = hint[i:i + 2 * self.ad_params.batch_size].to(get_torch_device())
+                current_kwargs["hint"] = hint[i:i + control_batch_size].to(get_torch_device())
                 current_ctrl = inner_model(**current_kwargs)
                 if len(controls) == 0:
                     controls = [[c.cpu() if type(c) == torch.Tensor else c] for c in current_ctrl]
@@ -122,7 +123,10 @@ class AnimateDiffMM:
         unet.set_model_unet_function_wrapper(AnimateDiffInfV2V.mm_sd_forward)
         unet.add_block_inner_modifier(mm_block_modifier)
         unet.set_memory_peak_estimation_modifier(mm_memory_estimator)
-        unet.set_controlnet_model_function_wrapper(mm_cn_forward)
+        if shared.opts.data.get("animatediff_disable_control_wrapper", False):
+            logger.warning("ControlNet wrapper is disabled. Be cautious that you may run out of VRAM.")
+        else:
+            unet.set_controlnet_model_function_wrapper(mm_cn_forward)
         sd_model.forge_objects.unet = unet
 
 
@@ -143,6 +147,14 @@ class AnimateDiffMM:
         alphas_cumprod = torch.cumprod(1.0 - betas, dim=0)
         unet.add_alphas_cumprod_modifier(lambda _: alphas_cumprod)
         sd_model.forge_objects.unet = unet
+
+
+    def set_layer_mapping(self, sd_model):
+        if hasattr(sd_model, 'network_layer_mapping'):
+            for name, module in self.mm.named_modules():
+                network_name = name.replace(".", "_")
+                sd_model.network_layer_mapping[network_name] = module
+                module.network_layer_name = network_name
 
 
 mm_animatediff = AnimateDiffMM()

@@ -10,6 +10,25 @@ def on_ui_settings():
 
     # default option specification
     shared.opts.add_option(
+        "animatediff_disable_control_wrapper",
+        shared.OptionInfo(
+            False,
+            "Disable ControlNet wrapper for AnimateDiff (this requires a large VRAM)",
+            gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
+        "animatediff_control_batch_size",
+        shared.OptionInfo(
+            0,
+            "ControlNet batch size for AnimateDiff (default: 2 * context_batch_size)",
+            gr.Slider,
+            {"minimum": 0, "maximum": 128, "step": 4},
+            section=section,
+        ),
+    )
+    shared.opts.add_option(
         "animatediff_model_path",
         shared.OptionInfo(
             None,
@@ -30,9 +49,19 @@ def on_ui_settings():
         ).needs_restart()
     )
     shared.opts.add_option(
+        "animatediff_save_to_custom",
+        shared.OptionInfo(
+            True,
+            "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/{date} "
+            "instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
+            gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
         "animatediff_frame_extract_path",
         shared.OptionInfo(
-            "GIF",
+            None,
             "Path to save extracted frames",
             gr.Textbox,
             {"placeholder": "Leave empty to use default path: tmp/animatediff-frames"},
@@ -40,12 +69,21 @@ def on_ui_settings():
         )
     )
     shared.opts.add_option(
-        "animatediff_save_to_custom",
+        "animatediff_frame_extract_remove",
         shared.OptionInfo(
-            True,
-            "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/{date} "
-            "instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
+            False,
+            "Always remove extracted frames after processing",
             gr.Checkbox,
+            section=section
+        )
+    )
+    shared.opts.add_option(
+        "animatediff_default_frame_extract_method",
+        shared.OptionInfo(
+            "ffmpeg",
+            "Default frame extraction method",
+            gr.Radio,
+            {"choices": ["ffmpeg", "opencv"]},
             section=section
         )
     )

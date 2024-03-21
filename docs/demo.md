@@ -1,5 +1,4 @@
 # Demo
-> Unfortunaly, due to unknown reason, you will NOT be able to reproduce videos here (created by OG A1111) to Forge.
 
 ## Basic Usage
 | AnimateDiff | Extension | img2img |

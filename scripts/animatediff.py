@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from fastapi import params
+
 import gradio as gr
 
 from modules import script_callbacks, scripts
@@ -13,10 +13,12 @@ from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
+from scripts.animatediff_xyz import patch_xyz, xyz_attrs
 from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_settings import on_ui_settings
 from scripts.animatediff_infotext import update_infotext, infotext_pasted
 from scripts.animatediff_utils import get_animatediff_arg
+from scripts.animatediff_i2ibatch import animatediff_hook_i2i_batch, animatediff_unhook_i2i_batch
 
 script_dir = scripts.basedir()
 motion_module.set_script_dir(script_dir)
@@ -40,7 +42,6 @@ class AnimateDiffScript(scripts.Script):
     def ui(self, is_img2img):
         unit = AnimateDiffUiGroup().render(
             is_img2img,
-            motion_module.get_model_dir(),
             self.infotext_fields,
             self.paste_field_names
         )
@@ -51,6 +52,11 @@ class AnimateDiffScript(scripts.Script):
         if p.is_api:
             params = get_animatediff_arg(p)
         motion_module.set_ad_params(params)
+
+        # apply XYZ settings
+        params.apply_xyz()
+        xyz_attrs.clear()
+
         if params.enable:
             logger.info("AnimateDiff process start.")
             motion_module.load(params.model)
@@ -86,7 +92,11 @@ class AnimateDiffScript(scripts.Script):
             logger.info("AnimateDiff process end.")
 
 
+patch_xyz()
+
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_after_component(AnimateDiffUiGroup.on_after_component)
 script_callbacks.on_cfg_denoiser(AnimateDiffInfV2V.animatediff_on_cfg_denoiser)
 script_callbacks.on_infotext_pasted(infotext_pasted)
+script_callbacks.on_before_ui(animatediff_hook_i2i_batch)
+script_callbacks.on_script_unloaded(animatediff_unhook_i2i_batch)

@@ -1,6 +1,7 @@
 import base64
 import datetime
 from pathlib import Path
+import traceback
 
 import imageio.v3 as imageio
 import numpy as np
@@ -18,7 +19,9 @@ from scripts.animatediff_ui import AnimateDiffProcess
 class AnimateDiffOutput:
     def output(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         video_paths = []
-        logger.info("Merging images into GIF.")
+        first_frames = []
+        from_xyz = any("xyz_grid" in frame.filename for frame in traceback.extract_stack())
+        logger.info(f"Saving output formats: {', '.join(params.format)}")
         date = datetime.datetime.now().strftime('%Y-%m-%d')
         output_dir = Path(f"{p.outpath_samples}/AnimateDiff/{date}")
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -27,7 +30,9 @@ class AnimateDiffOutput:
             # frame interpolation replaces video_list with interpolated frames
             # so make a copy instead of a slice (reference), to avoid modifying res
             frame_list = [image.copy() for image in res.images[i : i + params.video_length]]
-
+            if from_xyz:
+                first_frames.append(res.images[i].copy())
+            
             seq = images.get_next_sequence_number(output_dir, "")
             filename_suffix = f"-{params.request_id}" if params.request_id else ""
             filename = f"{seq:05}-{res.all_seeds[(i-res.index_of_first_image)]}{filename_suffix}"
@@ -43,9 +48,16 @@ class AnimateDiffOutput:
 
         res.images = video_paths if not p.is_api else (self._encode_video_to_b64(video_paths) + (frame_list if 'Frame' in params.format else []))
 
+        # replace results with first frame of each video so xyz grid draws correctly
+        if from_xyz:
+            res.images = first_frames
+
+        if shared.opts.data.get("animatediff_frame_extract_remove", False):
+            self._remove_frame_extract(params)
+
 
     def _remove_frame_extract(self, params: AnimateDiffProcess):
-        if params.video_source and params.video_path and not shared.opts.data.get("animatediff_frame_extract_path", None) and Path(params.video_path).exists():
+        if params.video_source and params.video_path and Path(params.video_path).exists():
             logger.info(f"Removing extracted frames from {params.video_path}")
             import shutil
             shutil.rmtree(params.video_path)
@@ -367,4 +379,4 @@ class AnimateDiffOutput:
         targetpath = f"{date}/{filename}"
         client.upload_file(file_path, bucket,  targetpath)
         logger.info(f"{file_path} saved to s3 in bucket: {bucket}")
-        return f"http://{host}:{port}/{bucket}/{targetpath}"  
+        return f"http://{host}:{port}/{bucket}/{targetpath}"
