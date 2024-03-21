@@ -55,6 +55,16 @@ def get_controlnet_units(p: StableDiffusionProcessing):
     for script in p.scripts.alwayson_scripts:
         if script.title().lower() == "controlnet":
             cn_units = p.script_args[script.args_from:script.args_to]
+
+            if p.is_api and len(cn_units) > 0 and isinstance(cn_units[0], dict):
+               from lib_controlnet.external_code import ControlNetUnit
+               from lib_controlnet.enums import InputMode
+               cn_units_dataclass = [ControlNetUnit.from_dict(cn_unit_dict) for cn_unit_dict in cn_units]
+               for cn_unit_dataclass in cn_units_dataclass:
+                    if cn_unit_dataclass.image is None:
+                        cn_unit_dataclass.input_mode = InputMode.BATCH
+               p.script_args[script.args_from:script.args_to] = cn_units_dataclass
+
             return [x for x in cn_units if x.enabled] if not p.is_api else cn_units
 
     return []
