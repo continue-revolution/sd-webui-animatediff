@@ -61,10 +61,11 @@ class AnimateDiffMM:
                 from einops import rearrange
                 def groupnorm32_mm_forward(gn32_original_forward, x, transformer_options={}):
                     x = rearrange(x, "(b f) c h w -> b c f h w", f=self.ad_params.batch_size)
-                    x = gn32_original_forward(self, x)
+                    x = gn32_original_forward(x)
                     x = rearrange(x, "b c f h w -> (b f) c h w", f=self.ad_params.batch_size)
                     return x
                 unet.set_groupnorm_wrapper(groupnorm32_mm_forward)
+                logger.info(f"{sd_ver} GroupNorm32 forward function is hacked.")
             except:
                 logger.warning(f"{sd_ver} GroupNorm32 forward function is NOT hacked. Performance will be degraded. Please use newer motion module")
 
