@@ -17,9 +17,14 @@ You might also be interested in another extension I created: [Segment Anything f
 ## Update
 - [v2.0.0-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.0-f) in `02/05/2023`: txt2img, prompt travel, infinite generation, all kinds of optimizations have been proven to be working properly and elegantly.
 - [v2.0.1-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.1-f) in `02/11/2023`: [ControlNet V2V](docs/features.md#controlnet-v2v) in txt2img panel is working properly and elegantly. You can also try adding mask and inpaint.
-- [v2.0.2-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.2-f) in `03/18/2023`: Motion LoRA and i2i batch have been restored. Motion LoRA is built under [KohakuBlueleaf](https://github.com/KohakuBlueleaf)'s [LyCORIS](https://github.com/KohakuBlueleaf/a1111-sd-webui-lycoris) extension.
+- [v2.0.2-f](https://github.com/continue-revolution/sd-webui-animatediff/tree/v2.0.2-f) in `03/18/2023`: Motion LoRA, i2i batch and GroupNorm hack have been restored. Motion LoRA is built under [KohakuBlueleaf](https://github.com/KohakuBlueleaf)'s [LyCORIS](https://github.com/KohakuBlueleaf/a1111-sd-webui-lycoris) extension. GroupNorm hack is currently in [this](https://github.com/lllyasviel/stable-diffusion-webui-forge/tree/conrevo/gn-patcher-for-early-ad) branch.
 
-TODO: Synchronize ControlNet updates from master branch, add SparseCtrl and Magic Animate, add more paramters.
+We believe that all features in OG A1111 version (except IP-Adapter prompt travel / SparseCtrl / ControlNet keyframe / FreeInit) have been available in Forge version. We will synchronize ControlNet updates from OG A1111 version, add SparseCtrl and Magic Animate, and add more paramters as soon as we can.
+
+BREAKING CHANGE:
+- You need PyTorch >= 2.0.0 to run this extension.
+- You need [a1111-sd-webui-lycoris](https://github.com/KohakuBlueleaf/a1111-sd-webui-lycoris) extension to run Motion LoRA. Consider ALL LoRAs as LyCORIS models (specify ALL LoRAs as `<lyco:whatever:x.y>` instead of `<lora:whatever:x.y>`, not only when you use AnimateDiff) if you install LyCORIS extension in Foge.
+- You need to download [Motion LoRA](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main/lora_v2), [Hotshot-XL](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/motion_module/mm_sdxl_hs.safetensors?download=true), [AnimateDiff V3 Motion Adapter](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/lora_v2/mm_sd15_v3_adapter.safetensors?download=true), [SparseCtrl](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main/control) from [my HuggingFace repository](https://huggingface.co/conrevo/AnimateDiff-A1111).
 
 ## Future Plan
 Although [OpenAI Sora](https://openai.com/sora) is far better at following complex text prompts and generating complex scenes, we believe that OpenAI will NOT open source Sora or any other other products they released recently. My current plan is to continue developing this extension until when an open-sourced video model is released, with strong ability to generate complex scenes, easy customization and good ecosystem like SD1.5.
@@ -30,7 +35,7 @@ That said, due to the notorious difficulty in maintaining [sd-webui-controlnet](
 
 
 ## Model Zoo
-I am maintaining a [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main) to provide all official models in fp16 & safetensors format. You are highly recommended to use my link. You MUST use my link to download Motion LoRA, Hotshot-XL, AnimateDiff V3 Motion Adapter. You may still use the old links if you want, for all other models
+I am maintaining a [huggingface repo](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main) to provide all official models in fp16 & safetensors format. You are highly recommended to use my link. You MUST use my link to download [Motion LoRA](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main/lora_v2), [Hotshot-XL](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/motion_module/mm_sdxl_hs.safetensors?download=true), [AnimateDiff V3 Motion Adapter](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/lora_v2/mm_sd15_v3_adapter.safetensors?download=true), [SparseCtrl](https://huggingface.co/conrevo/AnimateDiff-A1111/tree/main/control). You may still use the old links if you want, for all other models
 
 - "Official" models by [@guoyww](https://github.com/guoyww): [Google Drive](https://drive.google.com/drive/folders/1EqLC65eR1-W-sGD0Im7fkED6c8GkiNFI) | [HuggingFace](https://huggingface.co/guoyww/animatediff/tree/main) | [CivitAI](https://civitai.com/models/108836)
 - "Stabilized" community models by [@manshoety](https://huggingface.co/manshoety): [HuggingFace](https://huggingface.co/manshoety/AD_Stabilized_Motion/tree/main)

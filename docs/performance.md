@@ -20,7 +20,7 @@ I have [PR-ed](https://github.com/AUTOMATIC1111/stable-diffusion-webui/pull/1458
 
 
 ## VRAM
-> These are for OG A1111. Information about forge will be updated soon.
+> These are for OG A1111. It is meaningless to measure VRAM consumption in Forge because [@lllyasviel](https://github.com/lllyasviel) implemented batch VAE decode based on your available VRAM.
 
 Actual VRAM usage depends on your image size and context batch size. You can try to reduce image size to reduce VRAM usage. You are discouraged from changing context batch size, because this conflicts training specification.
 
