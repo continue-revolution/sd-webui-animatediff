@@ -181,6 +181,7 @@ def animatediff_i2i_batch(
     ad_params = get_animatediff_arg(p)
     if not ad_params.enable:
         return img2img.original_i2i_batch(p, input_dir, output_dir, inpaint_mask_dir, args, to_scale, scale_by, use_png_info, png_info_props, png_info_dir)
+    ad_params.is_i2i_batch = True
     if not ad_params.video_path and not ad_params.video_source:
         ad_params.video_path = input_dir
 
