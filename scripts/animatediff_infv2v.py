@@ -1,4 +1,3 @@
-from calendar import c
 from typing import List
 from types import MethodType
 
@@ -84,7 +83,20 @@ class AnimateDiffInfV2V:
         if ad_params is None or not ad_params.enable:
             return
 
-        if cfg_params.denoiser.step == 0 and getattr(ad_params, "step", -1) != 0:
+        # !adetailer accomodation
+        if not motion_module.mm_injected:
+            if cfg_params.denoiser.step == 0:
+                logger.warning(
+                    "No motion module detected, falling back to the original forward. You are most likely using !Adetailer. "
+                    "!Adetailer post-process your outputs sequentially, and there will NOT be motion module in your UNet, "
+                    "so there might be NO temporal consistency within the inpainted face. Use at your own risk. "
+                    "If you really want to pursue inpainting with AnimateDiff inserted into UNet, "
+                    "use Segment Anything to generate masks for each frame and inpaint them with AnimateDiff + ControlNet. "
+                    "Note that my proposal might be good or bad, do your own research to figure out the best way.")
+            return
+
+        if cfg_params.denoiser.step == 0 and getattr(cfg_params.denoiser.inner_model, 'original_forward', None) is None:
+
             # prompt travel
             prompt_closed_loop = (ad_params.video_length > ad_params.batch_size) and (ad_params.closed_loop in ['R+P', 'A'])
             ad_params.text_cond = ad_params.prompt_scheduler.multi_cond(cfg_params.text_cond, prompt_closed_loop)
@@ -156,10 +168,9 @@ class AnimateDiffInfV2V:
                     mm_cn_restore(_context)
                 return x_out
 
-            if getattr(cfg_params.denoiser.inner_model, 'original_forward', None) is None:
-                logger.info("inner model forward hooked")
-                cfg_params.denoiser.inner_model.original_forward = cfg_params.denoiser.inner_model.forward
-                cfg_params.denoiser.inner_model.forward = MethodType(mm_sd_forward, cfg_params.denoiser.inner_model)
+            logger.info("inner model forward hooked")
+            cfg_params.denoiser.inner_model.original_forward = cfg_params.denoiser.inner_model.forward
+            cfg_params.denoiser.inner_model.forward = MethodType(mm_sd_forward, cfg_params.denoiser.inner_model)
 
         cfg_params.text_cond = ad_params.text_cond
         ad_params.step = cfg_params.denoiser.step

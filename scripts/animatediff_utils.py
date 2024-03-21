@@ -79,6 +79,7 @@ def get_controlnet_units(p: StableDiffusionProcessing):
 
                 p.script_args[script.args_from:script.args_to] = cn_units_dataclass
                 cn_units = cn_units_dataclass
+
             return [x for x in cn_units if x.enabled] if not p.is_api else cn_units
 
     return []
@@ -126,7 +127,10 @@ def extract_frames_from_video(params):
         params.video_path = f"{data_path}/tmp/animatediff-frames"
     params.video_path = os.path.join(params.video_path, f"{Path(params.video_source).stem}-{generate_random_hash()}")
     try:
-        ffmpeg_extract_frames(params.video_source, params.video_path)
+        if shared.opts.data.get("animatediff_default_frame_extract_method", "ffmpeg") == "opencv":
+            cv2_extract_frames(params.video_source, params.video_path)
+        else:
+            ffmpeg_extract_frames(params.video_source, params.video_path)
     except Exception as e:
         logger.error(f"[AnimateDiff] Error extracting frames via ffmpeg: {e}, fall back to OpenCV.")
         cv2_extract_frames(params.video_source, params.video_path)

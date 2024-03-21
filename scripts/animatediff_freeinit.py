@@ -2,19 +2,11 @@ import torch
 import torch.fft as fft
 import math
 
-
-import os
-import re
-import sys
-
 from modules import sd_models, shared, sd_samplers, devices
-from modules.paths import extensions_builtin_dir
 from modules.processing import StableDiffusionProcessing, opt_C, opt_f, StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img, decode_latent_batch
 from types import MethodType
 
-from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_ui import AnimateDiffProcess
-
 
 
 def ddim_add_noise(
