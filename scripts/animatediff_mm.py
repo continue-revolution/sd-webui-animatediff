@@ -213,3 +213,4 @@ class AnimateDiffMM:
 
 
 mm_animatediff = AnimateDiffMM()
+print(mm_animatediff)
