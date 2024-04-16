@@ -74,7 +74,7 @@ def get_controlnet_units(p: StableDiffusionProcessing):
                     
                     if cn_unit_dataclass.image is None:
                         cn_unit_dataclass.input_mode = InputMode.BATCH
-                        cn_unit_dataclass.batch_images = cn_unit_dict.get("batch_images", None)
+                        cn_unit_dataclass.batch_images = getattr(cn_unit_dict, "batch_images", None)
                         cn_unit_dataclass.animatediff_batch = True
 
                 p.script_args[script.args_from:script.args_to] = cn_units_dataclass
