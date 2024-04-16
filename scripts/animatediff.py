@@ -10,7 +10,6 @@ from modules.scripts import PostprocessBatchListArgs, PostprocessImageArgs
 from scripts.animatediff_infv2v import AnimateDiffInfV2V
 from scripts.animatediff_latent import AnimateDiffI2VLatent
 from scripts.animatediff_logger import logger_animatediff as logger
-from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_prompt import AnimateDiffPromptSchedule
 from scripts.animatediff_output import AnimateDiffOutput
 from scripts.animatediff_xyz import patch_xyz, xyz_attrs
@@ -22,7 +21,6 @@ from scripts.animatediff_i2ibatch import * # this is necessary for CN to find th
 from scripts.animatediff_freeinit import AnimateDiffFreeInit
 
 script_dir = scripts.basedir()
-motion_module.set_script_dir(script_dir)
 
 
 class AnimateDiffScript(scripts.Script):
@@ -42,6 +40,8 @@ class AnimateDiffScript(scripts.Script):
 
 
     def ui(self, is_img2img):
+        from scripts.animatediff_mm import mm_animatediff as motion_module
+        motion_module.set_script_dir(script_dir)
         unit = AnimateDiffUiGroup().render(
             is_img2img,
             self.infotext_fields,
@@ -53,6 +53,7 @@ class AnimateDiffScript(scripts.Script):
     def before_process(self, p: StableDiffusionProcessing, params: AnimateDiffProcess):
         if p.is_api:
             params = get_animatediff_arg(p)
+        from scripts.animatediff_mm import mm_animatediff as motion_module
         motion_module.set_ad_params(params)
 
         # apply XYZ settings
@@ -91,6 +92,7 @@ class AnimateDiffScript(scripts.Script):
 
     def postprocess(self, p: StableDiffusionProcessing, res: Processed, params: AnimateDiffProcess):
         if params.enable:
+            from scripts.animatediff_mm import mm_animatediff as motion_module
             params.prompt_scheduler.save_infotext_txt(res)
             motion_module.restore(p.sd_model)
             self.hacked = False
