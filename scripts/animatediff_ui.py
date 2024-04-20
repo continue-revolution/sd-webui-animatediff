@@ -182,7 +182,7 @@ class AnimateDiffProcess:
                 cn_unit.batch_images = self.video_path
 
             # mask path broadcast
-            if cn_unit.input_mode.name == 'BATCH' and self.mask_path and not cn_unit.batch_mask_dir:
+            if cn_unit.input_mode.name == 'BATCH' and self.mask_path and not getattr(cn_unit, 'batch_mask_dir', False):
                 cn_unit.batch_mask_dir = self.mask_path
 
             # find minimun control images in CN batch

@@ -27,6 +27,7 @@ class AnimateDiffOutput:
         output_dir.mkdir(parents=True, exist_ok=True)
         step = params.video_length if params.video_length > params.batch_size else params.batch_size
         for i in range(res.index_of_first_image, len(res.images), step):
+            if i-res.index_of_first_image >= len(res.all_seeds): break
             # frame interpolation replaces video_list with interpolated frames
             # so make a copy instead of a slice (reference), to avoid modifying res
             frame_list = [image.copy() for image in res.images[i : i + params.video_length]]
