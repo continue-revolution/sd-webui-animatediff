@@ -119,7 +119,7 @@ def choices_bool():
 
 def find_xyz_module() -> Optional[ModuleType]:
     for data in scripts.scripts_data:
-        if data.script_class.__module__ in {"xyz_grid.py", "xy_grid.py"} and hasattr(data, "module"):
+        if data.script_class.__module__ in {"xyz_grid.py", "xy_grid.py", "scripts.xyz_grid", "scripts.xy_grid"} and hasattr(data, "module"):
             return data.module
 
     return None
