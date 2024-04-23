@@ -1,4 +1,7 @@
 # AnimateDiff for Stable Diffusion WebUI
+
+> It seems that WebUI v1.9.0 has some major mess-up. Please do not use this WebUI version. You can use either v1.8.0 or v1.9.3 (latest).
+
 This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) with [CLI](https://github.com/s9roll7/animatediff-cli-prompt-travel) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) with [ControlNet](https://github.com/Mikubill/sd-webui-controlnet), and form the most easy-to-use AI video toolkit. You can generate GIFs in exactly the same way as generating images after enabling this extension.
 
 This extension implements AnimateDiff in a different way. It inserts motion modules into UNet at runtime, so that you do not need to reload your model weights if you don't want to.
@@ -6,8 +9,6 @@ This extension implements AnimateDiff in a different way. It inserts motion modu
 You might also be interested in another extension I created: [Segment Anything for Stable Diffusion WebUI](https://github.com/continue-revolution/sd-webui-segment-anything), which could be quite useful for inpainting.
 
 [Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge) users should either checkout branch [forge/master](https://github.com/continue-revolution/sd-webui-animatediff/tree/forge/master) in this repository or use [sd-forge-animatediff](https://github.com/continue-revolution/sd-forge-animatediff). They will be in sync.
-
-[TusiArt](https://tusiart.com/) (for users inside P.R.China mainland) and [TensorArt](https://tensor.art/) (for others) offers online service of this extension.
 
 
 ## Table of Contents

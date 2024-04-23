@@ -7,6 +7,7 @@ import torch
 from modules import devices, shared
 from modules.script_callbacks import CFGDenoiserParams
 from scripts.animatediff_logger import logger_animatediff as logger
+from scripts.animatediff_mm import mm_animatediff as motion_module
 
 
 class AnimateDiffInfV2V:
@@ -78,7 +79,6 @@ class AnimateDiffInfV2V:
 
     @staticmethod
     def animatediff_on_cfg_denoiser(cfg_params: CFGDenoiserParams):
-        from scripts.animatediff_mm import mm_animatediff as motion_module
         ad_params = motion_module.ad_params
         if ad_params is None or not ad_params.enable:
             return
