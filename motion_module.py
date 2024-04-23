@@ -330,8 +330,8 @@ class VersatileAttention(CrossAttention):
 
 
     def forward(self, x: torch.Tensor):
-        from scripts import animatediff_mm
-        video_length = animatediff_mm.mm_animatediff.ad_params.batch_size
+        from scripts.animatediff_mm import mm_animatediff
+        video_length = mm_animatediff.ad_params.batch_size
 
         d = x.shape[1]
         x = rearrange(x, "(b f) d c -> (b d) f c", f=video_length)
