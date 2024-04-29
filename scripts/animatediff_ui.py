@@ -9,6 +9,7 @@ from modules import shared
 from modules.launch_utils import git
 from modules.processing import StableDiffusionProcessing, StableDiffusionProcessingImg2Img
 
+from scripts.animatediff_mm import mm_animatediff as motion_module
 from scripts.animatediff_xyz import xyz_attrs
 from scripts.animatediff_logger import logger_animatediff as logger
 from scripts.animatediff_utils import get_controlnet_units, extract_frames_from_video
@@ -95,7 +96,6 @@ class AnimateDiffProcess:
 
 
     def get_dict(self, is_img2img: bool):
-        from scripts.animatediff_mm import mm_animatediff as motion_module
         infotext = {
             "model": self.model,
             "video_length": self.video_length,
@@ -182,7 +182,7 @@ class AnimateDiffProcess:
                 cn_unit.batch_images = self.video_path
 
             # mask path broadcast
-            if cn_unit.input_mode.name == 'BATCH' and self.mask_path and not cn_unit.batch_mask_dir:
+            if cn_unit.input_mode.name == 'BATCH' and self.mask_path and not getattr(cn_unit, 'batch_mask_dir', False):
                 cn_unit.batch_mask_dir = self.mask_path
 
             # find minimun control images in CN batch
@@ -254,7 +254,6 @@ class AnimateDiffUiGroup:
 
 
     def get_model_list(self):
-        from scripts.animatediff_mm import mm_animatediff as motion_module
         model_dir = motion_module.get_model_dir()
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
@@ -490,7 +489,6 @@ class AnimateDiffUiGroup:
             with gr.Row():
                 unload = gr.Button(value="Move motion module to CPU (default if lowvram)")
                 remove = gr.Button(value="Remove motion module from any memory")
-                from scripts.animatediff_mm import mm_animatediff as motion_module
                 unload.click(fn=motion_module.unload)
                 remove.click(fn=motion_module.remove)
 
