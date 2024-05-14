@@ -1,5 +1,7 @@
 # AnimateDiff for Stable Diffusion WebUI
 
+> I have recently added a non-commercial [license](https://creativecommons.org/licenses/by-nc-sa/4.0/) to this extension. If you want to use this extension for commercial purpose, please contact me via email.
+
 > It seems that WebUI v1.9.0 has some major mess-up. Please do not use this WebUI version. You can use either v1.8.0 or v1.9.3 (latest).
 
 This extension aim for integrating [AnimateDiff](https://github.com/guoyww/AnimateDiff/) with [CLI](https://github.com/s9roll7/animatediff-cli-prompt-travel) into [AUTOMATIC1111 Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) with [ControlNet](https://github.com/Mikubill/sd-webui-controlnet), and form the most easy-to-use AI video toolkit. You can generate GIFs in exactly the same way as generating images after enabling this extension.
