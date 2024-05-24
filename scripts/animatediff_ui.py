@@ -172,6 +172,9 @@ class AnimateDiffProcess:
         cn_units = get_controlnet_units(p)
         min_batch_in_cn = -1
         for cn_unit in cn_units:
+            if cn_unit.enabled == False:
+                continue
+
             # batch path broadcast
             if (cn_unit.input_mode.name == 'SIMPLE' and cn_unit.image is None) or \
                (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_images) or \
