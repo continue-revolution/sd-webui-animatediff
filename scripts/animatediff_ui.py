@@ -261,7 +261,7 @@ class AnimateDiffUiGroup:
             if shared.sd_model.is_sdxl:
                 return ["sd1"]
             elif shared.sd_model.is_sd2:
-                return ["sd1, xl"]
+                return ["sd1", "xl"]
             elif shared.sd_model.is_sd1:
                 return ["xl"]
             else:
