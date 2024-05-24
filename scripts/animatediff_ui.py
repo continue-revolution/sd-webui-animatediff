@@ -256,7 +256,7 @@ class AnimateDiffUiGroup:
     def get_model_list(self):
         model_dir = motion_module.get_model_dir()
         if not os.path.isdir(model_dir):
-            os.mkdir(model_dir)
+            os.makedirs(model_dir, exist_ok=True)
         def get_sd_rm_tag():
             if shared.sd_model.is_sdxl:
                 return ["sd1"]
