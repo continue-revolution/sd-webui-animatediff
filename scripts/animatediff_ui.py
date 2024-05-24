@@ -172,7 +172,7 @@ class AnimateDiffProcess:
         cn_units = get_controlnet_units(p)
         min_batch_in_cn = -1
         for cn_unit in cn_units:
-            if cn_unit.enabled == False:
+            if not cn_unit.enabled: 
                 continue
 
             # batch path broadcast
