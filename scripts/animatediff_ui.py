@@ -266,7 +266,10 @@ class AnimateDiffUiGroup:
                 return ["xl"]
             else:
                 return []
-        return [f for f in os.listdir(model_dir) if f != ".gitkeep" and not any(tag in f for tag in get_sd_rm_tag())]
+        return [
+            f for f in sorted(os.listdir(model_dir))
+            if f != ".gitkeep" and not any(tag in f for tag in get_sd_rm_tag())
+        ]
 
 
     def refresh_models(self, *inputs):
