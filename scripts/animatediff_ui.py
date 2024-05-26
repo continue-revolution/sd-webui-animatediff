@@ -259,17 +259,20 @@ class AnimateDiffUiGroup:
     def get_model_list(self):
         model_dir = motion_module.get_model_dir()
         if not os.path.isdir(model_dir):
-            os.mkdir(model_dir)
+            os.makedirs(model_dir, exist_ok=True)
         def get_sd_rm_tag():
             if shared.sd_model.is_sdxl:
                 return ["sd1"]
             elif shared.sd_model.is_sd2:
-                return ["sd1, xl"]
+                return ["sd1", "xl"]
             elif shared.sd_model.is_sd1:
                 return ["xl"]
             else:
                 return []
-        return [f for f in os.listdir(model_dir) if f != ".gitkeep" and not any(tag in f for tag in get_sd_rm_tag())]
+        return [
+            f for f in sorted(os.listdir(model_dir))
+            if f != ".gitkeep" and not any(tag in f for tag in get_sd_rm_tag())
+        ]
 
 
     def refresh_models(self, *inputs):
