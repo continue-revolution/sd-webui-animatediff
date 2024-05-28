@@ -57,6 +57,9 @@ class AnimateDiffProcess:
         latent_power_last=1,
         latent_scale_last=32,
         request_id = '',
+        is_i2i_batch=False,
+        video_default=False,
+        prompt_scheduler=None,
     ):
         self.model = model
         self.enable = enable
@@ -86,9 +89,9 @@ class AnimateDiffProcess:
 
         # non-ui states
         self.request_id = request_id
-        self.video_default = False
-        self.is_i2i_batch = False
-        self.prompt_scheduler = None
+        self.video_default = video_default
+        self.is_i2i_batch = is_i2i_batch
+        self.prompt_scheduler = prompt_scheduler
 
 
     def get_list(self, is_img2img: bool):
