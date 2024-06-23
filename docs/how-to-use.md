@@ -6,11 +6,8 @@
 If you have already had OG A1111 and you are familiar with git, I highly recommend running the following commands in your terminal in `/path/to/stable-diffusion-webui`
 ```bash
 git remote add forge https://github.com/lllyasviel/stable-diffusion-webui-forge
-git branch lllyasviel/main
-git checkout lllyasviel/main
-git fetch forge
-git branch -u forge/main
-git pull
+git fetch forge main
+git checkout main
 ```
 To go back to OG A1111, just do `git checkout master` or `git checkout dev`.
 
