@@ -109,6 +109,11 @@ There are a lot of amazing demo online. Here I provide a very simple demo. The d
 ### V3
 AnimateDiff V3 has identical state dict keys as V1 but slightly different inference logic (GroupNorm is not hacked for V3). You may optionally use [adapter](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/lora/mm_sd15_v3_adapter.safetensors?download=true) for V3, in the same way as how you apply LoRA. You MUST use [my link](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/lora/mm_sd15_v3_adapter.safetensors?download=true) instead of the [official link](https://huggingface.co/guoyww/animatediff/resolve/main/v3_sd15_adapter.ckpt?download=true). The official adapter won't work for A1111 due to state dict incompatibility.
 
+### AnimateLCM
+- You can download the motion module from [here](https://huggingface.co/conrevo/AnimateDiff-A1111/resolve/main/motion_module/mm_sd15_AnimateLCM.safetensors?download=true). The [original weights](https://huggingface.co/wangfuyun/AnimateLCM/resolve/main/AnimateLCM_sd15_t2v.ckpt?download=true) should also work, but I recommend using my safetensors fp16 version.
+- You should also download Motion LoRA from [here](https://huggingface.co/wangfuyun/AnimateLCM/resolve/main/AnimateLCM_sd15_t2v_lora.safetensors?download=true) and use it like any LoRA.
+- You should use LCM sampler and a low CFG scale (typically 1-2).
+
 ### SDXL
 [AnimateDiff-XL](https://github.com/guoyww/AnimateDiff/tree/sdxl) and [HotShot-XL](https://github.com/hotshotco/Hotshot-XL) have identical architecture to AnimateDiff-SD1.5. The only difference are
 - HotShot-XL is trained with 8 frames instead of 16 frames. You are recommended to set `Context batch size` to 8 for HotShot-XL.

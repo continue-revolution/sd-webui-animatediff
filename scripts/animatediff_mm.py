@@ -49,7 +49,7 @@ class AnimateDiffMM:
             logger.info(f"Guessed {model_name} architecture: {model_type}")
             mm_config = dict(mm_name=model_name, mm_hash=model_hash, mm_type=model_type)
             self.mm = MotionWrapper(**mm_config)
-            self.mm.load_state_dict(mm_state_dict)
+            self.mm.load_state_dict(mm_state_dict, strict=not model_type==MotionModuleType.AnimateLCM)
         self.mm.to(device).eval()
         if not shared.cmd_opts.no_half:
             self.mm.half()

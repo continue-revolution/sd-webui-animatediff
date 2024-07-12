@@ -15,6 +15,7 @@ class MotionModuleType(Enum):
     AnimateDiffV2 = "AnimateDiff V2, Yuwei Guo, Shanghai AI Lab"
     AnimateDiffV3 = "AnimateDiff V3, Yuwei Guo, Shanghai AI Lab"
     AnimateDiffXL = "AnimateDiff SDXL, Yuwei Guo, Shanghai AI Lab"
+    AnimateLCM    = "AnimateLCM, Fu-Yun Wang, MMLab@CUHK"
     SparseCtrl = "SparseCtrl, Yuwei Guo, Shanghai AI Lab"
     HotShotXL = "HotShot-XL, John Mullan, Natural Synthetics Inc"
 
@@ -23,6 +24,8 @@ class MotionModuleType(Enum):
     def get_mm_type(state_dict: dict[str, torch.Tensor]):
         keys = list(state_dict.keys())
         if any(["mid_block" in k for k in keys]):
+            if not any(["pe" in k for k in keys]):
+                return MotionModuleType.AnimateLCM
             return MotionModuleType.AnimateDiffV2
         elif any(["down_blocks.3" in k for k in keys]):
             if 32 in next((state_dict[key] for key in state_dict if 'pe' in key), None).shape:
@@ -49,7 +52,7 @@ class MotionWrapper(nn.Module):
         self.mm_name = mm_name
         self.mm_type = mm_type
         self.mm_hash = mm_hash
-        max_len = 24 if self.enable_gn_hack() else 32
+        max_len = 64 if mm_type == MotionModuleType.AnimateLCM else (24 if self.enable_gn_hack() else 32)
         in_channels = (320, 640, 1280) if self.is_xl else (320, 640, 1280, 1280)
         self.down_blocks = nn.ModuleList([])
         self.up_blocks = nn.ModuleList([])
@@ -59,7 +62,7 @@ class MotionWrapper(nn.Module):
             else:
                 self.down_blocks.append(MotionModule(c, num_mm=2, max_len=max_len, operations=operations))
                 self.up_blocks.insert(0,MotionModule(c, num_mm=3, max_len=max_len, operations=operations))
-        if mm_type in [MotionModuleType.AnimateDiffV2]:
+        if self.is_v2:
             self.mid_block = MotionModule(1280, num_mm=1, max_len=max_len, operations=operations)
 
 
@@ -83,7 +86,7 @@ class MotionWrapper(nn.Module):
 
     @property
     def is_v2(self):
-        return self.mm_type == MotionModuleType.AnimateDiffV2
+        return self.mm_type in [MotionModuleType.AnimateDiffV2, MotionModuleType.AnimateLCM]
 
 
 class MotionModule(nn.Module):
