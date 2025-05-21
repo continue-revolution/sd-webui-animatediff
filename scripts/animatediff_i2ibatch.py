@@ -231,7 +231,7 @@ def animatediff_i2i_batch(
         try:
             img = Image.open(image)
         except UnidentifiedImageError as e:
-            print(e)
+            logger.error(f"Skipping image {image} due to UnidentifiedImageError: {e}")
             continue
         # Use the EXIF orientation of photos taken by smartphones.
         img = ImageOps.exif_transpose(img)

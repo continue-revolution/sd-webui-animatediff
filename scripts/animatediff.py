@@ -18,7 +18,7 @@ from scripts.animatediff_ui import AnimateDiffProcess, AnimateDiffUiGroup
 from scripts.animatediff_settings import on_ui_settings
 from scripts.animatediff_infotext import update_infotext, infotext_pasted
 from scripts.animatediff_utils import get_animatediff_arg
-from scripts.animatediff_i2ibatch import * # this is necessary for CN to find the function
+from scripts.animatediff_i2ibatch import animatediff_i2i_init, animatediff_i2i_batch # Make functions available for CN
 from scripts.animatediff_freeinit import AnimateDiffFreeInit
 
 script_dir = scripts.basedir()
@@ -28,7 +28,7 @@ motion_module.set_script_dir(script_dir)
 class AnimateDiffScript(scripts.Script):
 
     def __init__(self):
-        self.hacked = False
+        self.module_injected_by_this_script_run = False
         self.infotext_fields: List[Tuple[gr.components.IOComponent, str]] = []
         self.paste_field_names: List[str] = []
 
@@ -68,10 +68,10 @@ class AnimateDiffScript(scripts.Script):
             if params.freeinit_enable:
                 self.freeinit_hacker = AnimateDiffFreeInit(params)
                 self.freeinit_hacker.hack(p, params)
-            self.hacked = True
-        elif self.hacked:
+            self.module_injected_by_this_script_run = True
+        elif self.module_injected_by_this_script_run:
             motion_module.restore(p.sd_model)
-            self.hacked = False
+            self.module_injected_by_this_script_run = False
 
 
     def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
@@ -93,7 +93,7 @@ class AnimateDiffScript(scripts.Script):
         if params.enable:
             params.prompt_scheduler.save_infotext_txt(res)
             motion_module.restore(p.sd_model)
-            self.hacked = False
+            self.module_injected_by_this_script_run = False
             AnimateDiffOutput().output(p, res, params)
             logger.info("AnimateDiff process end.")
 
