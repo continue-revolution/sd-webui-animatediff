@@ -73,6 +73,8 @@ class AnimateDiffMM:
         if self.mm.is_v2:
             logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet middle block.")
             unet.middle_block.insert(-1, self.mm.mid_block.motion_modules[0])
+        # This section applies a global monkey patch to GroupNorm32.forward for specific motion modules
+        # that require reshaping of tensors before and after the GroupNorm operation.
         elif self.mm.enable_gn_hack():
             logger.info(f"Hacking {sd_ver} GroupNorm32 forward function.")
             if self.mm.is_hotshot:
@@ -83,14 +85,21 @@ class AnimateDiffMM:
             gn32_original_forward = self.gn32_original_forward
 
             def groupnorm32_mm_forward(self, x):
+                # Reshape the tensor to isolate a dimension (assumed to be 'frames' or similar,
+                # with 'b' likely referring to a fixed batch factor of 2 for this hack)
+                # before the original GroupNorm.
                 x = rearrange(x, "(b f) c h w -> b c f h w", b=2)
                 x = gn32_original_forward(self, x)
+                # Reshape the tensor back to its expected format after the original GroupNorm.
                 x = rearrange(x, "b c f h w -> (b f) c h w", b=2)
                 return x
 
+            # This is a global modification of the GroupNorm32.forward method.
             GroupNorm32.forward = groupnorm32_mm_forward
 
         logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet input blocks.")
+        # These indices are specific to the UNet architecture of SD1.5 and SDXL models.
+        # They might need adjustment if the underlying UNet structure changes significantly.
         for mm_idx, unet_idx in enumerate([1, 2, 4, 5, 7, 8, 10, 11]):
             if inject_sdxl and mm_idx >= 6:
                 break
@@ -99,6 +108,8 @@ class AnimateDiffMM:
             unet.input_blocks[unet_idx].append(mm_inject)
 
         logger.info(f"Injecting motion module {model_name} into {sd_ver} UNet output blocks.")
+        # These indices are specific to the UNet architecture of SD1.5 and SDXL models.
+        # They might need adjustment if the underlying UNet structure changes significantly.
         for unet_idx in range(12):
             if inject_sdxl and unet_idx >= 9:
                 break
@@ -126,12 +137,23 @@ class AnimateDiffMM:
         unet = sd_model.model.diffusion_model
 
         logger.info(f"Removing motion module from {sd_ver} UNet input blocks.")
-        for unet_idx in [1, 2, 4, 5, 7, 8, 10, 11]:
-            if inject_sdxl and unet_idx >= 9:
+        # These indices are specific to the UNet architecture of SD1.5 and SDXL models.
+        # They might need adjustment if the underlying UNet structure changes significantly.
+        input_block_indices_to_process = []
+        original_input_indices = [1, 2, 4, 5, 7, 8, 10, 11]
+        for mm_idx, unet_idx in enumerate(original_input_indices):
+            if inject_sdxl and mm_idx >= 6:
                 break
+            input_block_indices_to_process.append(unet_idx)
+        
+        # Iterate in reverse for popping if order matters, though for pop(-1) it might not.
+        # However, to be safe and clear, let's stick to the derived list.
+        for unet_idx in input_block_indices_to_process:
             unet.input_blocks[unet_idx].pop(-1)
 
         logger.info(f"Removing motion module from {sd_ver} UNet output blocks.")
+        # These indices are specific to the UNet architecture of SD1.5 and SDXL models.
+        # They might need adjustment if the underlying UNet structure changes significantly.
         for unet_idx in range(12):
             if inject_sdxl and unet_idx >= 9:
                 break
@@ -143,6 +165,8 @@ class AnimateDiffMM:
         if self.mm.is_v2:
             logger.info(f"Removing motion module from {sd_ver} UNet middle block.")
             unet.middle_block.pop(-2)
+        # This section restores the original GroupNorm32.forward method,
+        # removing the global monkey patch applied during injection if it was enabled.
         elif self.mm.enable_gn_hack():
             logger.info(f"Restoring {sd_ver} GroupNorm32 forward function.")
             if self.mm.is_hotshot:
