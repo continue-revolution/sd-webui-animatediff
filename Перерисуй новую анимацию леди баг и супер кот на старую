@@ -1,0 +1,40 @@
+{
+  "prompt": "Ladybug from Miraculous in SAMG cartoon style, cel-shaded, expressive anime-like face, clean outlines, vibrant lighting, high detail",
+  "negative_prompt": "blurry, lowres, 3D CGI, hyperrealistic, deformed, extra limbs, wrong proportions",
+  "steps": 30,
+  "sampler_name": "DPM++ 2M Karras",
+  "cfg_scale": 7,
+  "denoising_strength": 0.5,
+  "seed": -1,
+  "batch_size": 1,
+  "n_iter": 1,
+  "width": 512,
+  "height": 768,
+  "init_images": ["input/ladybug_frame01.png"],
+
+  "alwayson_scripts": {
+    "ControlNet": {
+      "args": [
+        {
+          "input_image": "input/ladybug_frame01.png",
+          "model": "control_sd15_openpose [fef5e48e]",  // или hed, если нужен контур
+          "module": "openpose_full",
+          "weight": 1.0,
+          "resize_mode": 1,
+          "lowvram": false,
+          "control_mode": 0,
+          "guidance": 1,
+          "guessmode": false
+        }
+      ]
+    },
+    "AnimateDiff": {
+      "args": {
+        "motion_module": "mm_sd_v15_v2.ckpt",  // скачай с AnimateDiff репо
+        "video_path": "input/video_frames/",
+        "video_length": 16,
+        "fps": 8
+      }
+    }
+  }
+}
